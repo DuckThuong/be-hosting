@@ -21,7 +21,10 @@ export class AuthService {
 
   public async SignIn(payload: SignInPayload): Promise<SignInDtoResponse> {
     try {
-      if (payload.email === '' && payload.password === '') {
+      if (
+        (!payload.email && payload.email === '') ||
+        (!payload.password && payload.password === '')
+      ) {
         throw new HttpException(
           ErrorLoginMessage.LOGIN_FAILED.toString(),
           HttpStatus.BAD_REQUEST,
@@ -68,7 +71,10 @@ export class AuthService {
 
   public async SignUp(payload: SignUpPayload): Promise<SignUpDtoResponse> {
     try {
-      if (payload.email === '' || payload.password === '') {
+      if (
+        (!payload.email && payload.email === '') ||
+        (!payload.password && payload.password === '')
+      ) {
         throw new HttpException(
           ErrorRegisterMessage.REGISTER_FAILED.toString(),
           HttpStatus.BAD_REQUEST,
