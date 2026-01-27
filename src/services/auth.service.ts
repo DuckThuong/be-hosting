@@ -1,17 +1,17 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { ROUND } from '../assests/constants/constants';
 import { ErrorLoginMessage } from '../assests/messages/login.message';
-import { isEmail } from '../common/validators/validator';
-import { SignInDtoResponse, SignInPayload } from '../dtos/auth/signIn.dto';
-import { AuthRepository } from '../repositories/auth.repository';
-import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
 import {
   ErrorRegisterMessage,
   SuccessRegisterMessage,
 } from '../assests/messages/register.message';
-import { ROUND } from '../assests/constants/constants';
+import { isEmail } from '../common/validators/validator';
+import { SignInDtoResponse, SignInPayload } from '../dtos/auth/signIn.dto';
+import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
 import { UserRole, UserStatus } from '../dtos/user/user.dto';
+import { AuthRepository } from '../repositories/auth.repository';
 @Injectable()
 export class AuthService {
   constructor(
@@ -38,9 +38,7 @@ export class AuthService {
         );
       }
 
-      const user = await this.authRepository.findOne({
-        where: { email: payload.email },
-      });
+      const user = await this.authRepository.findByEmail(payload.email);
 
       if (!user) {
         throw new HttpException(
@@ -86,10 +84,8 @@ export class AuthService {
           HttpStatus.BAD_REQUEST,
         );
       }
-
-      const existingUser = await this.authRepository.findOne({
-        where: { email: payload.email },
-      });
+      console.log(payload);
+      const existingUser = await this.authRepository.findByEmail(payload.email);
 
       if (existingUser) {
         throw new HttpException(
@@ -100,7 +96,7 @@ export class AuthService {
 
       const hashedPassword = await bcrypt.hash(payload.password, ROUND);
 
-      const newUser = this.authRepository.create({
+      const newUser = await this.authRepository.createUser({
         username: payload.userName,
         email: payload.email,
         password: hashedPassword,
@@ -115,7 +111,6 @@ export class AuthService {
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       } else {
-        await this.authRepository.save(newUser);
         return { message: SuccessRegisterMessage.REGISTER_SUCCESS.toString() };
       }
     } catch (error) {
