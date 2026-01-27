@@ -1,15 +1,20 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { GetUserByUserDtoResponse } from './dtos/user.dto';
-
-export interface UserPayload extends GetUserByUserDtoResponse {}
+import { UserDecoratorDtoResponse } from './dtos/user/user.dto';
 
 export const User = createParamDecorator(
   (
-    data: keyof UserPayload | undefined,
+    data: keyof UserDecoratorDtoResponse | undefined,
     ctx: ExecutionContext,
-  ): GetUserByUserDtoResponse | string | number | Date | undefined => {
+  ): UserDecoratorDtoResponse | string | number | Date | undefined => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const request = ctx.switchToHttp().getRequest();
-    const user: UserPayload = request.user;
-    return data ? (user as any)?.[data] : user;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const user = request.user as UserDecoratorDtoResponse;
+
+    if (!data) {
+      return user;
+    }
+
+    return user[data] as string | number | Date | undefined;
   },
 );
