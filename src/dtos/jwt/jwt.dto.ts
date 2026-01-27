@@ -4,3 +4,12 @@ export interface JwtPayload {
   iat?: number;
   exp?: number;
 }
+
+export interface JwtSignInPayload {
+  email: string;
+  password: string;
+}
+
+export interface JwtSignInDtoResponse {
+  access_token: string;
+}

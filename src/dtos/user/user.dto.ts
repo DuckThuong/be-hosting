@@ -148,3 +148,17 @@ export class UserDecoratorDtoResponse {
   })
   userRole: number;
 }
+
+// New
+
+export enum UserStatus {
+  ACTIVE = 0,
+  INACTIVE = 1,
+  BLOCKED = 2,
+}
+
+export enum UserRole {
+  ADMIN = 0,
+  USER = 1,
+  CUSTOMER = 2,
+}
