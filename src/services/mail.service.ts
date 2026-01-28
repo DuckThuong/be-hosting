@@ -3,16 +3,17 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { MAIL_CONFIG } from '../assests/constants/mail.constant';
+
+import { isEmail } from 'class-validator';
 import {
   MailErrorMessage,
   MailSuccessMessage,
-} from '../assests/messages/mail.message';
+} from '../assests/messages/auth.message';
 import { OtpHelper } from '../common/helpers/otp.helper';
 import { OtpData, SendEmailDto, SendOtpResponse } from '../dtos/auth/mail.dto';
+import { AuthRepository } from '../repositories/auth.repository';
 import { SendOtpTemplate } from './../templates/mail.template';
 import { OtpStorageService } from './otp.service';
-import { AuthRepository } from '../repositories/auth.repository';
-import { isEmail } from 'class-validator';
 
 @Injectable()
 export class MailService {

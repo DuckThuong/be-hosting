@@ -22,4 +22,8 @@ export class AuthRepository {
   public async verifyEmail(email: string): Promise<void> {
     await this.repo.update({ email }, { isEmailVerified: true });
   }
+
+  public async updatePassword(id: number, password: string): Promise<void> {
+    await this.repo.update({ id }, { password: password });
+  }
 }

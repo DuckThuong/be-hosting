@@ -2,17 +2,31 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ROUND } from '../assests/constants/constants';
-import { ErrorLoginMessage } from '../assests/messages/login.message';
-import {
-  ErrorRegisterMessage,
-  SuccessRegisterMessage,
-} from '../assests/messages/register.message';
 import { isEmail } from '../common/validators/validator';
 import { SignInDtoResponse, SignInPayload } from '../dtos/auth/signIn.dto';
 import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
-import { UserRole, UserStatus } from '../dtos/user/user.dto';
+import {
+  UserDecoratorDtoResponse,
+  UserRole,
+  UserStatus,
+} from '../dtos/user/user.dto';
 import { AuthRepository } from '../repositories/auth.repository';
 import { MailService } from './mail.service';
+import {
+  ResetPasswordPayload,
+  ResetPasswordResponse,
+} from '../dtos/auth/resetPassword.dto';
+import {
+  ErrorLoginMessage,
+  ErrorRegisterMessage,
+  ErrorResetPasswordMessage,
+  SuccessRegisterMessage,
+  SuccessResetPasswordMessage,
+} from '../assests/messages/auth.message';
+import {
+  ForgotPasswordPayload,
+  ForgotPasswordResponse,
+} from '../dtos/auth/forgotPassword.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -94,7 +108,6 @@ export class AuthService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      console.log(payload);
       const existingUser = await this.authRepository.findByEmail(payload.email);
 
       if (existingUser) {
@@ -127,6 +140,68 @@ export class AuthService {
       console.error('Error during sign-up:', error);
       throw new HttpException(
         ErrorRegisterMessage.REGISTER_FAILED.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async ForgotPassword(
+    payload: ForgotPasswordPayload,
+  ): Promise<ForgotPasswordResponse> {
+    try {
+    } catch (error) {
+      console.error('Error during reset password:', error);
+      throw new HttpException(
+        ErrorResetPasswordMessage.RESET_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async ResetPassword(
+    payload: ResetPasswordPayload,
+    user: UserDecoratorDtoResponse,
+  ): Promise<ResetPasswordResponse> {
+    try {
+      if (payload.newPassword && payload.newPassword.trim() === '') {
+        throw new HttpException(
+          ErrorResetPasswordMessage.PASSWORD_NOT_VALID.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+      if (payload.oldPassword && payload.oldPassword.trim() === '') {
+        throw new HttpException(
+          ErrorResetPasswordMessage.PASSWORD_NOT_VALID.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+      const isValid = await bcrypt.compare(payload.oldPassword, user.password);
+
+      if (!isValid) {
+        throw new HttpException(
+          ErrorLoginMessage.PASSWORD_INCORRECT.toString(),
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      if (payload.newPassword.localeCompare(payload.oldPassword)) {
+        if (!isValid) {
+          throw new HttpException(
+            ErrorResetPasswordMessage.PASSWORD_IS_EQUAL.toString(),
+            HttpStatus.UNAUTHORIZED,
+          );
+        }
+      }
+
+      const hashedPassword = await bcrypt.hash(payload.newPassword, ROUND);
+      await this.authRepository.updatePassword(user.id, hashedPassword);
+      return {
+        message: SuccessResetPasswordMessage.RESET_SUCCESS.toString(),
+      };
+    } catch (error) {
+      console.error('Error during reset password:', error);
+      throw new HttpException(
+        ErrorResetPasswordMessage.RESET_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
