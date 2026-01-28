@@ -47,6 +47,11 @@ export class MailService {
       });
 
       if (error) {
+        this.logger.error('❌ Resend API trả về lỗi:', {
+          errorMessage: error.message,
+          errorName: error.name,
+          fullError: error,
+        });
         throw new HttpException(
           MailErrorMessage.SEND_EMAIL_FAILED.toString(),
           HttpStatus.INTERNAL_SERVER_ERROR,
