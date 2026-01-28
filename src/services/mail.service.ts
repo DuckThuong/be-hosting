@@ -86,8 +86,10 @@ export class MailService {
 
       this.storeOtp(to, otp);
 
+      //fix cứng
+      const testEmail = 'trinhthuong26022003@gmail.com';
       await this.sendEmail({
-        to,
+        to: testEmail,
         subject: 'Mã OTP xác thực tài khoản',
         html: SendOtpTemplate(otp),
       });
