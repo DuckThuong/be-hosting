@@ -1,3 +1,4 @@
+// mail.service.ts
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
@@ -54,7 +55,7 @@ export class MailService {
 
       return data;
     } catch (error) {
-      console.log('Error sending email:', error);
+      this.logger.error('Error sending email:', error);
       throw new HttpException(
         MailErrorMessage.SEND_EMAIL_FAILED.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -73,6 +74,9 @@ export class MailService {
 
   public async sendOTP(to: string): Promise<SendOtpResponse> {
     try {
+      // Cleanup expired OTPs trước khi gửi OTP mới
+      this.cleanExpiredOTPs();
+
       const otp = OtpHelper.generate();
 
       this.storeOtp(to, otp);
@@ -82,9 +86,25 @@ export class MailService {
         subject: 'Mã OTP xác thực tài khoản',
         html: SendOtpTemplate(otp),
       });
+
+      this.logger.log(`OTP sent to ${to}`);
       return { message: MailSuccessMessage.OTP_SENT.toString() };
     } catch (error) {
-      console.log('Error in sendOTP:', error);
+      this.logger.error('Error in sendOTP:', error);
+      throw new HttpException(
+        MailErrorMessage.SEND_EMAIL_FAILED.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async resendOTP(to: string): Promise<SendOtpResponse> {
+    try {
+      this.otpStorage.delete(to);
+      this.cleanExpiredOTPs();
+      return await this.sendOTP(to);
+    } catch (error) {
+      this.logger.error('Error in resendOTP:', error);
       throw new HttpException(
         MailErrorMessage.SEND_EMAIL_FAILED.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -119,9 +139,15 @@ export class MailService {
       }
 
       this.otpStorage.delete(email);
+      this.logger.log(`OTP verified for ${email}`);
       return true;
     } catch (error) {
-      console.log('Error in verifyOTP:', error);
+      this.logger.error('Error in verifyOTP:', error);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new HttpException(
         MailErrorMessage.OTP_INVALID.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -131,9 +157,15 @@ export class MailService {
 
   public cleanExpiredOTPs(): void {
     try {
+      const countBefore = this.otpStorage.getAll().size;
       this.otpStorage.cleanExpired();
+      const countAfter = this.otpStorage.getAll().size;
+
+      if (countBefore > countAfter) {
+        this.logger.log(`Cleaned ${countBefore - countAfter} expired OTPs`);
+      }
     } catch (error) {
-      console.log('Error cleaning expired OTPs:', error);
+      this.logger.error('Error cleaning expired OTPs:', error);
     }
   }
 }
