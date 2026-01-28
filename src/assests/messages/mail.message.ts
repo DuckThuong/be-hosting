@@ -8,6 +8,8 @@ export class MailMessage {
 
 export enum MailErrorMessage {
   SEND_EMAIL_FAILED = 'Gửi email thất bại',
+  MAIL_IS_NOT_VALID = 'Email không hợp lệ',
+  MAIL_IS_NOT_EXIST = 'Email chưa được đăng ký',
   OTP_NOT_FOUND = 'OTP không tồn tại hoặc đã hết hạn',
   OTP_EXPIRED = 'OTP đã hết hạn',
   OTP_INVALID = 'OTP không chính xác',

@@ -12,11 +12,13 @@ import { SignInDtoResponse, SignInPayload } from '../dtos/auth/signIn.dto';
 import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
 import { UserRole, UserStatus } from '../dtos/user/user.dto';
 import { AuthRepository } from '../repositories/auth.repository';
+import { MailService } from './mail.service';
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private authRepository: AuthRepository,
+    private mailService: MailService,
   ) {}
 
   public async SignIn(payload: SignInPayload): Promise<SignInDtoResponse> {
@@ -55,9 +57,17 @@ export class AuthService {
         );
       }
 
-      return {
-        access_token: this.jwtService.sign({ email: payload.email }),
-      };
+      if (isValid && !user.isEmailVerified) {
+        await this.mailService.sendOTP(user.email);
+        throw new HttpException(
+          ErrorLoginMessage.USER_NOT_VERIFIED.toString(),
+          HttpStatus.UNAUTHORIZED,
+        );
+      } else {
+        return {
+          access_token: this.jwtService.sign({ email: payload.email }),
+        };
+      }
     } catch (error) {
       console.error('Error during sign-in:', error);
       throw new HttpException(
