@@ -20,7 +20,7 @@ async function bootstrap() {
 
   setupSwagger(app);
 
-  await app.listen(process.env.PORT ?? 8080);
+  await app.listen(process.env.API_PORT || 8000);
 
   module.hot?.accept();
   module.hot?.dispose(() => {
