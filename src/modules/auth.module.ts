@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AuthController } from '../controllers/auth.controller';
-import { AuthService } from '../services/auth.service';
-import { JwtStrategy } from '../common/jwt/jwt.strategy';
-import { AuthRepository } from '../repositories/auth.repository';
-import { TbUserDefault } from '../entities/user/user_default.dto';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtStrategy } from '../common/jwt/jwt.strategy';
+import { AuthController } from '../controllers/auth.controller';
+import { TbUserDefault } from '../entities/user/user_default.dto';
+import { AuthRepository } from '../repositories/auth.repository';
+import { AuthService } from '../services/auth.service';
+import { MailModule } from './mail.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         expiresIn: '1d',
       },
     }),
+    MailModule,
   ],
   providers: [AuthService, JwtStrategy, AuthRepository],
   controllers: [AuthController],
