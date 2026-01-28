@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TbUserDefault } from '../entities/user/user_default.dto';
+import { TbUserDefault } from '../entities/user/user_default.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TbUserDefault } from './entities/user/user_default.dto';
+import { TbUserDefault } from './entities/user/user_default.entity';
 import { AuthModule } from './modules/auth.module';
 
 @Module({

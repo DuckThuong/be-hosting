@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { OtpStorageModule } from './otp.module';
 import { AuthRepository } from '../repositories/auth.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TbUserDefault } from '../entities/user/user_default.dto';
+import { TbUserDefault } from '../entities/user/user_default.entity';
 
 @Module({
   imports: [

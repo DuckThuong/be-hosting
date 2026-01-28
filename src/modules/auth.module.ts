@@ -4,7 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from '../common/jwt/jwt.strategy';
 import { AuthController } from '../controllers/auth.controller';
-import { TbUserDefault } from '../entities/user/user_default.dto';
+import { TbUserDefault } from '../entities/user/user_default.entity';
 import { AuthRepository } from '../repositories/auth.repository';
 import { AuthService } from '../services/auth.service';
 import { MailModule } from './mail.module';
