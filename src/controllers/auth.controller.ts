@@ -30,12 +30,14 @@ export class AuthController {
   }
 
   @Post('send-otp')
+  @ApiOperation({ summary: 'Send OTP to Email' })
   @HttpCode(HttpStatus.OK)
   async sendOTP(@Body() dto: SendOtpDto) {
     return await this.mailService.sendOTP(dto.email);
   }
 
   @Post('verify-otp')
+  @ApiOperation({ summary: 'Verify OTP from Email' })
   @HttpCode(HttpStatus.OK)
   async verifyOTP(@Body() dto: VerifyOtpDto) {
     const isValid = await this.mailService.verifyOTP(dto.email, dto.otp);

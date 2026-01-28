@@ -1,109 +1,139 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
+import { MAIL_CONFIG } from '../assests/constants/mail.constant';
+import {
+  MailErrorMessage,
+  MailSuccessMessage,
+} from '../assests/messages/mail.message';
+import { OtpHelper } from '../common/helpers/otp.helper';
+import { OtpData, SendEmailDto, SendOtpResponse } from '../dtos/auth/mail.dto';
 import { SendOtpTemplate } from './../templates/mail.template';
-
-export interface SendEmailDto {
-  to: string;
-  subject: string;
-  html: string;
-  from?: string;
-}
+import { OtpStorageService } from './otp.service';
 
 @Injectable()
 export class MailService {
   private resend: Resend;
   private readonly logger = new Logger(MailService.name);
-  private readonly defaultFrom: string;
-  private otpStorage: Map<string, { otp: string; expiresAt: number }> =
-    new Map();
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly otpStorage: OtpStorageService,
+  ) {
+    this.initializeResend();
+  }
+
+  private initializeResend(): void {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
 
     if (!apiKey) {
-      throw new Error('RESEND_API_KEY is not defined');
+      throw new HttpException(
+        MailErrorMessage.RESEND_API_KEY_MISSING.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     this.resend = new Resend(apiKey);
-    this.defaultFrom = 'Your App <onboarding@resend.dev>';
   }
 
-  private async sendEmail(emailData: SendEmailDto) {
+  private async sendEmail(emailData: SendEmailDto): Promise<any> {
     try {
       const { data, error } = await this.resend.emails.send({
-        from: emailData.from || this.defaultFrom,
+        from: emailData.from || MAIL_CONFIG.DEFAULT_FROM,
         to: emailData.to,
         subject: emailData.subject,
         html: emailData.html,
       });
 
       if (error) {
-        this.logger.error('Error sending email:', error);
-        throw new Error(error.message);
+        throw new HttpException(
+          MailErrorMessage.SEND_EMAIL_FAILED.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
 
-      this.logger.log(`Email sent successfully to ${emailData.to}`);
       return data;
     } catch (error) {
-      this.logger.error('Failed to send email:', error);
-      throw error;
+      console.log('Error sending email:', error);
+      throw new HttpException(
+        MailErrorMessage.SEND_EMAIL_FAILED.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
-  private generateOTP(): string {
-    return Math.floor(1000 + Math.random() * 9000).toString();
+  private storeOtp(email: string, otp: string): void {
+    const otpData: OtpData = {
+      otp,
+      expiresAt: OtpHelper.calculateExpiryTime(),
+    };
+
+    this.otpStorage.set(email, otpData);
   }
 
-  public async sendOTP(to: string) {
-    const otp = this.generateOTP();
-    const expiresAt = Date.now() + 5 * 60 * 1000;
+  public async sendOTP(to: string): Promise<SendOtpResponse> {
+    try {
+      const otp = OtpHelper.generate();
 
-    this.otpStorage.set(to, { otp, expiresAt });
+      this.storeOtp(to, otp);
 
-    await this.sendEmail({
-      to,
-      subject: 'Mã OTP xác thực tài khoản',
-      html: SendOtpTemplate(otp),
-    });
-
-    this.logger.log(`OTP sent to ${to}, expires in 5 minutes`);
-    return { message: 'OTP đã được gửi đến email của bạn' };
+      await this.sendEmail({
+        to,
+        subject: 'Mã OTP xác thực tài khoản',
+        html: SendOtpTemplate(otp),
+      });
+      return { message: MailSuccessMessage.OTP_SENT.toString() };
+    } catch (error) {
+      console.log('Error in sendOTP:', error);
+      throw new HttpException(
+        MailErrorMessage.SEND_EMAIL_FAILED.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  public async verifyOTP(email: string, otp: string): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+  public verifyOTP(email: string, otp: string): boolean {
+    try {
       const stored = this.otpStorage.get(email);
 
       if (!stored) {
-        reject(new BadRequestException('OTP không tồn tại hoặc đã hết hạn'));
-        return;
+        throw new HttpException(
+          MailErrorMessage.OTP_NOT_FOUND.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
-      if (Date.now() > stored.expiresAt) {
+      if (OtpHelper.isExpired(stored.expiresAt)) {
         this.otpStorage.delete(email);
-        reject(new BadRequestException('OTP đã hết hạn'));
-        return;
+        throw new HttpException(
+          MailErrorMessage.OTP_EXPIRED.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       if (stored.otp !== otp) {
-        reject(new BadRequestException('OTP không chính xác'));
-        return;
+        throw new HttpException(
+          MailErrorMessage.OTP_INVALID.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
       }
 
       this.otpStorage.delete(email);
-      this.logger.log(`OTP verified successfully for ${email}`);
-      resolve(true);
-    });
+      return true;
+    } catch (error) {
+      console.log('Error in verifyOTP:', error);
+      throw new HttpException(
+        MailErrorMessage.OTP_INVALID.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  cleanExpiredOTPs() {
-    const now = Date.now();
-    for (const [email, data] of this.otpStorage.entries()) {
-      if (now > data.expiresAt) {
-        this.otpStorage.delete(email);
-        this.logger.log(`Cleaned expired OTP for ${email}`);
-      }
+  public cleanExpiredOTPs(): void {
+    try {
+      this.otpStorage.cleanExpired();
+    } catch (error) {
+      console.log('Error cleaning expired OTPs:', error);
     }
   }
 }

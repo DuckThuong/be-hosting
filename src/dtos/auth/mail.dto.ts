@@ -16,3 +16,24 @@ export class VerifyOtpDto {
   @Length(4, 4, { message: 'OTP phải có 4 số' })
   otp: string;
 }
+
+export interface SendEmailDto {
+  to: string;
+  subject: string;
+  html: string;
+  from?: string;
+}
+
+export interface OtpData {
+  otp: string;
+  expiresAt: number;
+}
+
+export interface OtpVerificationResult {
+  isValid: boolean;
+  error?: string;
+}
+
+export interface SendOtpResponse {
+  message: string;
+}
