@@ -82,3 +82,12 @@ export class ErrorResetPasswordMessage {
   static readonly PASSWORD_NOT_VALID = 'Mật khẩu không chính xác.';
   static readonly PASSWORD_IS_EQUAL = 'Mật khẩu mới phải khác mật khẩu cũ.';
 }
+
+export class SuccessForgotPasswordMessage {
+  static readonly VERIFY_SUCCESS = 'Email xác thực thành công.';
+}
+
+export class ErrorForgotPasswordMessage {
+  static readonly FORGOT_ERROR = 'Đã xảy ra lỗi';
+  static readonly EMAIL_NOT_EXIST = 'Email không tồn tại.';
+}

@@ -1,10 +1,27 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
+import {
+  ForgotPasswordPayload,
+  ForgotPasswordResponse,
+} from '../dtos/auth/forgotPassword.dto';
+import { SendOtpDto, VerifyOtpDto } from '../dtos/auth/mail.dto';
+import {
+  ResetPasswordPayload,
+  ResetPasswordResponse,
+} from '../dtos/auth/resetPassword.dto';
 import { SignInDtoResponse } from '../dtos/auth/signIn.dto';
 import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
+import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { AuthService } from '../services/auth.service';
 import { MailService } from '../services/mail.service';
-import { SendOtpDto, VerifyOtpDto } from '../dtos/auth/mail.dto';
+import { User } from '../user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -27,6 +44,23 @@ export class AuthController {
     @Body() payload: SignUpPayload,
   ): Promise<SignInDtoResponse> {
     return this.authService.SignIn(payload);
+  }
+
+  @ApiOperation({ summary: 'User Forgot Password' })
+  @Post('forgot-password')
+  public async forgotPassword(
+    @Body() payload: ForgotPasswordPayload,
+  ): Promise<ForgotPasswordResponse> {
+    return this.authService.ForgotPassword(payload);
+  }
+
+  @ApiOperation({ summary: 'User Forgot Password' })
+  @Put('reset-password')
+  public async resetPassword(
+    @Body() payload: ResetPasswordPayload,
+    @User() user: UserDecoratorDtoResponse,
+  ): Promise<ResetPasswordResponse> {
+    return this.authService.ResetPassword(payload, user);
   }
 
   @Post('send-otp')

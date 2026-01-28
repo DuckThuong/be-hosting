@@ -17,9 +17,11 @@ import {
   ResetPasswordResponse,
 } from '../dtos/auth/resetPassword.dto';
 import {
+  ErrorForgotPasswordMessage,
   ErrorLoginMessage,
   ErrorRegisterMessage,
   ErrorResetPasswordMessage,
+  SuccessForgotPasswordMessage,
   SuccessRegisterMessage,
   SuccessResetPasswordMessage,
 } from '../assests/messages/auth.message';
@@ -149,10 +151,37 @@ export class AuthService {
     payload: ForgotPasswordPayload,
   ): Promise<ForgotPasswordResponse> {
     try {
+      if (!payload.email && payload.email.trim() === '') {
+        throw new HttpException(
+          ErrorLoginMessage.EMAIL_NOT_VALID.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (!isEmail(payload.email)) {
+        throw new HttpException(
+          ErrorLoginMessage.EMAIL_NOT_VALID.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const user = await this.authRepository.findByEmail(payload.email);
+
+      if (!user) {
+        throw new HttpException(
+          ErrorLoginMessage.USER_NOT_FOUND.toString(),
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      await this.mailService.sendOTP(user.email);
+      return {
+        message: SuccessForgotPasswordMessage.VERIFY_SUCCESS.toString(),
+      };
     } catch (error) {
       console.error('Error during reset password:', error);
       throw new HttpException(
-        ErrorResetPasswordMessage.RESET_ERROR.toString(),
+        ErrorForgotPasswordMessage.FORGOT_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -163,13 +192,13 @@ export class AuthService {
     user: UserDecoratorDtoResponse,
   ): Promise<ResetPasswordResponse> {
     try {
-      if (payload.newPassword && payload.newPassword.trim() === '') {
+      if (!payload.newPassword && payload.newPassword.trim() === '') {
         throw new HttpException(
           ErrorResetPasswordMessage.PASSWORD_NOT_VALID.toString(),
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
-      if (payload.oldPassword && payload.oldPassword.trim() === '') {
+      if (!payload.oldPassword && payload.oldPassword.trim() === '') {
         throw new HttpException(
           ErrorResetPasswordMessage.PASSWORD_NOT_VALID.toString(),
           HttpStatus.INTERNAL_SERVER_ERROR,
