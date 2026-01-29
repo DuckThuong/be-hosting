@@ -87,7 +87,7 @@ export class LocationService {
     payload: UpdateLocationTypePayloadDto,
   ): Promise<UpdateLocationTypeResponseDto> {
     try {
-      if (payload.id) {
+      if (!payload.id) {
         throw new HttpException(
           ErrorLocationMessage.CATCH_ERROR.toString(),
           HttpStatus.INTERNAL_SERVER_ERROR,

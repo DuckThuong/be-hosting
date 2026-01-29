@@ -51,7 +51,62 @@ export class CreateServiceDto {
   serviceDiscount: number;
 }
 
+export class UpdateServiceDto {
+  @ApiProperty({
+    description: 'id',
+    example: '......',
+    required: true,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'serviceName',
+    example: '......',
+    required: true,
+  })
+  serviceName: string;
+
+  @ApiProperty({
+    description: 'serviceDescription',
+    example: '......',
+    required: true,
+  })
+  serviceDescription: string;
+
+  @ApiProperty({
+    description: 'serviceLogo',
+    example: '......',
+    required: true,
+  })
+  serviceLogo: string;
+
+  @ApiProperty({
+    description: 'serviceBackGround',
+    example: '......',
+    required: true,
+  })
+  serviceBackGround: string;
+
+  @ApiProperty({
+    description: 'servicePrice',
+    example: '......',
+    required: true,
+  })
+  servicePrice: number;
+
+  @ApiProperty({
+    description: 'serviceDiscount',
+    example: '......',
+    required: true,
+  })
+  serviceDiscount: number;
+}
 export class CreateServiceResponseDto {
+  message: string;
+  data: ServiceDto;
+}
+
+export class UpdateServiceResponseDto {
   message: string;
   data: ServiceDto;
 }

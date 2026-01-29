@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { SuccessLocationMessage } from '../assests/messages/location.message';
 import {
   CreateLocationTypePayloadDto,
   CreateLocationTypeResponseDto,
@@ -36,18 +37,11 @@ export class LocationRepository {
       typeLogo: data.logo,
       typeBackGround: data.backgroundUrl,
     });
-    if (Type) {
-      const savedType = await this.locationType.save(Type);
-      return {
-        message: 'Tạo mới thành công.',
-        data: plainToInstance(LocationTypeDto, savedType),
-      };
-    } else {
-      return {
-        message: 'Tạo mới thất bại.',
-        data: plainToInstance(LocationTypeDto, {}),
-      };
-    }
+    const savedType = await this.locationType.save(Type);
+    return {
+      message: SuccessLocationMessage.CREATE_SUCCESS,
+      data: plainToInstance(LocationTypeDto, savedType),
+    };
   }
 
   public async findLocationTypeById(
@@ -71,7 +65,7 @@ export class LocationRepository {
     });
     const savedType = await this.locationType.save(updatedEntity);
     return {
-      message: 'Cập nhật thành công.',
+      message: SuccessLocationMessage.UPDATE_SUCCESS,
       data: plainToInstance(LocationTypeDto, savedType),
     };
   }

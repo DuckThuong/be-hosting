@@ -1,5 +1,6 @@
 export class SuccessLocationMessage {
   static readonly CREATE_SUCCESS = 'Tạo mới thành công';
+  static readonly UPDATE_SUCCESS = 'Cập nhật thành công';
 }
 
 export class ErrorLocationMessage {
