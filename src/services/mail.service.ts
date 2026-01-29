@@ -19,6 +19,7 @@ import {
 import { AuthRepository } from '../repositories/auth.repository';
 import { SendOtpTemplate } from './../templates/mail.template';
 import { OtpStorageService } from './otp.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class MailService {
@@ -29,6 +30,7 @@ export class MailService {
     private readonly configService: ConfigService,
     private readonly otpStorage: OtpStorageService,
     private readonly authRepository: AuthRepository,
+    private jwtService: JwtService,
   ) {
     this.initializeResend();
   }
@@ -169,7 +171,10 @@ export class MailService {
     }
   }
 
-  public async verifyOTP(email: string, otp: string): Promise<boolean> {
+  public async verifyOTP(
+    email: string,
+    otp: string,
+  ): Promise<{ access_token: string }> {
     try {
       const stored = this.otpStorage.get(email);
 
@@ -198,7 +203,9 @@ export class MailService {
       this.otpStorage.delete(email);
       await this.authRepository.verifyEmail(email);
       this.logger.log(`OTP verified for ${email}`);
-      return true;
+      return {
+        access_token: this.jwtService.sign({ email: email }),
+      };
     } catch (error) {
       this.logger.error('Error in verifyOTP:', error);
 

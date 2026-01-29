@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import {
@@ -22,6 +23,7 @@ import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { AuthService } from '../services/auth.service';
 import { MailService } from '../services/mail.service';
 import { User } from '../user.decorator';
+import { JwtAuthGuard } from '../common/jwt/jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -56,6 +58,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'User Forgot Password' })
   @Put('reset-password')
+  @UseGuards(JwtAuthGuard)
   public async resetPassword(
     @Body() payload: ResetPasswordPayload,
     @User() user: UserDecoratorDtoResponse,
@@ -81,7 +84,6 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify OTP from Email' })
   @HttpCode(HttpStatus.OK)
   public verifyOTP(@Body() dto: VerifyOtpDto) {
-    const isValid = this.mailService.verifyOTP(dto.email, dto.otp);
-    return { success: isValid, message: 'OTP xác thực thành công' };
+    return this.mailService.verifyOTP(dto.email, dto.otp);
   }
 }
