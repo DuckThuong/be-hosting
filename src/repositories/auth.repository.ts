@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TbUserDefault } from '../entities/user/user_default.dto';
+import { TbUserDefault } from '../entities/user/user_default.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -10,12 +10,20 @@ export class AuthRepository {
     private readonly repo: Repository<TbUserDefault>,
   ) {}
 
-  findByEmail(email: string) {
-    return this.repo.findOne({ where: { email } });
+  public async findByEmail(email: string) {
+    return await this.repo.findOne({ where: { email } });
   }
 
-  createUser(userData: Partial<TbUserDefault>) {
+  public async createUser(userData: Partial<TbUserDefault>) {
     const user = this.repo.create(userData);
-    return this.repo.save(user);
+    return await this.repo.save(user);
+  }
+
+  public async verifyEmail(email: string): Promise<void> {
+    await this.repo.update({ email }, { isEmailVerified: true });
+  }
+
+  public async updatePassword(id: number, password: string): Promise<void> {
+    await this.repo.update({ id }, { password: password });
   }
 }

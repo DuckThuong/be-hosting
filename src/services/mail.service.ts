@@ -3,12 +3,20 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { MAIL_CONFIG } from '../assests/constants/mail.constant';
+
+import { isEmail } from 'class-validator';
 import {
   MailErrorMessage,
   MailSuccessMessage,
-} from '../assests/messages/mail.message';
+} from '../assests/messages/auth.message';
 import { OtpHelper } from '../common/helpers/otp.helper';
-import { OtpData, SendEmailDto, SendOtpResponse } from '../dtos/auth/mail.dto';
+import {
+  OtpData,
+  SendEmailDto,
+  SendOtpDto,
+  SendOtpResponse,
+} from '../dtos/auth/mail.dto';
+import { AuthRepository } from '../repositories/auth.repository';
 import { SendOtpTemplate } from './../templates/mail.template';
 import { OtpStorageService } from './otp.service';
 
@@ -20,6 +28,7 @@ export class MailService {
   constructor(
     private readonly configService: ConfigService,
     private readonly otpStorage: OtpStorageService,
+    private readonly authRepository: AuthRepository,
   ) {
     this.initializeResend();
   }
@@ -77,22 +86,44 @@ export class MailService {
     this.otpStorage.set(email, otpData);
   }
 
-  public async sendOTP(to: string): Promise<SendOtpResponse> {
+  public async sendOTP(payload: SendOtpDto): Promise<SendOtpResponse> {
     try {
-      // Cleanup expired OTPs trước khi gửi OTP mới
       this.cleanExpiredOTPs();
+
+      if (payload.email === '') {
+        throw new HttpException(
+          MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+      if (!isEmail(payload.email)) {
+        throw new HttpException(
+          MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const hasExist = await this.authRepository.findByEmail(payload.email);
+      if (!hasExist) {
+        throw new HttpException(
+          MailErrorMessage.MAIL_IS_NOT_EXIST.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
 
       const otp = OtpHelper.generate();
 
-      this.storeOtp(to, otp);
+      this.storeOtp(payload.email, otp);
 
+      //fix cứng
+      const testEmail = 'trinhthuong26022003@gmail.com';
       await this.sendEmail({
-        to,
+        to: testEmail,
         subject: 'Mã OTP xác thực tài khoản',
         html: SendOtpTemplate(otp),
       });
 
-      this.logger.log(`OTP sent to ${to}`);
+      this.logger.log(`OTP sent to ${payload.email}`);
       return { message: MailSuccessMessage.OTP_SENT.toString() };
     } catch (error) {
       this.logger.error('Error in sendOTP:', error);
@@ -103,11 +134,32 @@ export class MailService {
     }
   }
 
-  public async resendOTP(to: string): Promise<SendOtpResponse> {
+  public async resendOTP(payload: SendOtpDto): Promise<SendOtpResponse> {
     try {
-      this.otpStorage.delete(to);
+      if (payload.email === '') {
+        throw new HttpException(
+          MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+      if (!isEmail(payload.email)) {
+        throw new HttpException(
+          MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const hasExist = await this.authRepository.findByEmail(payload.email);
+      if (!hasExist) {
+        throw new HttpException(
+          MailErrorMessage.MAIL_IS_NOT_EXIST.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      this.otpStorage.delete(payload.email);
       this.cleanExpiredOTPs();
-      return await this.sendOTP(to);
+      return await this.sendOTP(payload);
     } catch (error) {
       this.logger.error('Error in resendOTP:', error);
       throw new HttpException(
@@ -117,7 +169,7 @@ export class MailService {
     }
   }
 
-  public verifyOTP(email: string, otp: string): boolean {
+  public async verifyOTP(email: string, otp: string): Promise<boolean> {
     try {
       const stored = this.otpStorage.get(email);
 
@@ -144,6 +196,7 @@ export class MailService {
       }
 
       this.otpStorage.delete(email);
+      await this.authRepository.verifyEmail(email);
       this.logger.log(`OTP verified for ${email}`);
       return true;
     } catch (error) {
