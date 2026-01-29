@@ -67,7 +67,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Send OTP to Email' })
   @HttpCode(HttpStatus.OK)
   public async sendOTP(@Body() dto: SendOtpDto) {
-    return await this.mailService.sendOTP(dto.email);
+    return await this.mailService.sendOTP(dto);
+  }
+
+  @Post('resend-otp')
+  @ApiOperation({ summary: 'Resend OTP to Email' })
+  @HttpCode(HttpStatus.OK)
+  public async resendOtp(@Body() dto: SendOtpDto) {
+    return await this.mailService.resendOTP(dto);
   }
 
   @Post('verify-otp')
