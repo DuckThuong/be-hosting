@@ -41,8 +41,8 @@ export class AuthService {
   public async SignIn(payload: SignInPayload): Promise<SignInDtoResponse> {
     try {
       if (
-        (!payload.email && payload.email === '') ||
-        (!payload.password && payload.password === '')
+        (!payload.email && payload.email.trim() === '') ||
+        (!payload.password && payload.password.trim() === '')
       ) {
         throw new HttpException(
           ErrorLoginMessage.LOGIN_FAILED.toString(),
@@ -56,6 +56,8 @@ export class AuthService {
           HttpStatus.BAD_REQUEST,
         );
       }
+
+      console.log(payload);
 
       const user = await this.authRepository.findByEmail(payload.email);
 
