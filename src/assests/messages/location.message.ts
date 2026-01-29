@@ -1,6 +1,9 @@
 export class SuccessLocationMessage {
   static readonly CREATE_SUCCESS = 'Tạo mới thành công';
   static readonly UPDATE_SUCCESS = 'Cập nhật thành công';
+  static readonly ADD_SERVICE_SUCCESS = 'Thêm dịch vụ thành công.';
+  static readonly PAUSE_SERVICE_SUCCESS = 'Tạm ngưng dịch vụ thành công.';
+  static readonly REMOVE_SERVICE_SUCCESS = 'Xóa dịch vụ thành công.';
 }
 
 export class ErrorLocationMessage {

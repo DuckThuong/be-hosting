@@ -9,10 +9,15 @@ import {
   LocationTypeDto,
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
-} from '../dtos/location/locationService.dto';
+} from '../dtos/location/locationType.dto';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
+import {
+  AddLocationServicePayload,
+  LocationServiceData,
+  LocationServiceResponse,
+} from '../dtos/location/locationService.dto';
 
 @Injectable()
 export class LocationRepository {
@@ -44,14 +49,6 @@ export class LocationRepository {
     };
   }
 
-  public async findLocationTypeById(
-    id: number,
-  ): Promise<TbLocationType | null> {
-    return await this.locationType.findOne({
-      where: { id },
-    });
-  }
-
   public async updateLocationType(
     existType: TbLocationType,
     payload: UpdateLocationTypePayloadDto,
@@ -70,7 +67,89 @@ export class LocationRepository {
     };
   }
 
+  public async findLocationTypeById(
+    id: number,
+  ): Promise<TbLocationType | null> {
+    return await this.locationType.findOne({
+      where: { id },
+    });
+  }
+
   public async getAllLocationType(): Promise<TbLocationType[]> {
     return await this.locationType.find();
+  }
+
+  public async AddNewLocationService(
+    location: TbLocation,
+    payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    const validData = new Array<LocationServiceData>();
+    for (const item of payload.data) {
+      const isExist = await this.locationService.findBy({
+        serviceCode: item.serviceCode,
+        locationCode: location.locationCode,
+      });
+      if (isExist) {
+        continue;
+      } else {
+        validData.push(item);
+      }
+    }
+
+    if (validData.length > 0) {
+      for (const data of validData) {
+        const newService = this.locationService.create({
+          locationCode: location.locationCode,
+          serviceCode: data.serviceCode,
+          isActive: data.isActive,
+          serviceNote: data.note ?? '',
+        });
+
+        await this.locationService.save(newService);
+      }
+    }
+    return {
+      message: SuccessLocationMessage.ADD_SERVICE_SUCCESS,
+    };
+  }
+
+  public async PauseServiceProvide(
+    location: TbLocation,
+    payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    for (const item of payload.data) {
+      if (item.isActive !== false) continue;
+
+      await this.locationService.update(
+        {
+          locationCode: location.locationCode,
+          serviceCode: item.serviceCode,
+        },
+        {
+          isActive: false,
+          serviceNote: item.note ?? '',
+        },
+      );
+    }
+
+    return {
+      message: SuccessLocationMessage.PAUSE_SERVICE_SUCCESS,
+    };
+  }
+
+  public async RemoveLocationService(
+    location: TbLocation,
+    payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    for (const item of payload.data) {
+      await this.locationService.delete({
+        locationCode: location.locationCode,
+        serviceCode: item.serviceCode,
+      });
+    }
+
+    return {
+      message: SuccessLocationMessage.REMOVE_SERVICE_SUCCESS,
+    };
   }
 }

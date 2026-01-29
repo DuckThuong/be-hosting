@@ -5,7 +5,7 @@ import {
   CreateLocationTypeResponseDto,
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
-} from '../dtos/location/locationService.dto';
+} from '../dtos/location/locationType.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
