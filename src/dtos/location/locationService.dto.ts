@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateLocationServicePayloadDto {
+export class CreateLocationTypePayloadDto {
   @ApiProperty({
     description: 'Code',
     example: '......',
@@ -37,12 +37,54 @@ export class CreateLocationServicePayloadDto {
   backgroundUrl: string;
 }
 
-export class CreateLocationServiceResponseDto {
-  message: string;
-  data: LocationServiceDto;
+export class UpdateLocationTypePayloadDto {
+  @ApiProperty({
+    description: 'id',
+    example: '......',
+    required: true,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'name',
+    example: '......',
+    required: true,
+  })
+  name: string;
+
+  @ApiProperty({
+    description: 'description',
+    example: '......',
+    required: true,
+  })
+  description: string;
+
+  @ApiProperty({
+    description: 'logo',
+    example: '......',
+    required: true,
+  })
+  logo: string;
+
+  @ApiProperty({
+    description: 'backgroundUrl',
+    example: '......',
+    required: true,
+  })
+  backgroundUrl: string;
 }
 
-export class LocationServiceDto {
+export class CreateLocationTypeResponseDto {
+  message: string;
+  data: LocationTypeDto;
+}
+
+export class UpdateLocationTypeResponseDto {
+  message: string;
+  data: LocationTypeDto;
+}
+
+export class LocationTypeDto {
   id: string;
   typeCode: string;
   typeName: string;

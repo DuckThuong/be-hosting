@@ -3,9 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
 import {
-  CreateLocationServicePayloadDto,
-  CreateLocationServiceResponseDto,
-  LocationServiceDto,
+  CreateLocationTypePayloadDto,
+  CreateLocationTypeResponseDto,
+  LocationTypeDto,
+  UpdateLocationTypePayloadDto,
+  UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationService.dto';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
@@ -24,28 +26,54 @@ export class LocationRepository {
     private readonly locationType: Repository<TbLocationType>,
   ) {}
 
-  public async createLocationService(
-    data: CreateLocationServicePayloadDto,
-  ): Promise<CreateLocationServiceResponseDto> {
-    const service = this.locationType.create({
+  public async createLocationType(
+    data: CreateLocationTypePayloadDto,
+  ): Promise<CreateLocationTypeResponseDto> {
+    const Type = this.locationType.create({
       typeCode: data.code,
       typeName: data.name,
       typeDescription: data.description,
       typeLogo: data.logo,
       typeBackGround: data.backgroundUrl,
     });
-    if (service) {
-      const savedService = await this.locationType.save(service);
+    if (Type) {
+      const savedType = await this.locationType.save(Type);
       return {
         message: 'Tạo mới thành công.',
-        data: plainToInstance(LocationServiceDto, savedService),
+        data: plainToInstance(LocationTypeDto, savedType),
       };
     } else {
       return {
         message: 'Tạo mới thất bại.',
-        data: plainToInstance(LocationServiceDto, {}),
+        data: plainToInstance(LocationTypeDto, {}),
       };
     }
+  }
+
+  public async findLocationTypeById(
+    id: number,
+  ): Promise<TbLocationType | null> {
+    return await this.locationType.findOne({
+      where: { id },
+    });
+  }
+
+  public async updateLocationType(
+    existType: TbLocationType,
+    payload: UpdateLocationTypePayloadDto,
+  ): Promise<UpdateLocationTypeResponseDto> {
+    const updatedEntity = this.locationType.merge(existType, {
+      typeCode: existType.typeCode,
+      typeName: payload.name ?? existType.typeName,
+      typeDescription: payload.description ?? existType.typeDescription,
+      typeLogo: payload.logo ?? existType.typeLogo,
+      typeBackGround: payload.backgroundUrl ?? existType.typeBackGround,
+    });
+    const savedType = await this.locationType.save(updatedEntity);
+    return {
+      message: 'Cập nhật thành công.',
+      data: plainToInstance(LocationTypeDto, savedType),
+    };
   }
 
   public async getAllLocationType(): Promise<TbLocationType[]> {

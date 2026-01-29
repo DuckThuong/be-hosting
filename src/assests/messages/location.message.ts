@@ -4,6 +4,7 @@ export class SuccessLocationMessage {
 
 export class ErrorLocationMessage {
   static readonly CATCH_ERROR = 'Đã xảy ra lỗi!';
+  static readonly TYPE_NOT_EXIST = 'Phân loại không tồn tại.';
   static readonly TYPE_NAME_INVALID = 'Tên của loại khu vực không hợp lệ.';
   static readonly TYPE_NAME_NOTEMPTY =
     'Tên của loại khu vực không được để trống.';
