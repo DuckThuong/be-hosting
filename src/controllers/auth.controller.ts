@@ -17,7 +17,7 @@ import {
   ResetPasswordPayload,
   ResetPasswordResponse,
 } from '../dtos/auth/resetPassword.dto';
-import { SignInDtoResponse } from '../dtos/auth/signIn.dto';
+import { SignInDtoResponse, SignInPayload } from '../dtos/auth/signIn.dto';
 import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { AuthService } from '../services/auth.service';
@@ -43,7 +43,7 @@ export class AuthController {
   @ApiOperation({ summary: 'User Sign In' })
   @Post('signin')
   public async signIn(
-    @Body() payload: SignUpPayload,
+    @Body() payload: SignInPayload,
   ): Promise<SignInDtoResponse> {
     return this.authService.SignIn(payload);
   }
