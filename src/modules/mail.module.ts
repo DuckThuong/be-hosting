@@ -5,14 +5,23 @@ import { OtpStorageModule } from './otp.module';
 import { AuthRepository } from '../repositories/auth.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TbUserDefault } from '../entities/user/user_default.entity';
+import { JwtStrategy } from '../common/jwt/jwt.strategy';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([TbUserDefault]),
     ConfigModule,
     OtpStorageModule,
+
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: {
+        expiresIn: '1d',
+      },
+    }),
   ],
-  providers: [MailService, AuthRepository],
+  providers: [MailService, AuthRepository, JwtStrategy],
   exports: [MailService],
 })
 export class MailModule {}
