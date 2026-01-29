@@ -29,6 +29,7 @@ import {
   ForgotPasswordPayload,
   ForgotPasswordResponse,
 } from '../dtos/auth/forgotPassword.dto';
+import { SendOtpDto } from '../dtos/auth/mail.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -74,7 +75,10 @@ export class AuthService {
       }
 
       if (isValid && !user.isEmailVerified) {
-        await this.mailService.sendOTP(user.email);
+        const otpPayload: SendOtpDto = {
+          email: user.email,
+        };
+        await this.mailService.sendOTP(otpPayload);
         throw new HttpException(
           ErrorLoginMessage.USER_NOT_VERIFIED.toString(),
           HttpStatus.UNAUTHORIZED,
@@ -136,6 +140,10 @@ export class AuthService {
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       } else {
+        const otpPayload: SendOtpDto = {
+          email: newUser.email,
+        };
+        await this.mailService.sendOTP(otpPayload);
         return { message: SuccessRegisterMessage.REGISTER_SUCCESS.toString() };
       }
     } catch (error) {
@@ -174,7 +182,10 @@ export class AuthService {
         );
       }
 
-      await this.mailService.sendOTP(user.email);
+      const otpPayload: SendOtpDto = {
+        email: user.email,
+      };
+      await this.mailService.sendOTP(otpPayload);
       return {
         message: SuccessForgotPasswordMessage.VERIFY_SUCCESS.toString(),
       };
