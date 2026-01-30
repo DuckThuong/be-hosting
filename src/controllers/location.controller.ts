@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import {
   CreateLocationTypePayloadDto,
   CreateLocationTypeResponseDto,
@@ -11,11 +11,12 @@ import { LocationService } from '../services/location.service';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
 
 @Controller('location')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('JWT-auth')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
 
   @ApiOperation({ summary: 'Thêm mới phân loại địa điểm' })
-  @UseGuards(JwtAuthGuard)
   @Post('create-location-type')
   public async createLocationType(
     @Body() payload: CreateLocationTypePayloadDto,
@@ -24,7 +25,6 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Cập nhật phân loại địa điểm' })
-  @UseGuards(JwtAuthGuard)
   @Put('update-location-type')
   public async updateLocationType(
     @Body() payload: UpdateLocationTypePayloadDto,
@@ -33,7 +33,6 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Lấy toàn bộ phân loại địa điểm' })
-  @UseGuards(JwtAuthGuard)
   @Get('get-all-location-type')
   public async getAllLocationType(): Promise<TbLocationType[]> {
     return this.locationService.GetAllLocationType();
