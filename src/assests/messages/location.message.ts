@@ -20,4 +20,13 @@ export class ErrorLocationMessage {
   static readonly TYPE_LOGO_INVALID = 'Logo của loại khu vực không hợp lệ.';
   static readonly TYPE_BACKGROUND_INVALID =
     'Ảnh nền loại khu vực không hợp lệ.';
+  static readonly LOCATION_NOT_FOUND = 'Khu vực không tồn tại.';
+  static readonly LOCATION_CODE_NOTEMPTY = 'Mã khu vực không được để trống.';
+}
+
+export class ErrorServiceMessage {
+  static readonly SERVICE_CODE_NOTEMPTY = 'Mã dịch vụ không được để trống.';
+  static readonly SERVICE_CODE_INVALID = 'Mã dịch vụ không hợp lệ.';
+  static readonly SERVICE_CODE_TOO_LONG =
+    'Mã dịch vụ không được vượt quá 50 ký tự.';
 }

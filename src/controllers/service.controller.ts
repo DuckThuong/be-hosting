@@ -16,24 +16,24 @@ import { ServiceService } from '../services/service.service';
 export class ServiceController {
   constructor(private readonly serviceSV: ServiceService) {}
 
-  @ApiOperation({ summary: 'Thêm mới phân loại địa điểm' })
-  @Post('create-location-type')
+  @ApiOperation({ summary: 'Thêm mới dịch vụ' })
+  @Post('create-location-service')
   public async createService(
     @Body() payload: CreateServiceDto,
   ): Promise<CreateServiceResponseDto> {
     return this.serviceSV.CreateService(payload);
   }
 
-  @ApiOperation({ summary: 'Cập nhật phân loại địa điểm' })
-  @Put('update-location-type')
+  @ApiOperation({ summary: 'Cập nhật dịch vụ' })
+  @Put('update-location-service')
   public async updateService(
     @Body() payload: UpdateServiceDto,
   ): Promise<UpdateServiceResponseDto> {
     return this.serviceSV.UpdateService(payload);
   }
 
-  @ApiOperation({ summary: 'Lấy toàn bộ phân loại địa điểm' })
-  @Get('get-all-location-type')
+  @ApiOperation({ summary: 'Lấy toàn bộ dịch vụ' })
+  @Get('get-all-location-service')
   public async getAllService(): Promise<TbService[]> {
     return this.serviceSV.GetAllService();
   }

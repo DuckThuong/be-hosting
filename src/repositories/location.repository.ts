@@ -152,4 +152,8 @@ export class LocationRepository {
       message: SuccessLocationMessage.REMOVE_SERVICE_SUCCESS,
     };
   }
+
+  public async FindLocationByCode(code: string): Promise<TbLocation | null> {
+    return await this.location.findOneBy({ locationCode: code });
+  }
 }

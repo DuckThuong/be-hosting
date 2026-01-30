@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import {
   CreateLocationTypePayloadDto,
@@ -9,6 +17,10 @@ import {
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
+import {
+  AddLocationServicePayload,
+  LocationServiceResponse,
+} from '../dtos/location/locationService.dto';
 
 @Controller('location')
 @UseGuards(JwtAuthGuard)
@@ -36,5 +48,29 @@ export class LocationController {
   @Get('get-all-location-type')
   public async getAllLocationType(): Promise<TbLocationType[]> {
     return this.locationService.GetAllLocationType();
+  }
+
+  @ApiOperation({ summary: 'Thêm mới dịch vụ' })
+  @Post('add-new-location-service')
+  public async addNewLocationService(
+    @Body() payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    return this.locationService.AddNewLocationService(payload);
+  }
+
+  @ApiOperation({ summary: 'Tạm dừng cung cấp dịch vụ' })
+  @Put('pause-location-service')
+  public async pauseLocationService(
+    @Body() payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    return this.locationService.PauseLocationService(payload);
+  }
+
+  @ApiOperation({ summary: 'Gỡ bỏ dịch vụ' })
+  @Delete('remove-location-service')
+  public async removeLocationService(
+    @Body() payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    return this.locationService.RemoveLocationService(payload);
   }
 }

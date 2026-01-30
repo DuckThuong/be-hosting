@@ -1,6 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ErrorLocationMessage } from '../assests/messages/location.message';
 import {
+  AddLocationServicePayload,
+  LocationServiceResponse,
+} from '../dtos/location/locationService.dto';
+import {
   CreateLocationTypePayloadDto,
   CreateLocationTypeResponseDto,
   UpdateLocationTypePayloadDto,
@@ -8,6 +12,7 @@ import {
 } from '../dtos/location/locationType.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationRepository } from '../repositories/location.repository';
+import { ErrorServiceMessage } from '../assests/messages/service.message';
 
 @Injectable()
 export class LocationService {
@@ -144,6 +149,164 @@ export class LocationService {
   }
 
   public async GetAllLocationType(): Promise<TbLocationType[]> {
-    return await this.locationRepo.getAllLocationType();
+    try {
+      return await this.locationRepo.getAllLocationType();
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async AddNewLocationService(
+    payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    try {
+      if (!payload.locationCode && payload.locationCode === '') {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const location = await this.locationRepo.FindLocationByCode(
+        payload.locationCode,
+      );
+
+      if (!location) {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      if (payload.data.length > 0) {
+        for (const item of payload.data) {
+          if (item.serviceCode.length > 50) {
+            throw new HttpException(
+              ErrorServiceMessage.SERVICE_CODE_NOTEMPTY.toString(),
+              HttpStatus.BAD_REQUEST,
+            );
+          } else if (item.serviceCode === '') {
+            throw new HttpException(
+              ErrorServiceMessage.SERVICE_CODE_INVALID.toString(),
+              HttpStatus.BAD_REQUEST,
+            );
+          } else {
+            continue;
+          }
+        }
+      }
+
+      return await this.locationRepo.AddNewLocationService(location, payload);
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async PauseLocationService(
+    payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    try {
+      if (!payload.locationCode && payload.locationCode === '') {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const location = await this.locationRepo.FindLocationByCode(
+        payload.locationCode,
+      );
+
+      if (!location) {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      if (payload.data.length > 0) {
+        for (const item of payload.data) {
+          if (item.serviceCode.length > 50) {
+            throw new HttpException(
+              ErrorServiceMessage.SERVICE_CODE_NOTEMPTY.toString(),
+              HttpStatus.BAD_REQUEST,
+            );
+          } else if (item.serviceCode === '') {
+            throw new HttpException(
+              ErrorServiceMessage.SERVICE_CODE_INVALID.toString(),
+              HttpStatus.BAD_REQUEST,
+            );
+          } else {
+            continue;
+          }
+        }
+      }
+
+      return await this.locationRepo.PauseServiceProvide(location, payload);
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async RemoveLocationService(
+    payload: AddLocationServicePayload,
+  ): Promise<LocationServiceResponse> {
+    try {
+      if (!payload.locationCode && payload.locationCode === '') {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const location = await this.locationRepo.FindLocationByCode(
+        payload.locationCode,
+      );
+
+      if (!location) {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      if (payload.data.length > 0) {
+        for (const item of payload.data) {
+          if (item.serviceCode.length > 50) {
+            throw new HttpException(
+              ErrorServiceMessage.SERVICE_CODE_NOTEMPTY.toString(),
+              HttpStatus.BAD_REQUEST,
+            );
+          } else if (item.serviceCode === '') {
+            throw new HttpException(
+              ErrorServiceMessage.SERVICE_CODE_INVALID.toString(),
+              HttpStatus.BAD_REQUEST,
+            );
+          } else {
+            continue;
+          }
+        }
+      }
+
+      return await this.locationRepo.RemoveLocationService(location, payload);
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }
