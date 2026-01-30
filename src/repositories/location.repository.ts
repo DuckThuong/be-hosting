@@ -18,6 +18,7 @@ import {
   LocationServiceData,
   LocationServiceResponse,
 } from '../dtos/location/locationService.dto';
+import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 
 @Injectable()
 export class LocationRepository {
@@ -30,6 +31,9 @@ export class LocationRepository {
 
     @InjectRepository(TbLocationType)
     private readonly locationType: Repository<TbLocationType>,
+
+    @InjectRepository(TbLocationType)
+    private readonly locationAddress: Repository<TbLocationAddress>,
   ) {}
 
   public async createLocationType(

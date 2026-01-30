@@ -6,10 +6,16 @@ import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationRepository } from '../repositories/location.repository';
 import { LocationService } from '../services/location.service';
+import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TbLocation, TbLocationService, TbLocationType]),
+    TypeOrmModule.forFeature([
+      TbLocation,
+      TbLocationType,
+      TbLocationAddress,
+      TbLocationService,
+    ]),
   ],
   providers: [LocationService, LocationRepository],
   controllers: [LocationController],
