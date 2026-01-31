@@ -11,7 +11,9 @@ export class AuthRepository {
   ) {}
 
   public async findByEmail(email: string) {
-    return await this.repo.findOne({ where: { email } });
+    return await this.repo.findOne({
+      where: { email },
+    });
   }
 
   public async createUser(userData: Partial<TbUserDefault>) {

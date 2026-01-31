@@ -13,6 +13,9 @@ export class TbLocationService {
   @Column({ type: 'varchar', length: 50, unique: true, nullable: false })
   serviceCode: string;
 
+  @Column({ type: 'varchar', length: 2000, nullable: false })
+  serviceNote: string;
+
   @Column({
     type: 'boolean',
     default: false,

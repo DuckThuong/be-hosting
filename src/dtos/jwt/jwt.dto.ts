@@ -1,6 +1,16 @@
-export interface JwtPayload {
-  sub: string;
+import { UserRole, UserStatus } from '../user/user.dto';
+
+export class JwtPayload {
+  sub: number;
+  userCode: string;
+  username: string;
   email: string;
+  phone?: string;
+  fullName?: string;
+  dateOfBirth?: Date;
+  status: UserStatus;
+  role: UserRole;
+  isEmailVerified: boolean;
   iat?: number;
   exp?: number;
 }

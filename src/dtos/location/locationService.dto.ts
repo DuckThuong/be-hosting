@@ -1,94 +1,42 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateLocationTypePayloadDto {
+export class AddLocationServicePayload {
   @ApiProperty({
-    description: 'Code',
+    description: 'locationCode',
     example: '......',
     required: true,
   })
-  code: string;
+  locationCode: string;
 
   @ApiProperty({
-    description: 'name',
+    description: 'data',
     example: '......',
     required: true,
   })
-  name: string;
-
-  @ApiProperty({
-    description: 'description',
-    example: '......',
-    required: true,
-  })
-  description: string;
-
-  @ApiProperty({
-    description: 'logo',
-    example: '......',
-    required: true,
-  })
-  logo: string;
-
-  @ApiProperty({
-    description: 'backgroundUrl',
-    example: '......',
-    required: true,
-  })
-  backgroundUrl: string;
+  data: LocationServiceData[];
 }
 
-export class UpdateLocationTypePayloadDto {
+export class LocationServiceData {
   @ApiProperty({
-    description: 'id',
+    description: 'serviceCode',
     example: '......',
     required: true,
   })
-  id: number;
-
+  serviceCode: string;
   @ApiProperty({
-    description: 'name',
+    description: 'isActive',
     example: '......',
     required: true,
   })
-  name: string;
-
+  isActive: boolean;
   @ApiProperty({
-    description: 'description',
+    description: 'note',
     example: '......',
-    required: true,
+    required: false,
   })
-  description: string;
-
-  @ApiProperty({
-    description: 'logo',
-    example: '......',
-    required: true,
-  })
-  logo: string;
-
-  @ApiProperty({
-    description: 'backgroundUrl',
-    example: '......',
-    required: true,
-  })
-  backgroundUrl: string;
+  note?: string;
 }
 
-export class CreateLocationTypeResponseDto {
+export class LocationServiceResponse {
   message: string;
-  data: LocationTypeDto;
-}
-
-export class UpdateLocationTypeResponseDto {
-  message: string;
-  data: LocationTypeDto;
-}
-
-export class LocationTypeDto {
-  id: string;
-  typeCode: string;
-  typeName: string;
-  typeDescription: string;
-  typeLogo: string;
-  typeBackGround: string;
 }

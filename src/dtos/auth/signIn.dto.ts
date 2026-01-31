@@ -17,5 +17,6 @@ export class SignInPayload {
 }
 
 export class SignInDtoResponse {
+  message: string;
   access_token: string;
 }

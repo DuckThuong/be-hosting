@@ -6,6 +6,7 @@ import { MAIL_CONFIG } from '../assests/constants/mail.constant';
 
 import { isEmail } from 'class-validator';
 import {
+  ErrorLoginMessage,
   MailErrorMessage,
   MailSuccessMessage,
 } from '../assests/messages/auth.message';
@@ -20,6 +21,7 @@ import { AuthRepository } from '../repositories/auth.repository';
 import { SendOtpTemplate } from './../templates/mail.template';
 import { OtpStorageService } from './otp.service';
 import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from '../dtos/jwt/jwt.dto';
 
 @Injectable()
 export class MailService {
@@ -48,6 +50,22 @@ export class MailService {
     this.resend = new Resend(apiKey);
   }
 
+  private validateEmail(email: string): void {
+    if (!email || email === '') {
+      throw new HttpException(
+        MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!isEmail(email)) {
+      throw new HttpException(
+        MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   private async sendEmail(emailData: SendEmailDto): Promise<any> {
     try {
       const { data, error } = await this.resend.emails.send({
@@ -72,6 +90,11 @@ export class MailService {
       return data;
     } catch (error) {
       this.logger.error('Error sending email:', error);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new HttpException(
         MailErrorMessage.SEND_EMAIL_FAILED.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -89,27 +112,17 @@ export class MailService {
   }
 
   public async sendOTP(payload: SendOtpDto): Promise<SendOtpResponse> {
+    // Validate input
+    this.validateEmail(payload.email);
+
     try {
       this.cleanExpiredOTPs();
-
-      if (payload.email === '') {
-        throw new HttpException(
-          MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-      if (!isEmail(payload.email)) {
-        throw new HttpException(
-          MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
 
       const hasExist = await this.authRepository.findByEmail(payload.email);
       if (!hasExist) {
         throw new HttpException(
           MailErrorMessage.MAIL_IS_NOT_EXIST.toString(),
-          HttpStatus.INTERNAL_SERVER_ERROR,
+          HttpStatus.NOT_FOUND,
         );
       }
 
@@ -129,6 +142,11 @@ export class MailService {
       return { message: MailSuccessMessage.OTP_SENT.toString() };
     } catch (error) {
       this.logger.error('Error in sendOTP:', error);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new HttpException(
         MailErrorMessage.SEND_EMAIL_FAILED.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -137,25 +155,15 @@ export class MailService {
   }
 
   public async resendOTP(payload: SendOtpDto): Promise<SendOtpResponse> {
-    try {
-      if (payload.email === '') {
-        throw new HttpException(
-          MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-      if (!isEmail(payload.email)) {
-        throw new HttpException(
-          MailErrorMessage.MAIL_IS_NOT_VALID.toString(),
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
+    // Validate input
+    this.validateEmail(payload.email);
 
+    try {
       const hasExist = await this.authRepository.findByEmail(payload.email);
       if (!hasExist) {
         throw new HttpException(
           MailErrorMessage.MAIL_IS_NOT_EXIST.toString(),
-          HttpStatus.INTERNAL_SERVER_ERROR,
+          HttpStatus.NOT_FOUND,
         );
       }
 
@@ -164,6 +172,11 @@ export class MailService {
       return await this.sendOTP(payload);
     } catch (error) {
       this.logger.error('Error in resendOTP:', error);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new HttpException(
         MailErrorMessage.SEND_EMAIL_FAILED.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -174,7 +187,16 @@ export class MailService {
   public async verifyOTP(
     email: string,
     otp: string,
-  ): Promise<{ access_token: string }> {
+  ): Promise<{ access_token: string; isVerify: boolean }> {
+    this.validateEmail(email);
+
+    if (!otp || otp === '') {
+      throw new HttpException(
+        MailErrorMessage.OTP_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     try {
       const stored = this.otpStorage.get(email);
 
@@ -200,11 +222,33 @@ export class MailService {
         );
       }
 
-      this.otpStorage.delete(email);
+      const user = await this.authRepository.findByEmail(email);
+      if (!user) {
+        throw new HttpException(
+          ErrorLoginMessage.USER_NOT_FOUND.toString(),
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
       await this.authRepository.verifyEmail(email);
-      this.logger.log(`OTP verified for ${email}`);
+
+      const payload: JwtPayload = {
+        sub: user.id,
+        userCode: user.userCode,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        fullName: user.fullName,
+        dateOfBirth: user.dateOfBirth,
+        status: user.status,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+      };
+
+      const token = this.jwtService.sign(payload);
       return {
-        access_token: this.jwtService.sign({ email: email }),
+        access_token: token,
+        isVerify: true,
       };
     } catch (error) {
       this.logger.error('Error in verifyOTP:', error);

@@ -15,7 +15,7 @@ import { JwtModule } from '@nestjs/jwt';
     OtpStorageModule,
 
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET || 'duckthuong-28072003-secretkey',
       signOptions: {
         expiresIn: '1d',
       },
