@@ -8,28 +8,29 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../common/jwt/jwt.guard';
+import {
+  CreateLocationDto,
+  DeleteLocationDto,
+  DeleteLocationResponseDto,
+  LocationResponseDto,
+  UpdatelocationPayloadDto,
+  UpdateRentStatusDto,
+  UpdateRentStatusResponseDto,
+} from '../dtos/location/location.dto';
+import {
+  AddLocationServicePayload,
+  LocationServiceResponse,
+} from '../dtos/location/locationService.dto';
 import {
   CreateLocationTypePayloadDto,
   CreateLocationTypeResponseDto,
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
-import {
-  CreateLocationDto,
-  LocationResponseDto,
-  UpdatelocationPayloadDto,
-  DeleteLocationDto,
-  DeleteLocationResponseDto,
-  UpdateRentStatusDto,
-  UpdateRentStatusResponseDto,
-} from '../dtos/location/location.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
-import { JwtAuthGuard } from '../common/jwt/jwt.guard';
-import {
-  AddLocationServicePayload,
-  LocationServiceResponse,
-} from '../dtos/location/locationService.dto';
+import { User } from '../user.decorator';
 
 @Controller('location')
 @UseGuards(JwtAuthGuard)
@@ -86,9 +87,10 @@ export class LocationController {
   @ApiOperation({ summary: 'Tạo mới địa điểm cho thuê' })
   @Post('create-location')
   public async createLocation(
+    @User() user,
     @Body() payload: CreateLocationDto,
   ): Promise<LocationResponseDto> {
-    return this.locationService.CreateLocation(payload);
+    return this.locationService.CreateLocation(user, payload);
   }
 
   @ApiOperation({ summary: 'Cập nhật thông tin địa điểm' })

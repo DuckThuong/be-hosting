@@ -17,6 +17,13 @@ export class TbUserDefault {
 
   @Column({
     type: 'varchar',
+    length: 50,
+    comment: 'UserCode',
+  })
+  userCode: string;
+
+  @Column({
+    type: 'varchar',
     length: 100,
     comment: 'User email',
   })
@@ -25,7 +32,7 @@ export class TbUserDefault {
   @Column({
     type: 'varchar',
     length: 255,
-    select: false,
+    select: true,
     comment: 'Hashed password',
   })
   password: string;

@@ -22,6 +22,7 @@ import {
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
+import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationRepository } from '../repositories/location.repository';
 
@@ -322,6 +323,7 @@ export class LocationService {
   }
 
   public async CreateLocation(
+    user: UserDecoratorDtoResponse,
     payload: CreateLocationDto,
   ): Promise<LocationResponseDto> {
     if (!payload.typeCode || payload.typeCode.trim() === '') {
@@ -348,20 +350,6 @@ export class LocationService {
     if (payload.locationName.length > 200) {
       throw new HttpException(
         ErrorLocationMessage.LOCATION_NAME_INVALID.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!payload.ownerCode || payload.ownerCode.trim() === '') {
-      throw new HttpException(
-        ErrorLocationMessage.OWNER_CODE_NOTEMPTY.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (payload.ownerCode.length > 50) {
-      throw new HttpException(
-        ErrorLocationMessage.OWNER_CODE_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -453,7 +441,11 @@ export class LocationService {
     }
 
     try {
-      const location = await this.locationRepo.CreateLocation(payload);
+      const dataPayload: CreateLocationDto = {
+        ...payload,
+        ownerCode: user.userCode,
+      };
+      const location = await this.locationRepo.CreateLocation(dataPayload);
       if (payload.serviceCode.length > 0 && location.data) {
         const serviceData: LocationServiceData[] = [];
         for (const item of payload.serviceCode) {

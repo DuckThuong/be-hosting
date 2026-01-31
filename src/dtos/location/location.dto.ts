@@ -40,15 +40,6 @@ export class CreateLocationDto {
   @MaxLength(100)
   locationName: string;
 
-  @ApiProperty({
-    description: 'Mã chủ sở hữu',
-    example: 'OWNER001',
-    required: true,
-    maxLength: 100,
-  })
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(100)
   ownerCode: string;
 
   @ApiProperty({

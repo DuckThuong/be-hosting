@@ -30,6 +30,8 @@ import {
   ForgotPasswordResponse,
 } from '../dtos/auth/forgotPassword.dto';
 import { SendOtpDto } from '../dtos/auth/mail.dto';
+import { randomString } from '../common/helpers/common.helper';
+import { JwtPayload } from '../dtos/jwt/jwt.dto';
 
 @Injectable()
 export class AuthService {
@@ -91,9 +93,22 @@ export class AuthService {
     }
 
     try {
+      const payload: JwtPayload = {
+        sub: user.id,
+        userCode: user.userCode,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        fullName: user.fullName,
+        dateOfBirth: user.dateOfBirth,
+        status: user.status,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+      };
+
       return {
         message: 'Đăng nhập thành công',
-        access_token: this.jwtService.sign({ email: payload.email }),
+        access_token: this.jwtService.sign(payload),
       };
     } catch (error) {
       console.error('Error during JWT signing:', error);
@@ -139,6 +154,7 @@ export class AuthService {
       const hashedPassword = await bcrypt.hash(payload.password, ROUND);
 
       const newUser = await this.authRepository.createUser({
+        userCode: randomString(),
         username: payload.userName,
         email: payload.email,
         password: hashedPassword,

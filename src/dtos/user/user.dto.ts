@@ -1,5 +1,6 @@
 export class UserDecoratorDtoResponse {
   id: number;
+  userCode: string;
   username: string;
   email: string;
   password: string;
