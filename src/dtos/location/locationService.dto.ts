@@ -12,6 +12,7 @@ export class AddLocationServicePayload {
     description: 'data',
     example: '......',
     required: true,
+    type: () => LocationServiceData,
   })
   data: LocationServiceData[];
 }
