@@ -200,7 +200,6 @@ export class MailService {
         );
       }
 
-      this.otpStorage.delete(email);
       await this.authRepository.verifyEmail(email);
       this.logger.log(`OTP verified for ${email}`);
       return {
