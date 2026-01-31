@@ -132,10 +132,6 @@ export class CreateLocationDto {
   locationRate?: number;
 }
 
-export class UpdatelocationPayloadDto {
-  locationCode: string;
-  data: UpdateLocationDto;
-}
 export class UpdateLocationDto {
   @ApiProperty({
     description: 'Mã loại địa điểm',
@@ -245,6 +241,20 @@ export class UpdateLocationDto {
   @IsOptional()
   @IsNumber()
   locationRate?: number;
+}
+
+export class UpdatelocationPayloadDto {
+  @ApiProperty({
+    description: 'locationCode',
+    example: 'locationCode',
+  })
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'data',
+    type: () => UpdateLocationDto,
+  })
+  data: UpdateLocationDto;
 }
 
 export class DeleteLocationDto {

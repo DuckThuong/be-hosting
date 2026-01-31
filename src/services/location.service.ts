@@ -698,18 +698,6 @@ export class LocationService {
       );
     }
 
-    if (
-      payload.hasRent === LOCATION_RENT_STATUS.READY &&
-      existingLocation.hasRent === LOCATION_RENT_STATUS.HAS_RENT
-    ) {
-      if (existingLocation.userRentCd && !payload.userRentCd) {
-        throw new HttpException(
-          ErrorLocationMessage.LOCATION_ALREADY_RENTED.toString(),
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-    }
-
     try {
       return await this.locationRepo.UpdateRentStatus(payload);
     } catch (error) {
