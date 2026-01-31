@@ -2,13 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateServiceDto {
   @ApiProperty({
-    description: 'serviceCode',
-    example: '......',
-    required: true,
-  })
-  serviceCode: string;
-
-  @ApiProperty({
     description: 'serviceName',
     example: '......',
     required: true,

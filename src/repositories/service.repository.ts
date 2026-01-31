@@ -11,6 +11,7 @@ import {
   UpdateServiceResponseDto,
 } from '../dtos/service.dto';
 import { TbService } from '../entities/service.entity';
+import { randomString } from '../common/helpers/common.helper';
 
 @Injectable()
 export class ServiceRepository {
@@ -23,7 +24,7 @@ export class ServiceRepository {
     payload: CreateServiceDto,
   ): Promise<CreateServiceResponseDto> {
     const service = this.service.create({
-      serviceCode: payload.serviceCode,
+      serviceCode: randomString(),
       serviceName: payload.serviceName,
       serviceDescription: payload.serviceDescription,
       serviceLogo: payload.serviceLogo,

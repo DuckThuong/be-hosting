@@ -7,14 +7,29 @@ export class TbLocation {
   })
   id: number;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'varchar', length: 50, unique: false })
   typeCode: string;
 
   @Column({ type: 'varchar', length: 100, unique: false })
   locationName: string;
 
+  @Column({ type: 'varchar', length: 100, unique: false })
+  ownerCode: string;
+
   @Column({ type: 'varchar', length: 25, unique: true })
   locationCode: string;
+
+  @Column({ type: 'int', unique: false, nullable: true })
+  minTimeLimit: number;
+
+  @Column({ type: 'int', unique: false, nullable: true })
+  maxTimeLimit: number;
+
+  @Column({ type: 'int', unique: false, nullable: true })
+  hasRent: number;
+
+  @Column({ type: 'varchar', length: 50, unique: false, nullable: true })
+  userRentCd: string;
 
   @Column({ type: 'varchar', length: 2000, unique: false, nullable: true })
   locationDescription: string;
@@ -24,4 +39,7 @@ export class TbLocation {
 
   @Column({ type: 'int', unique: false, nullable: false })
   locationStatus: number;
+
+  @Column({ type: 'int', unique: false, nullable: true })
+  locationRate: number;
 }

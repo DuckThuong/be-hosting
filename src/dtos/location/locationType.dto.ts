@@ -2,13 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateLocationTypePayloadDto {
   @ApiProperty({
-    description: 'Code',
-    example: '......',
-    required: true,
-  })
-  code: string;
-
-  @ApiProperty({
     description: 'name',
     example: '......',
     required: true,

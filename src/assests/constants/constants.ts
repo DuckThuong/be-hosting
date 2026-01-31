@@ -4,3 +4,10 @@ export const jwtConstants = {
 };
 
 export const ROUND = 10;
+export const chars =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+export const LOCATION_RENT_STATUS = {
+  HAS_RENT: 1,
+  READY: 0,
+};

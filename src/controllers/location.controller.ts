@@ -14,6 +14,15 @@ import {
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
+import {
+  CreateLocationDto,
+  LocationResponseDto,
+  UpdatelocationPayloadDto,
+  DeleteLocationDto,
+  DeleteLocationResponseDto,
+  UpdateRentStatusDto,
+  UpdateRentStatusResponseDto,
+} from '../dtos/location/location.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
@@ -50,7 +59,7 @@ export class LocationController {
     return this.locationService.GetAllLocationType();
   }
 
-  @ApiOperation({ summary: 'Thêm mới dịch vụ' })
+  @ApiOperation({ summary: 'Thêm mới dịch vụ cho địa điểm' })
   @Post('add-new-location-service')
   public async addNewLocationService(
     @Body() payload: AddLocationServicePayload,
@@ -66,11 +75,43 @@ export class LocationController {
     return this.locationService.PauseLocationService(payload);
   }
 
-  @ApiOperation({ summary: 'Gỡ bỏ dịch vụ' })
+  @ApiOperation({ summary: 'Gỡ bỏ dịch vụ khỏi địa điểm' })
   @Delete('remove-location-service')
   public async removeLocationService(
     @Body() payload: AddLocationServicePayload,
   ): Promise<LocationServiceResponse> {
     return this.locationService.RemoveLocationService(payload);
+  }
+
+  @ApiOperation({ summary: 'Tạo mới địa điểm cho thuê' })
+  @Post('create-location')
+  public async createLocation(
+    @Body() payload: CreateLocationDto,
+  ): Promise<LocationResponseDto> {
+    return this.locationService.CreateLocation(payload);
+  }
+
+  @ApiOperation({ summary: 'Cập nhật thông tin địa điểm' })
+  @Put('update-location')
+  public async updateLocation(
+    @Body() payload: UpdatelocationPayloadDto,
+  ): Promise<LocationResponseDto> {
+    return this.locationService.UpdateLocation(payload);
+  }
+
+  @ApiOperation({ summary: 'Xóa địa điểm' })
+  @Delete('delete-location')
+  public async deleteLocation(
+    @Body() payload: DeleteLocationDto,
+  ): Promise<DeleteLocationResponseDto> {
+    return this.locationService.DeleteLocation(payload);
+  }
+
+  @ApiOperation({ summary: 'Cập nhật trạng thái cho thuê địa điểm' })
+  @Put('update-rent-status')
+  public async updateRentStatus(
+    @Body() payload: UpdateRentStatusDto,
+  ): Promise<UpdateRentStatusResponseDto> {
+    return this.locationService.UpdateRentStatus(payload);
   }
 }

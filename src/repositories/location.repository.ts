@@ -2,7 +2,25 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
-import { SuccessLocationMessage } from '../assests/messages/location.message';
+import {
+  ErrorLocationMessage,
+  SuccessLocationMessage,
+} from '../assests/messages/location.message';
+import { randomString } from '../common/helpers/common.helper';
+import {
+  CreateLocationDto,
+  DeleteLocationDto,
+  DeleteLocationResponseDto,
+  LocationResponseDto,
+  UpdatelocationPayloadDto,
+  UpdateRentStatusDto,
+  UpdateRentStatusResponseDto,
+} from '../dtos/location/location.dto';
+import {
+  AddLocationServicePayload,
+  LocationServiceData,
+  LocationServiceResponse,
+} from '../dtos/location/locationService.dto';
 import {
   CreateLocationTypePayloadDto,
   CreateLocationTypeResponseDto,
@@ -11,14 +29,10 @@ import {
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
 import { TbLocation } from '../entities/location/location.entity';
+import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
-import {
-  AddLocationServicePayload,
-  LocationServiceData,
-  LocationServiceResponse,
-} from '../dtos/location/locationService.dto';
-import { TbLocationAddress } from '../entities/location/locationAddress.entity';
+import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
 
 @Injectable()
 export class LocationRepository {
@@ -32,7 +46,7 @@ export class LocationRepository {
     @InjectRepository(TbLocationType)
     private readonly locationType: Repository<TbLocationType>,
 
-    @InjectRepository(TbLocationType)
+    @InjectRepository(TbLocationAddress)
     private readonly locationAddress: Repository<TbLocationAddress>,
   ) {}
 
@@ -40,7 +54,7 @@ export class LocationRepository {
     data: CreateLocationTypePayloadDto,
   ): Promise<CreateLocationTypeResponseDto> {
     const Type = this.locationType.create({
-      typeCode: data.code,
+      typeCode: randomString(),
       typeName: data.name,
       typeDescription: data.description,
       typeLogo: data.logo,
@@ -159,5 +173,138 @@ export class LocationRepository {
 
   public async FindLocationByCode(code: string): Promise<TbLocation | null> {
     return await this.location.findOneBy({ locationCode: code });
+  }
+
+  public async CreateLocation(
+    payload: CreateLocationDto,
+  ): Promise<LocationResponseDto> {
+    const location = this.location.create({
+      locationCode: randomString(),
+      typeCode: payload.typeCode,
+      locationName: payload.locationName,
+      ownerCode: payload.ownerCode,
+      minTimeLimit: payload.minTimeLimit,
+      maxTimeLimit: payload.maxTimeLimit,
+      hasRent: payload.hasRent ?? 0,
+      userRentCd: payload.userRentCd,
+      locationDescription: payload.locationDescription,
+      locationNote: payload.locationNote,
+      locationStatus: payload.locationStatus,
+      locationRate: payload.locationRate,
+    });
+
+    const savedLocation = await this.location.save(location);
+
+    return {
+      message: 'Tạo địa điểm cho thuê thành công',
+      data: savedLocation,
+    };
+  }
+
+  public async UpdateLocation(
+    payload: UpdatelocationPayloadDto,
+  ): Promise<LocationResponseDto> {
+    const existingLocation = await this.location.findOneBy({
+      locationCode: payload.locationCode,
+    });
+
+    if (existingLocation) {
+      const updateData: Partial<TbLocation> = {
+        typeCode: payload.data.typeCode,
+        locationName: payload.data.locationName,
+        locationStatus: payload.data.locationStatus,
+      };
+
+      if (payload.data.minTimeLimit !== undefined) {
+        updateData.minTimeLimit = payload.data.minTimeLimit;
+      }
+      if (payload.data.maxTimeLimit !== undefined) {
+        updateData.maxTimeLimit = payload.data.maxTimeLimit;
+      }
+      if (payload.data.hasRent !== undefined) {
+        updateData.hasRent = payload.data.hasRent;
+      }
+      if (payload.data.userRentCd !== undefined) {
+        updateData.userRentCd = payload.data.userRentCd;
+      }
+      if (payload.data.locationDescription !== undefined) {
+        updateData.locationDescription = payload.data.locationDescription;
+      }
+      if (payload.data.locationNote !== undefined) {
+        updateData.locationNote = payload.data.locationNote;
+      }
+      if (payload.data.locationRate !== undefined) {
+        updateData.locationRate = payload.data.locationRate;
+      }
+
+      const updatedEntity = this.location.merge(existingLocation, updateData);
+
+      const savedLocation = await this.location.save(updatedEntity);
+
+      return {
+        message: SuccessLocationMessage.UPDATE_SUCCESS,
+        data: savedLocation,
+      };
+    } else {
+      return {
+        message: ErrorLocationMessage.LOCATION_NOT_FOUND,
+      };
+    }
+  }
+
+  public async DeleteLocation(
+    payload: DeleteLocationDto,
+  ): Promise<DeleteLocationResponseDto> {
+    const existingLocation = await this.location.findOneBy({
+      locationCode: payload.locationCode,
+    });
+    if (existingLocation) {
+      if (
+        existingLocation.hasRent === LOCATION_RENT_STATUS.HAS_RENT ||
+        existingLocation.userRentCd
+      ) {
+        return {
+          message: ErrorLocationMessage.LOCATION_IN_USE,
+          data: { deleted: false },
+        };
+      } else {
+        await this.location.delete({ locationCode: payload.locationCode });
+        return {
+          message: SuccessLocationMessage.DELETE_SUCCESS,
+          data: { deleted: true },
+        };
+      }
+    } else {
+      return {
+        message: ErrorLocationMessage.LOCATION_NOT_FOUND,
+        data: { deleted: false },
+      };
+    }
+  }
+
+  public async UpdateRentStatus(
+    payload: UpdateRentStatusDto,
+  ): Promise<UpdateRentStatusResponseDto> {
+    const existingLocation = await this.location.findOneBy({
+      locationCode: payload.locationCode,
+    });
+    if (existingLocation) {
+      const updatedEntity = this.location.merge(existingLocation, {
+        hasRent: payload.hasRent,
+        userRentCd: payload.userRentCd,
+      });
+
+      const savedLocation = await this.location.save(updatedEntity);
+
+      return {
+        message: SuccessLocationMessage.UPDATE_SUCCESS,
+        data: savedLocation,
+      };
+    } else {
+      return {
+        message: ErrorLocationMessage.LOCATION_NOT_FOUND,
+        data: {},
+      };
+    }
   }
 }

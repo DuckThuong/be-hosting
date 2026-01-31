@@ -23,20 +23,6 @@ export class ServiceService {
       );
     }
 
-    if (!payload.serviceCode || payload.serviceCode.trim() === '') {
-      throw new HttpException(
-        ErrorServiceMessage.SERVICE_CODE_NOTEMPTY.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (payload.serviceCode.length > 50) {
-      throw new HttpException(
-        ErrorServiceMessage.SERVICE_CODE_INVALID.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
     if (!payload.serviceName || payload.serviceName.trim() === '') {
       throw new HttpException(
         ErrorServiceMessage.SERVICE_NAME_NOTEMPTY.toString(),
