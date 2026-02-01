@@ -39,14 +39,6 @@ export class TbUserDefault {
 
   @Column({
     type: 'varchar',
-    length: 20,
-    nullable: true,
-    comment: 'Phone number',
-  })
-  phone?: string;
-
-  @Column({
-    type: 'varchar',
     length: 100,
     nullable: true,
     comment: 'Full name',

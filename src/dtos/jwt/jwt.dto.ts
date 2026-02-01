@@ -5,7 +5,6 @@ export class JwtPayload {
   userCode: string;
   username: string;
   email: string;
-  phone?: string;
   fullName?: string;
   dateOfBirth?: Date;
   status: UserStatus;

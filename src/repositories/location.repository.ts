@@ -33,6 +33,15 @@ import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
+import {
+  CreateLocationAddressPayloadDto,
+  CreateLocationAddressResponseDto,
+  DeleteLocationAddressPayloadDto,
+  DeleteLocationAddressResponseDto,
+  LocationAddressDto,
+  UpdateLocationAddressPayloadDto,
+  UpdateLocationAddressResponseDto,
+} from '../dtos/location/locationAddress.dto';
 
 @Injectable()
 export class LocationRepository {
@@ -173,6 +182,149 @@ export class LocationRepository {
 
   public async FindLocationByCode(code: string): Promise<TbLocation | null> {
     return await this.location.findOneBy({ locationCode: code });
+  }
+
+  public async CreateLocationAddress(
+    payload: CreateLocationAddressPayloadDto,
+  ): Promise<CreateLocationAddressResponseDto> {
+    const existingLocation = await this.location.findOneBy({
+      locationCode: payload.locationCode,
+    });
+    if (!existingLocation) {
+      return {
+        message: ErrorLocationMessage.LOCATION_NOT_FOUND,
+      };
+    }
+
+    const newAddress = this.locationAddress.create({
+      locationCode: payload.locationCode,
+      addressCode: randomString(),
+      addressName: payload.addressName,
+      fullAddress: payload.fullAddress,
+      addressWard: payload.addressWard,
+      addressDistrict: payload.addressDistrict,
+      addressCity: payload.addressCity,
+      addressProvince: payload.addressProvince,
+      addressCountry: payload.addressCountry,
+      addRessPortal: payload.addRessPortal,
+      addressLat: payload.addressLat,
+      addressLong: payload.addressLong,
+      addressRegion: payload.addressRegion,
+      addressStatus: payload.addressStatus,
+      addressDescription: payload.addressDescription ?? '',
+      addressNote: payload.addressNote ?? '',
+      addressType: payload.addressType,
+    });
+
+    const savedAddress = await this.locationAddress.save(newAddress);
+
+    return {
+      message: SuccessLocationMessage.CREATE_ADDRESS_SUCCESS,
+      data: plainToInstance(LocationAddressDto, savedAddress),
+    };
+  }
+
+  public async UpdateLocationAddress(
+    payload: UpdateLocationAddressPayloadDto,
+  ): Promise<UpdateLocationAddressResponseDto> {
+    const existingAddress = await this.locationAddress.findOneBy({
+      addressCode: payload.addressCode,
+    });
+    if (!existingAddress) {
+      return {
+        message: ErrorLocationMessage.ADDRESS_NOT_FOUND,
+      };
+    }
+
+    const updateData: Partial<TbLocationAddress> = {};
+
+    if (payload.addressName !== undefined) {
+      updateData.addressName = payload.addressName;
+    }
+    if (payload.fullAddress !== undefined) {
+      updateData.fullAddress = payload.fullAddress;
+    }
+    if (payload.addressWard !== undefined) {
+      updateData.addressWard = payload.addressWard;
+    }
+    if (payload.addressDistrict !== undefined) {
+      updateData.addressDistrict = payload.addressDistrict;
+    }
+    if (payload.addressCity !== undefined) {
+      updateData.addressCity = payload.addressCity;
+    }
+    if (payload.addressProvince !== undefined) {
+      updateData.addressProvince = payload.addressProvince;
+    }
+    if (payload.addressCountry !== undefined) {
+      updateData.addressCountry = payload.addressCountry;
+    }
+    if (payload.addRessPortal !== undefined) {
+      updateData.addRessPortal = payload.addRessPortal;
+    }
+    if (payload.addressLat !== undefined) {
+      updateData.addressLat = payload.addressLat;
+    }
+    if (payload.addressLong !== undefined) {
+      updateData.addressLong = payload.addressLong;
+    }
+    if (payload.addressRegion !== undefined) {
+      updateData.addressRegion = payload.addressRegion;
+    }
+    if (payload.addressStatus !== undefined) {
+      updateData.addressStatus = payload.addressStatus;
+    }
+    if (payload.addressDescription !== undefined) {
+      updateData.addressDescription = payload.addressDescription;
+    }
+    if (payload.addressNote !== undefined) {
+      updateData.addressNote = payload.addressNote;
+    }
+    if (payload.addressType !== undefined) {
+      updateData.addressType = payload.addressType;
+    }
+
+    const updatedEntity = this.locationAddress.merge(
+      existingAddress,
+      updateData,
+    );
+    const savedAddress = await this.locationAddress.save(updatedEntity);
+
+    return {
+      message: SuccessLocationMessage.UPDATE_ADDRESS_SUCCESS,
+      data: plainToInstance(LocationAddressDto, savedAddress),
+    };
+  }
+
+  public async DeleteLocationAddress(
+    payload: DeleteLocationAddressPayloadDto,
+  ): Promise<DeleteLocationAddressResponseDto> {
+    const existingAddress = await this.locationAddress.findOneBy({
+      addressCode: payload.addressCode,
+    });
+    if (!existingAddress) {
+      return {
+        message: ErrorLocationMessage.ADDRESS_NOT_FOUND,
+        data: { deleted: false },
+      };
+    }
+
+    if (existingAddress.locationCode !== payload.locationCode) {
+      return {
+        message: ErrorLocationMessage.ADDRESS_BELONGS_TO_OTHER_LOCATION,
+        data: { deleted: false },
+      };
+    }
+
+    await this.locationAddress.delete({
+      addressCode: payload.addressCode,
+      locationCode: payload.locationCode,
+    });
+
+    return {
+      message: SuccessLocationMessage.DELETE_ADDRESS_SUCCESS,
+      data: { deleted: true },
+    };
   }
 
   public async CreateLocation(
