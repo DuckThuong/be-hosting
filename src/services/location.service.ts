@@ -25,6 +25,11 @@ import {
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationRepository } from '../repositories/location.repository';
+import {
+  DeleteLocationAddressesDto,
+  DeleteLocationAddressResponseDto,
+  UpdateLocationAddressPayloadDto,
+} from '../dtos/location/locationAddress.dto';
 
 @Injectable()
 export class LocationService {
@@ -462,6 +467,36 @@ export class LocationService {
 
         await this.AddNewLocationService(servicePayload);
       }
+
+      if (
+        payload.locationAddress &&
+        payload.locationAddress.length > 0 &&
+        location.data
+      ) {
+        const addressData = new UpdateLocationAddressPayloadDto();
+        addressData.locationCode = location.data.locationCode;
+        for (const data of payload.locationAddress) {
+          addressData.data.push({
+            addressCode: data.addressCode,
+            addressName: data.addressName,
+            fullAddress: data.fullAddress,
+            addressWard: data.addressWard,
+            addressDistrict: data.addressDistrict,
+            addressCity: data.addressCity,
+            addressProvince: data.addressProvince,
+            addressCountry: data.addressCountry,
+            addRessPortal: data.addRessPortal,
+            addressLat: data.addressLat,
+            addressLong: data.addressLong,
+            addressRegion: data.addressRegion,
+            addressStatus: data.addressStatus,
+            addressDescription: data.addressDescription ?? '',
+            addressNote: data.addressNote ?? '',
+            addressType: data.addressType,
+          });
+        }
+        await this.locationRepo.UpdateLocationAddress(addressData);
+      }
       return location;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -603,7 +638,55 @@ export class LocationService {
     }
 
     try {
-      return await this.locationRepo.UpdateLocation(payload);
+      const location = await this.locationRepo.UpdateLocation(payload);
+
+      if (payload.data.serviceCode.length > 0 && location.data) {
+        const serviceData: LocationServiceData[] = [];
+        for (const item of payload.data.serviceCode) {
+          serviceData.push({
+            serviceCode: item.serviceCode,
+            isActive: true,
+            note: '',
+          });
+        }
+        const servicePayload: AddLocationServicePayload = {
+          locationCode: location.data.locationCode,
+          data: serviceData,
+        };
+
+        await this.AddNewLocationService(servicePayload);
+      }
+
+      if (
+        payload.data.locationAddress &&
+        payload.data.locationAddress.length > 0 &&
+        location.data
+      ) {
+        const addressData = new UpdateLocationAddressPayloadDto();
+        addressData.locationCode = location.data.locationCode;
+        for (const data of payload.data.locationAddress) {
+          addressData.data.push({
+            addressCode: data.addressCode,
+            addressName: data.addressName,
+            fullAddress: data.fullAddress,
+            addressWard: data.addressWard,
+            addressDistrict: data.addressDistrict,
+            addressCity: data.addressCity,
+            addressProvince: data.addressProvince,
+            addressCountry: data.addressCountry,
+            addRessPortal: data.addRessPortal,
+            addressLat: data.addressLat,
+            addressLong: data.addressLong,
+            addressRegion: data.addressRegion,
+            addressStatus: data.addressStatus,
+            addressDescription: data.addressDescription ?? '',
+            addressNote: data.addressNote ?? '',
+            addressType: data.addressType,
+          });
+        }
+        await this.locationRepo.UpdateLocationAddress(addressData);
+      }
+      return location;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -705,6 +788,29 @@ export class LocationService {
         throw error;
       }
       console.error('Error during update rent status:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async DeleteLocationAddressByCode(
+    payload: DeleteLocationAddressesDto,
+  ): Promise<DeleteLocationAddressResponseDto> {
+    if (!payload.addressCode && payload.addressCode === '') {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    try {
+      return await this.locationRepo.DeleteLocationAddress(payload);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during delete location:', error);
       throw new HttpException(
         ErrorLocationMessage.CATCH_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,

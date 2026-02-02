@@ -357,18 +357,18 @@ export class UpdateLocationAddressResponseDto {
   data?: LocationAddressDto[];
 }
 
-// ─── Delete ──────────────────────────────────────────────────────────────────
-
-export class DeleteLocationAddressPayloadDto {
+export class DeleteAllLocationAddressesDto {
   @ApiProperty({
     description: 'Mã địa điểm',
     example: 'LOC_abc123',
   })
   locationCode: string;
+}
 
+export class DeleteLocationAddressesDto {
   @ApiProperty({
-    description: 'Mã địa chỉ cần xóa',
-    example: 'ADR_abc123',
+    description: 'Mã địa chỉ',
+    example: 'LOC_abc123',
   })
   addressCode: string;
 }
@@ -386,5 +386,3 @@ export class DeleteLocationAddressResponseDto {
   })
   data: { deleted: boolean };
 }
-
-// ─── Response DTO ────────────────────────────────────────────────────────────

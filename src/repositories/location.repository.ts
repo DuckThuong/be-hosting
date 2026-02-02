@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
+import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
 import {
   ErrorLocationMessage,
   SuccessLocationMessage,
@@ -16,6 +17,17 @@ import {
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
 } from '../dtos/location/location.dto';
+import {
+  CreateLocationAddressPayloadDto,
+  CreateLocationAddressResponseDto,
+  DeleteAllLocationAddressesDto,
+  DeleteLocationAddressesDto,
+  DeleteLocationAddressResponseDto,
+  LocationAddressDto,
+  LocationAddressPayloadDto,
+  UpdateLocationAddressPayloadDto,
+  UpdateLocationAddressResponseDto,
+} from '../dtos/location/locationAddress.dto';
 import {
   AddLocationServicePayload,
   LocationServiceData,
@@ -32,17 +44,6 @@ import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
-import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
-import {
-  CreateLocationAddressPayloadDto,
-  CreateLocationAddressResponseDto,
-  DeleteLocationAddressPayloadDto,
-  DeleteLocationAddressResponseDto,
-  LocationAddressDto,
-  LocationAddressPayloadDto,
-  UpdateLocationAddressPayloadDto,
-  UpdateLocationAddressResponseDto,
-} from '../dtos/location/locationAddress.dto';
 
 @Injectable()
 export class LocationRepository {
@@ -370,12 +371,8 @@ export class LocationRepository {
         }
       }
 
-      const totalUpdated = updatedAddresses.length - createAddressData.length;
-      const totalCreated = createAddressData.length;
-      const message = `Cập nhật ${totalUpdated} địa chỉ, tạo mới ${totalCreated} địa chỉ`;
-
       return {
-        message,
+        message: SuccessLocationMessage.CREATE_SUCCESS,
         data: plainToInstance(LocationAddressDto, updatedAddresses),
       };
     } catch (error) {
@@ -385,12 +382,14 @@ export class LocationRepository {
       await queryRunner.release();
     }
   }
+
   public async DeleteLocationAddress(
-    payload: DeleteLocationAddressPayloadDto,
+    payload: DeleteLocationAddressesDto,
   ): Promise<DeleteLocationAddressResponseDto> {
     const existingAddress = await this.locationAddress.findOneBy({
       addressCode: payload.addressCode,
     });
+
     if (!existingAddress) {
       return {
         message: ErrorLocationMessage.ADDRESS_NOT_FOUND,
@@ -398,21 +397,39 @@ export class LocationRepository {
       };
     }
 
-    if (existingAddress.locationCode !== payload.locationCode) {
-      return {
-        message: ErrorLocationMessage.ADDRESS_BELONGS_TO_OTHER_LOCATION,
-        data: { deleted: false },
-      };
-    }
-
     await this.locationAddress.delete({
       addressCode: payload.addressCode,
-      locationCode: payload.locationCode,
     });
 
     return {
       message: SuccessLocationMessage.DELETE_ADDRESS_SUCCESS,
       data: { deleted: true },
+    };
+  }
+
+  public async DeleteAllLocationAddresses(
+    payload: DeleteAllLocationAddressesDto,
+  ): Promise<DeleteLocationAddressResponseDto> {
+    const existingAddresses = await this.locationAddress.find({
+      where: { locationCode: payload.locationCode },
+    });
+
+    if (existingAddresses.length === 0) {
+      return {
+        message: ErrorLocationMessage.ADDRESS_NOT_FOUND as string,
+        data: { deleted: false },
+      };
+    }
+
+    await this.locationAddress.delete({
+      locationCode: payload.locationCode,
+    });
+
+    return {
+      message: SuccessLocationMessage.DELETE_ADDRESS_SUCCESS as string,
+      data: {
+        deleted: true,
+      },
     };
   }
 
@@ -509,6 +526,9 @@ export class LocationRepository {
           data: { deleted: false },
         };
       } else {
+        await this.DeleteAllLocationAddresses({
+          locationCode: payload.locationCode,
+        });
         await this.location.delete({ locationCode: payload.locationCode });
         return {
           message: SuccessLocationMessage.DELETE_SUCCESS,

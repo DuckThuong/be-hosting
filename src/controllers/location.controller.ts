@@ -18,6 +18,7 @@ import {
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
 } from '../dtos/location/location.dto';
+import { DeleteLocationAddressesDto } from '../dtos/location/locationAddress.dto';
 import {
   AddLocationServicePayload,
   LocationServiceResponse,
@@ -115,5 +116,13 @@ export class LocationController {
     @Body() payload: UpdateRentStatusDto,
   ): Promise<UpdateRentStatusResponseDto> {
     return this.locationService.UpdateRentStatus(payload);
+  }
+
+  @ApiOperation({ summary: 'Xóa địa điểm' })
+  @Delete('delete-location')
+  public async deleteLocationAdress(
+    @Body() payload: DeleteLocationAddressesDto,
+  ): Promise<DeleteLocationResponseDto> {
+    return this.locationService.DeleteLocationAddressByCode(payload);
   }
 }

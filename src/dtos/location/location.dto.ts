@@ -8,6 +8,7 @@ import {
   IsNumber,
 } from 'class-validator';
 import { TbLocation } from '../../entities/location/location.entity';
+import { LocationAddressUpdateDto } from './locationAddress.dto';
 
 export class CreateLocationDto {
   @ApiProperty({
@@ -23,11 +24,18 @@ export class CreateLocationDto {
 
   @ApiProperty({
     description: 'Danh sách dịch vụ',
-    required: true,
-    maxLength: 50,
+    type: () => ServicePayloadDto,
+    isArray: true,
   })
   @IsNotEmpty()
   serviceCode: ServicePayloadDto[];
+
+  @ApiProperty({
+    description: 'Danh sách cơ sở',
+    type: () => LocationAddressUpdateDto,
+    isArray: true,
+  })
+  locationAddress: LocationAddressUpdateDto[];
 
   @ApiProperty({
     description: 'Tên địa điểm',
@@ -146,12 +154,18 @@ export class UpdateLocationDto {
 
   @ApiProperty({
     description: 'Danh sách dịch vụ',
-    example: '______',
-    required: true,
-    maxLength: 50,
+    type: () => ServicePayloadDto,
+    isArray: true,
   })
   @IsNotEmpty()
   serviceCode: ServicePayloadDto[];
+
+  @ApiProperty({
+    description: 'Danh sách cơ sở',
+    type: () => LocationAddressUpdateDto,
+    isArray: true,
+  })
+  locationAddress: LocationAddressUpdateDto[];
 
   @ApiProperty({
     description: 'Tên địa điểm',
