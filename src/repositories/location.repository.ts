@@ -39,6 +39,7 @@ import {
   DeleteLocationAddressPayloadDto,
   DeleteLocationAddressResponseDto,
   LocationAddressDto,
+  LocationAddressPayloadDto,
   UpdateLocationAddressPayloadDto,
   UpdateLocationAddressResponseDto,
 } from '../dtos/location/locationAddress.dto';
@@ -190,112 +191,200 @@ export class LocationRepository {
     const existingLocation = await this.location.findOneBy({
       locationCode: payload.locationCode,
     });
+
     if (!existingLocation) {
       return {
         message: ErrorLocationMessage.LOCATION_NOT_FOUND,
       };
     }
 
-    const newAddress = this.locationAddress.create({
-      locationCode: payload.locationCode,
-      addressCode: randomString(),
-      addressName: payload.addressName,
-      fullAddress: payload.fullAddress,
-      addressWard: payload.addressWard,
-      addressDistrict: payload.addressDistrict,
-      addressCity: payload.addressCity,
-      addressProvince: payload.addressProvince,
-      addressCountry: payload.addressCountry,
-      addRessPortal: payload.addRessPortal,
-      addressLat: payload.addressLat,
-      addressLong: payload.addressLong,
-      addressRegion: payload.addressRegion,
-      addressStatus: payload.addressStatus,
-      addressDescription: payload.addressDescription ?? '',
-      addressNote: payload.addressNote ?? '',
-      addressType: payload.addressType,
-    });
+    if (!payload.data || payload.data.length === 0) {
+      return {
+        message: ErrorLocationMessage.ADDRESS_DATA_NOTEMPTY,
+      };
+    }
 
-    const savedAddress = await this.locationAddress.save(newAddress);
+    const queryRunner =
+      this.locationAddress.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    return {
-      message: SuccessLocationMessage.CREATE_ADDRESS_SUCCESS,
-      data: plainToInstance(LocationAddressDto, savedAddress),
-    };
+    try {
+      const savedAddresses: LocationAddressDto[] = [];
+
+      for (const addressData of payload.data) {
+        const newAddress = this.locationAddress.create({
+          locationCode: payload.locationCode,
+          addressCode: randomString(),
+          addressName: addressData.addressName,
+          fullAddress: addressData.fullAddress,
+          addressWard: addressData.addressWard,
+          addressDistrict: addressData.addressDistrict,
+          addressCity: addressData.addressCity,
+          addressProvince: addressData.addressProvince,
+          addressCountry: addressData.addressCountry,
+          addRessPortal: addressData.addRessPortal,
+          addressLat: addressData.addressLat,
+          addressLong: addressData.addressLong,
+          addressRegion: addressData.addressRegion,
+          addressStatus: addressData.addressStatus,
+          addressDescription: addressData.addressDescription ?? '',
+          addressNote: addressData.addressNote ?? '',
+          addressType: addressData.addressType,
+        });
+
+        const savedAddress = await queryRunner.manager.save(newAddress);
+        savedAddresses.push(savedAddress);
+      }
+
+      await queryRunner.commitTransaction();
+
+      return {
+        message: SuccessLocationMessage.CREATE_ADDRESS_SUCCESS,
+        data: plainToInstance(LocationAddressDto, savedAddresses),
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   public async UpdateLocationAddress(
     payload: UpdateLocationAddressPayloadDto,
   ): Promise<UpdateLocationAddressResponseDto> {
-    const existingAddress = await this.locationAddress.findOneBy({
-      addressCode: payload.addressCode,
-    });
-    if (!existingAddress) {
+    if (!payload.data || payload.data.length === 0) {
       return {
-        message: ErrorLocationMessage.ADDRESS_NOT_FOUND,
+        message: ErrorLocationMessage.ADDRESS_DATA_NOTEMPTY,
       };
     }
 
-    const updateData: Partial<TbLocationAddress> = {};
+    const queryRunner =
+      this.locationAddress.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (payload.addressName !== undefined) {
-      updateData.addressName = payload.addressName;
-    }
-    if (payload.fullAddress !== undefined) {
-      updateData.fullAddress = payload.fullAddress;
-    }
-    if (payload.addressWard !== undefined) {
-      updateData.addressWard = payload.addressWard;
-    }
-    if (payload.addressDistrict !== undefined) {
-      updateData.addressDistrict = payload.addressDistrict;
-    }
-    if (payload.addressCity !== undefined) {
-      updateData.addressCity = payload.addressCity;
-    }
-    if (payload.addressProvince !== undefined) {
-      updateData.addressProvince = payload.addressProvince;
-    }
-    if (payload.addressCountry !== undefined) {
-      updateData.addressCountry = payload.addressCountry;
-    }
-    if (payload.addRessPortal !== undefined) {
-      updateData.addRessPortal = payload.addRessPortal;
-    }
-    if (payload.addressLat !== undefined) {
-      updateData.addressLat = payload.addressLat;
-    }
-    if (payload.addressLong !== undefined) {
-      updateData.addressLong = payload.addressLong;
-    }
-    if (payload.addressRegion !== undefined) {
-      updateData.addressRegion = payload.addressRegion;
-    }
-    if (payload.addressStatus !== undefined) {
-      updateData.addressStatus = payload.addressStatus;
-    }
-    if (payload.addressDescription !== undefined) {
-      updateData.addressDescription = payload.addressDescription;
-    }
-    if (payload.addressNote !== undefined) {
-      updateData.addressNote = payload.addressNote;
-    }
-    if (payload.addressType !== undefined) {
-      updateData.addressType = payload.addressType;
-    }
+    try {
+      const updatedAddresses: any[] = [];
+      const createAddressData: LocationAddressPayloadDto[] = [];
 
-    const updatedEntity = this.locationAddress.merge(
-      existingAddress,
-      updateData,
-    );
-    const savedAddress = await this.locationAddress.save(updatedEntity);
+      for (const address of payload.data) {
+        const existingAddress = await queryRunner.manager.findOneBy(
+          TbLocationAddress,
+          { addressCode: address.addressCode },
+        );
 
-    return {
-      message: SuccessLocationMessage.UPDATE_ADDRESS_SUCCESS,
-      data: plainToInstance(LocationAddressDto, savedAddress),
-    };
+        if (!existingAddress) {
+          createAddressData.push({
+            addressName: address.addressName,
+            fullAddress: address.fullAddress,
+            addressWard: address.addressWard,
+            addressDistrict: address.addressDistrict,
+            addressCity: address.addressCity,
+            addressProvince: address.addressProvince,
+            addressCountry: address.addressCountry,
+            addRessPortal: address.addRessPortal,
+            addressLat: address.addressLat,
+            addressLong: address.addressLong,
+            addressRegion: address.addressRegion,
+            addressStatus: address.addressStatus,
+            addressDescription: address.addressDescription ?? '',
+            addressNote: address.addressNote ?? '',
+            addressType: address.addressType,
+          });
+          continue;
+        }
+
+        const updateData: Partial<TbLocationAddress> = {};
+
+        if (address.addressName !== undefined) {
+          updateData.addressName = address.addressName;
+        }
+        if (address.fullAddress !== undefined) {
+          updateData.fullAddress = address.fullAddress;
+        }
+        if (address.addressWard !== undefined) {
+          updateData.addressWard = address.addressWard;
+        }
+        if (address.addressDistrict !== undefined) {
+          updateData.addressDistrict = address.addressDistrict;
+        }
+        if (address.addressCity !== undefined) {
+          updateData.addressCity = address.addressCity;
+        }
+        if (address.addressProvince !== undefined) {
+          updateData.addressProvince = address.addressProvince;
+        }
+        if (address.addressCountry !== undefined) {
+          updateData.addressCountry = address.addressCountry;
+        }
+        if (address.addRessPortal !== undefined) {
+          updateData.addRessPortal = address.addRessPortal;
+        }
+        if (address.addressLat !== undefined) {
+          updateData.addressLat = address.addressLat;
+        }
+        if (address.addressLong !== undefined) {
+          updateData.addressLong = address.addressLong;
+        }
+        if (address.addressRegion !== undefined) {
+          updateData.addressRegion = address.addressRegion;
+        }
+        if (address.addressStatus !== undefined) {
+          updateData.addressStatus = address.addressStatus;
+        }
+        if (address.addressDescription !== undefined) {
+          updateData.addressDescription = address.addressDescription;
+        }
+        if (address.addressNote !== undefined) {
+          updateData.addressNote = address.addressNote;
+        }
+        if (address.addressType !== undefined) {
+          updateData.addressType = address.addressType;
+        }
+
+        const updatedEntity = queryRunner.manager.merge(
+          TbLocationAddress,
+          existingAddress,
+          updateData,
+        );
+
+        const savedAddress = await queryRunner.manager.save(updatedEntity);
+        updatedAddresses.push(savedAddress);
+      }
+
+      await queryRunner.commitTransaction();
+
+      if (createAddressData.length > 0) {
+        const createResult = await this.CreateLocationAddress({
+          locationCode: payload.locationCode,
+          data: createAddressData,
+        });
+
+        if (createResult.data) {
+          const newAddresses = Array.isArray(createResult.data)
+            ? createResult.data
+            : [createResult.data];
+          updatedAddresses.push(...newAddresses);
+        }
+      }
+
+      const totalUpdated = updatedAddresses.length - createAddressData.length;
+      const totalCreated = createAddressData.length;
+      const message = `Cập nhật ${totalUpdated} địa chỉ, tạo mới ${totalCreated} địa chỉ`;
+
+      return {
+        message,
+        data: plainToInstance(LocationAddressDto, updatedAddresses),
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
-
   public async DeleteLocationAddress(
     payload: DeleteLocationAddressPayloadDto,
   ): Promise<DeleteLocationAddressResponseDto> {

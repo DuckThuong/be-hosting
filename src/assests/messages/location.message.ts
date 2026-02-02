@@ -9,7 +9,6 @@ export class SuccessLocationMessage {
     'Cập nhật trạng thái cho thuê thành công';
   static readonly CANCEL_RENT_SUCCESS = 'Hủy cho thuê thành công';
 
-  // ── Address ──────────────────────────────────────────────────────────────
   static readonly CREATE_ADDRESS_SUCCESS = 'Tạo địa chỉ thành công.';
   static readonly UPDATE_ADDRESS_SUCCESS = 'Cập nhật địa chỉ thành công.';
   static readonly DELETE_ADDRESS_SUCCESS = 'Xóa địa chỉ thành công.';
@@ -61,6 +60,8 @@ export class ErrorLocationMessage {
   static readonly ADDRESS_ALREADY_EXISTS = 'Địa chỉ đã tồn tại.';
   static readonly ADDRESS_BELONGS_TO_OTHER_LOCATION =
     'Địa chỉ này không thuộc khu vực đã chỉ định.';
+  static readonly ADDRESS_DATA_NOTEMPTY =
+    'Dữ liệu địa chỉ không được để trống.';
   static readonly ADDRESS_CODE_NOTEMPTY = 'Mã địa chỉ không được để trống.';
   static readonly ADDRESS_CODE_INVALID = 'Mã địa chỉ không hợp lệ.';
   static readonly ADDRESS_NAME_NOTEMPTY = 'Tên địa chỉ không được để trống.';
