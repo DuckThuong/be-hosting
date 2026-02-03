@@ -190,7 +190,6 @@ export class LocationService {
 
     if (payload.data && payload.data.length > 0) {
       for (const item of payload.data) {
-        console.log(payload.data);
         if (!item.serviceCode || item.serviceCode.trim() === '') {
           throw new HttpException(
             ErrorServiceMessage.SERVICE_CODE_NOTEMPTY.toString(),
@@ -473,30 +472,30 @@ export class LocationService {
         payload.locationAddress.length > 0 &&
         location.data
       ) {
-        const addressData = new UpdateLocationAddressPayloadDto();
-        addressData.locationCode = location.data.locationCode;
-        for (const data of payload.locationAddress) {
-          addressData.data.push({
-            addressCode: data.addressCode,
-            addressName: data.addressName,
-            fullAddress: data.fullAddress,
-            addressWard: data.addressWard,
-            addressDistrict: data.addressDistrict,
-            addressCity: data.addressCity,
-            addressProvince: data.addressProvince,
-            addressCountry: data.addressCountry,
-            addRessPortal: data.addRessPortal,
-            addressLat: data.addressLat,
-            addressLong: data.addressLong,
-            addressRegion: data.addressRegion,
-            addressStatus: data.addressStatus,
-            addressDescription: data.addressDescription ?? '',
-            addressNote: data.addressNote ?? '',
-            addressType: data.addressType,
-          });
-        }
+        const addressData: UpdateLocationAddressPayloadDto = {
+          locationCode: location.data.locationCode,
+          data: payload.locationAddress.map((item) => ({
+            addressCode: item.addressCode,
+            addressName: item.addressName,
+            fullAddress: item.fullAddress,
+            addressWard: item.addressWard,
+            addressDistrict: item.addressDistrict,
+            addressCity: item.addressCity,
+            addressProvince: item.addressProvince,
+            addressCountry: item.addressCountry,
+            addRessPortal: item.addRessPortal,
+            addressLat: item.addressLat,
+            addressLong: item.addressLong,
+            addressRegion: item.addressRegion,
+            addressStatus: item.addressStatus,
+            addressDescription: item.addressDescription ?? '',
+            addressNote: item.addressNote ?? '',
+            addressType: item.addressType,
+          })),
+        };
         await this.locationRepo.UpdateLocationAddress(addressData);
       }
+
       return location;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -640,7 +639,7 @@ export class LocationService {
     try {
       const location = await this.locationRepo.UpdateLocation(payload);
 
-      if (payload.data.serviceCode.length > 0 && location.data) {
+      if (payload.data.serviceCode?.length > 0 && location.data) {
         const serviceData: LocationServiceData[] = [];
         for (const item of payload.data.serviceCode) {
           serviceData.push({
@@ -662,30 +661,30 @@ export class LocationService {
         payload.data.locationAddress.length > 0 &&
         location.data
       ) {
-        const addressData = new UpdateLocationAddressPayloadDto();
-        addressData.locationCode = location.data.locationCode;
-        for (const data of payload.data.locationAddress) {
-          addressData.data.push({
-            addressCode: data.addressCode,
-            addressName: data.addressName,
-            fullAddress: data.fullAddress,
-            addressWard: data.addressWard,
-            addressDistrict: data.addressDistrict,
-            addressCity: data.addressCity,
-            addressProvince: data.addressProvince,
-            addressCountry: data.addressCountry,
-            addRessPortal: data.addRessPortal,
-            addressLat: data.addressLat,
-            addressLong: data.addressLong,
-            addressRegion: data.addressRegion,
-            addressStatus: data.addressStatus,
-            addressDescription: data.addressDescription ?? '',
-            addressNote: data.addressNote ?? '',
-            addressType: data.addressType,
-          });
-        }
+        const addressData: UpdateLocationAddressPayloadDto = {
+          locationCode: payload.locationCode,
+          data: payload.data.locationAddress.map((item) => ({
+            addressCode: item.addressCode,
+            addressName: item.addressName,
+            fullAddress: item.fullAddress,
+            addressWard: item.addressWard,
+            addressDistrict: item.addressDistrict,
+            addressCity: item.addressCity,
+            addressProvince: item.addressProvince,
+            addressCountry: item.addressCountry,
+            addRessPortal: item.addRessPortal,
+            addressLat: item.addressLat,
+            addressLong: item.addressLong,
+            addressRegion: item.addressRegion,
+            addressStatus: item.addressStatus,
+            addressDescription: item.addressDescription ?? '',
+            addressNote: item.addressNote ?? '',
+            addressType: item.addressType,
+          })),
+        };
         await this.locationRepo.UpdateLocationAddress(addressData);
       }
+
       return location;
     } catch (error) {
       if (error instanceof HttpException) {

@@ -24,7 +24,6 @@ import {
   DeleteLocationAddressesDto,
   DeleteLocationAddressResponseDto,
   LocationAddressDto,
-  LocationAddressPayloadDto,
   UpdateLocationAddressPayloadDto,
   UpdateLocationAddressResponseDto,
 } from '../dtos/location/locationAddress.dto';
@@ -268,16 +267,20 @@ export class LocationRepository {
 
     try {
       const updatedAddresses: any[] = [];
-      const createAddressData: LocationAddressPayloadDto[] = [];
 
       for (const address of payload.data) {
         const existingAddress = await queryRunner.manager.findOneBy(
           TbLocationAddress,
-          { addressCode: address.addressCode },
+          {
+            addressCode: address.addressCode,
+            locationCode: payload.locationCode,
+          },
         );
 
         if (!existingAddress) {
-          createAddressData.push({
+          const newAddress = queryRunner.manager.create(TbLocationAddress, {
+            locationCode: payload.locationCode,
+            addressCode: randomString(),
             addressName: address.addressName,
             fullAddress: address.fullAddress,
             addressWard: address.addressWard,
@@ -294,82 +297,70 @@ export class LocationRepository {
             addressNote: address.addressNote ?? '',
             addressType: address.addressType,
           });
-          continue;
-        }
 
-        const updateData: Partial<TbLocationAddress> = {};
+          const savedAddress = await queryRunner.manager.save(newAddress);
+          updatedAddresses.push(savedAddress);
+        } else {
+          const updateData: Partial<TbLocationAddress> = {};
 
-        if (address.addressName !== undefined) {
-          updateData.addressName = address.addressName;
-        }
-        if (address.fullAddress !== undefined) {
-          updateData.fullAddress = address.fullAddress;
-        }
-        if (address.addressWard !== undefined) {
-          updateData.addressWard = address.addressWard;
-        }
-        if (address.addressDistrict !== undefined) {
-          updateData.addressDistrict = address.addressDistrict;
-        }
-        if (address.addressCity !== undefined) {
-          updateData.addressCity = address.addressCity;
-        }
-        if (address.addressProvince !== undefined) {
-          updateData.addressProvince = address.addressProvince;
-        }
-        if (address.addressCountry !== undefined) {
-          updateData.addressCountry = address.addressCountry;
-        }
-        if (address.addRessPortal !== undefined) {
-          updateData.addRessPortal = address.addRessPortal;
-        }
-        if (address.addressLat !== undefined) {
-          updateData.addressLat = address.addressLat;
-        }
-        if (address.addressLong !== undefined) {
-          updateData.addressLong = address.addressLong;
-        }
-        if (address.addressRegion !== undefined) {
-          updateData.addressRegion = address.addressRegion;
-        }
-        if (address.addressStatus !== undefined) {
-          updateData.addressStatus = address.addressStatus;
-        }
-        if (address.addressDescription !== undefined) {
-          updateData.addressDescription = address.addressDescription;
-        }
-        if (address.addressNote !== undefined) {
-          updateData.addressNote = address.addressNote;
-        }
-        if (address.addressType !== undefined) {
-          updateData.addressType = address.addressType;
-        }
+          if (address.addressName !== undefined) {
+            updateData.addressName = address.addressName;
+          }
+          if (address.fullAddress !== undefined) {
+            updateData.fullAddress = address.fullAddress;
+          }
+          if (address.addressWard !== undefined) {
+            updateData.addressWard = address.addressWard;
+          }
+          if (address.addressDistrict !== undefined) {
+            updateData.addressDistrict = address.addressDistrict;
+          }
+          if (address.addressCity !== undefined) {
+            updateData.addressCity = address.addressCity;
+          }
+          if (address.addressProvince !== undefined) {
+            updateData.addressProvince = address.addressProvince;
+          }
+          if (address.addressCountry !== undefined) {
+            updateData.addressCountry = address.addressCountry;
+          }
+          if (address.addRessPortal !== undefined) {
+            updateData.addRessPortal = address.addRessPortal;
+          }
+          if (address.addressLat !== undefined) {
+            updateData.addressLat = address.addressLat;
+          }
+          if (address.addressLong !== undefined) {
+            updateData.addressLong = address.addressLong;
+          }
+          if (address.addressRegion !== undefined) {
+            updateData.addressRegion = address.addressRegion;
+          }
+          if (address.addressStatus !== undefined) {
+            updateData.addressStatus = address.addressStatus;
+          }
+          if (address.addressDescription !== undefined) {
+            updateData.addressDescription = address.addressDescription;
+          }
+          if (address.addressNote !== undefined) {
+            updateData.addressNote = address.addressNote;
+          }
+          if (address.addressType !== undefined) {
+            updateData.addressType = address.addressType;
+          }
 
-        const updatedEntity = queryRunner.manager.merge(
-          TbLocationAddress,
-          existingAddress,
-          updateData,
-        );
+          const updatedEntity = queryRunner.manager.merge(
+            TbLocationAddress,
+            existingAddress,
+            updateData,
+          );
 
-        const savedAddress = await queryRunner.manager.save(updatedEntity);
-        updatedAddresses.push(savedAddress);
+          const savedAddress = await queryRunner.manager.save(updatedEntity);
+          updatedAddresses.push(savedAddress);
+        }
       }
 
       await queryRunner.commitTransaction();
-
-      if (createAddressData.length > 0) {
-        const createResult = await this.CreateLocationAddress({
-          locationCode: payload.locationCode,
-          data: createAddressData,
-        });
-
-        if (createResult.data) {
-          const newAddresses = Array.isArray(createResult.data)
-            ? createResult.data
-            : [createResult.data];
-          updatedAddresses.push(...newAddresses);
-        }
-      }
 
       return {
         message: SuccessLocationMessage.CREATE_SUCCESS,
