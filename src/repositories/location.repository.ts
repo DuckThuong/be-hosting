@@ -119,13 +119,12 @@ export class LocationRepository {
         serviceCode: item.serviceCode,
         locationCode: location.locationCode,
       });
-      if (isExist) {
+      if (isExist.length > 0) {
         continue;
       } else {
         validData.push(item);
       }
     }
-
     if (validData.length > 0) {
       for (const data of validData) {
         const newService = this.locationService.create({
