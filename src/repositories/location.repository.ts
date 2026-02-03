@@ -12,7 +12,9 @@ import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  LocationListDto,
   LocationResponseDto,
+  LocationServiceDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
@@ -558,5 +560,67 @@ export class LocationRepository {
         data: {},
       };
     }
+  }
+
+  public async GetAllLocation(): Promise<LocationListDto[]> {
+    const locations = await this.location
+      .createQueryBuilder('TL')
+      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .select('TL.locationCode', 'locationCode')
+      .addSelect('TL.locationName', 'locationName')
+      .addSelect('TL.locationDescription', 'locationDescription')
+      .addSelect('TL.locationNote', 'locationNote')
+      .addSelect('TL.minTimeLimit', 'minTime')
+      .addSelect('TL.maxTimeLimit', 'maxTime')
+      .addSelect('TL.hasRent', 'hasRent')
+      .addSelect('TL.locationRate', 'locationRate')
+      .addSelect('TL.typeCode', 'typeCode')
+      .addSelect('TLT.typeName', 'typeName')
+      .addSelect('TLT.typeDescription', 'typeDescription')
+      .addSelect('TLT.typeLogo', 'typeLogo')
+      .addSelect('TLT.typeBackGround', 'typeBackGround')
+      .addSelect('TL.ownerCode', 'ownerCode')
+      .addSelect('TUDO.userName', 'ownerName')
+      .addSelect('TUDO.email', 'ownerEmail')
+      .addSelect('TUPO.avatarUrl', 'ownerAvatar')
+      .addSelect('TUPO.coverUrl', 'ownerCover')
+      .addSelect('TUPO.phone', 'ownerPhone')
+      .addSelect('TUPO.fullAddress', 'ownerAddress')
+      .addSelect('TUPO.userCity', 'ownerCity')
+      .addSelect('TL.userRentCd', 'renterCode')
+      .addSelect('TUDR.userName', 'renterName')
+      .addSelect('TUDR.email', 'renterEmail')
+      .addSelect('TUPR.avatarUrl', 'renterAvatar')
+      .addSelect('TUPR.coverUrl', 'renterCover')
+      .addSelect('TUPR.phone', 'renterPhone')
+      .addSelect('TUPR.fullAddress', 'renterAddress')
+      .addSelect('TUPR.userCity', 'renterCity')
+      .getRawMany<LocationListDto>();
+
+    return locations;
+  }
+
+  public async GetLocationServices(
+    locationCode: string,
+  ): Promise<LocationServiceDto[]> {
+    const result = await this.locationService
+      .createQueryBuilder('tls')
+      .leftJoin('tb_service', 'ts', 'tls.serviceCode = ts.serviceCode')
+      .select('ts.serviceCode', 'serviceCode')
+      .addSelect('ts.serviceLogo', 'serviceLogo')
+      .addSelect('ts.serviceBackGround', 'serviceBackGround')
+      .addSelect('ts.serviceName', 'serviceName')
+      .addSelect('ts.servicePrice', 'servicePrice')
+      .addSelect('ts.serviceDescription', 'serviceDescription')
+      .addSelect('tls.serviceNote', 'serviceNote')
+      .addSelect('tls.isActive', 'isActive')
+      .where('tls.locationCode = :locationCode', { locationCode })
+      .getRawMany<LocationServiceDto>();
+
+    return result;
   }
 }

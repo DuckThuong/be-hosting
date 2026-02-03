@@ -6,6 +6,7 @@ import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  LocationListDto,
   LocationResponseDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
@@ -805,6 +806,31 @@ export class LocationService {
     }
     try {
       return await this.locationRepo.DeleteLocationAddress(payload);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during delete location:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async GetAllLocation(): Promise<LocationListDto[]> {
+    try {
+      const location = await this.locationRepo.GetAllLocation();
+
+      for (const item of location) {
+        if (item.locationCode) {
+          const service = await this.locationRepo.GetLocationServices(
+            item.locationCode,
+          );
+          item.services = service;
+        }
+      }
+      return location;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

@@ -367,3 +367,276 @@ export class UpdateRentStatusResponseDto {
   })
   data: any;
 }
+
+export class LocationServiceDto {
+  @ApiProperty({
+    description: 'Mã dịch vụ',
+    example: 'SRV001',
+  })
+  serviceCode: string;
+
+  @ApiProperty({
+    description: 'Logo dịch vụ',
+    example: 'https://cdn.example.com/service-logo.png',
+    required: false,
+  })
+  serviceLogo?: string;
+
+  @ApiProperty({
+    description: 'Hình nền dịch vụ',
+    example: 'https://cdn.example.com/service-bg.png',
+    required: false,
+  })
+  serviceBackGround?: string;
+
+  @ApiProperty({
+    description: 'Tên dịch vụ',
+    example: 'Wifi miễn phí',
+  })
+  serviceName: string;
+
+  @ApiProperty({
+    description: 'Giá dịch vụ',
+    example: 50000,
+  })
+  servicePrice: number;
+
+  @ApiProperty({
+    description: 'Mô tả dịch vụ',
+    example: 'Wifi tốc độ cao 100Mbps',
+    required: false,
+  })
+  serviceDescription?: string;
+
+  @ApiProperty({
+    description: 'Ghi chú dịch vụ',
+    example: 'Miễn phí cho khách thuê dài hạn',
+    required: false,
+  })
+  serviceNote?: string;
+
+  @ApiProperty({
+    description: 'Trạng thái kích hoạt',
+    example: true,
+  })
+  isActive: boolean;
+}
+
+export class LocationServiceDataDto {
+  @ApiProperty({
+    description: 'Mã địa điểm',
+    example: 'LOC001',
+  })
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Danh sách dịch vụ của địa điểm',
+    type: [LocationServiceDto],
+    required: false,
+  })
+  services?: LocationServiceDto[];
+}
+
+export class LocationListDto {
+  @ApiProperty({
+    description: 'Mã địa điểm',
+    example: 'LOC001',
+  })
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Tên địa điểm',
+    example: 'Tòa nhà A',
+  })
+  locationName: string;
+
+  @ApiProperty({
+    description: 'Mô tả địa điểm',
+    example: 'Địa điểm cho thuê văn phòng',
+    required: false,
+  })
+  locationDescription?: string;
+
+  @ApiProperty({
+    description: 'Ghi chú địa điểm',
+    example: 'Gần trung tâm',
+    required: false,
+  })
+  locationNote?: string;
+
+  @ApiProperty({
+    description: 'Thời gian thuê tối thiểu (giờ)',
+    example: 1,
+  })
+  minTime: number;
+
+  @ApiProperty({
+    description: 'Thời gian thuê tối đa (giờ)',
+    example: 24,
+  })
+  maxTime: number;
+
+  @ApiProperty({
+    description: 'Có cho thuê hay không',
+    example: true,
+  })
+  hasRent: boolean;
+
+  @ApiProperty({
+    description: 'Đánh giá địa điểm',
+    example: 4.5,
+  })
+  locationRate: number;
+
+  @ApiProperty({
+    description: 'Mã loại địa điểm',
+    example: 'TYPE001',
+  })
+  typeCode: string;
+
+  @ApiProperty({
+    description: 'Tên loại địa điểm',
+    example: 'Văn phòng',
+    required: false,
+  })
+  typeName?: string;
+
+  @ApiProperty({
+    description: 'Mô tả loại địa điểm',
+    example: 'Không gian làm việc',
+    required: false,
+  })
+  typeDescription?: string;
+
+  @ApiProperty({
+    description: 'Logo loại địa điểm',
+    example: 'https://cdn.example.com/logo.png',
+    required: false,
+  })
+  typeLogo?: string;
+
+  @ApiProperty({
+    description: 'Hình nền loại địa điểm',
+    example: 'https://cdn.example.com/bg.png',
+    required: false,
+  })
+  typeBackGround?: string;
+
+  @ApiProperty({
+    description: 'Mã chủ sở hữu',
+    example: 'USR001',
+  })
+  ownerCode: string;
+
+  @ApiProperty({
+    description: 'Tên chủ sở hữu',
+    example: 'Nguyễn Văn A',
+    required: false,
+  })
+  ownerName?: string;
+
+  @ApiProperty({
+    description: 'Email chủ sở hữu',
+    example: 'owner@example.com',
+    required: false,
+  })
+  ownerEmail?: string;
+
+  @ApiProperty({
+    description: 'Avatar chủ sở hữu',
+    example: 'https://cdn.example.com/avatar.jpg',
+    required: false,
+  })
+  ownerAvatar?: string;
+
+  @ApiProperty({
+    description: 'Ảnh bìa chủ sở hữu',
+    example: 'https://cdn.example.com/cover.jpg',
+    required: false,
+  })
+  ownerCover?: string;
+
+  @ApiProperty({
+    description: 'Số điện thoại chủ sở hữu',
+    example: '0901234567',
+    required: false,
+  })
+  ownerPhone?: string;
+
+  @ApiProperty({
+    description: 'Địa chỉ chủ sở hữu',
+    example: '123 Nguyễn Huệ, Q1',
+    required: false,
+  })
+  ownerAddress?: string;
+
+  @ApiProperty({
+    description: 'Thành phố chủ sở hữu',
+    example: 'Hồ Chí Minh',
+    required: false,
+  })
+  ownerCity?: string;
+
+  @ApiProperty({
+    description: 'Mã người thuê',
+    example: 'USR002',
+    required: false,
+  })
+  renterCode?: string;
+
+  @ApiProperty({
+    description: 'Tên người thuê',
+    example: 'Trần Thị B',
+    required: false,
+  })
+  renterName?: string;
+
+  @ApiProperty({
+    description: 'Email người thuê',
+    example: 'renter@example.com',
+    required: false,
+  })
+  renterEmail?: string;
+
+  @ApiProperty({
+    description: 'Avatar người thuê',
+    example: 'https://cdn.example.com/renter-avatar.jpg',
+    required: false,
+  })
+  renterAvatar?: string;
+
+  @ApiProperty({
+    description: 'Ảnh bìa người thuê',
+    example: 'https://cdn.example.com/renter-cover.jpg',
+    required: false,
+  })
+  renterCover?: string;
+
+  @ApiProperty({
+    description: 'Số điện thoại người thuê',
+    example: '0907654321',
+    required: false,
+  })
+  renterPhone?: string;
+
+  @ApiProperty({
+    description: 'Địa chỉ người thuê',
+    example: '456 Lê Lợi, Q1',
+    required: false,
+  })
+  renterAddress?: string;
+
+  @ApiProperty({
+    description: 'Thành phố người thuê',
+    example: 'Hà Nội',
+    required: false,
+  })
+  renterCity?: string;
+
+  @ApiProperty({
+    description: 'Danh sách dịch vụ của địa điểm',
+    type: [LocationServiceDto],
+    required: false,
+  })
+  services?: LocationServiceDto[];
+}
