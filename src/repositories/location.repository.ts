@@ -12,6 +12,8 @@ import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  GetLocationAddressByLocationCodeResponseDto,
+  LocationAddressItemDto,
   LocationListDto,
   LocationResponseDto,
   LocationServiceDto,
@@ -519,7 +521,11 @@ export class LocationRepository {
         };
       } else {
         await this.DeleteAllLocationAddresses({
-          locationCode: payload.locationCode,
+          locationCode: existingLocation.locationCode,
+        });
+
+        await this.locationService.delete({
+          locationCode: existingLocation.locationCode,
         });
         await this.location.delete({ locationCode: payload.locationCode });
         return {
@@ -621,5 +627,36 @@ export class LocationRepository {
       .getRawMany<LocationServiceDto>();
 
     return result;
+  }
+
+  public async GetLocationAddressByLocationCode(
+    locationCode: string,
+  ): Promise<GetLocationAddressByLocationCodeResponseDto> {
+    const result = await this.locationAddress
+      .createQueryBuilder('tla')
+      .select([
+        'tla.addressCode AS addressCode',
+        'tla.addressName AS addressName',
+        'tla.fullAddress AS fullAddress',
+        'tla.addressWard AS addressWard',
+        'tla.addressDistrict AS addressDistrict',
+        'tla.addressCity AS addressCity',
+        'tla.addressProvince AS addressProvince',
+        'tla.addressCountry AS addressCountry',
+        'tla.addRessPortal AS addRessPortal',
+        'tla.addressLat AS addressLat',
+        'tla.addressLong AS addressLong',
+        'tla.addressRegion AS addressRegion',
+        'tla.addressStatus AS addressStatus',
+        'tla.addressDescription AS addressDescription',
+        'tla.addressNote AS addressNote',
+        'tla.addressType AS addressType',
+      ])
+      .where('tla.locationCode = :locationCode', { locationCode })
+      .getRawMany<LocationAddressItemDto>();
+
+    return {
+      data: result,
+    };
   }
 }

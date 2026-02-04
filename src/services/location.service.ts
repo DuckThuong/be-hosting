@@ -828,6 +828,13 @@ export class LocationService {
             item.locationCode,
           );
           item.services = service;
+
+          const address =
+            await this.locationRepo.GetLocationAddressByLocationCode(
+              item.locationCode,
+            );
+
+          item.address = address.data;
         }
       }
       return location;

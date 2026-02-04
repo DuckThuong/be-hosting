@@ -422,6 +422,25 @@ export class LocationServiceDto {
   isActive: boolean;
 }
 
+export class LocationAddressItemDto {
+  @ApiProperty({ description: 'addressCode' }) addressCode: string;
+  @ApiProperty({ description: 'addressName' }) addressName: string;
+  @ApiProperty({ description: 'fullAddress' }) fullAddress: string;
+  @ApiProperty({ description: 'addressWard' }) addressWard: string;
+  @ApiProperty({ description: 'addressDistrict' }) addressDistrict: string;
+  @ApiProperty({ description: 'addressCity' }) addressCity: string;
+  @ApiProperty({ description: 'addressProvince' }) addressProvince: string;
+  @ApiProperty({ description: 'addressCountry' }) addressCountry: string;
+  @ApiProperty({ description: 'addRessPortal' }) addRessPortal: string;
+  @ApiProperty({ description: 'addressLat' }) addressLat: number;
+  @ApiProperty({ description: 'addressLong' }) addressLong: number;
+  @ApiProperty({ description: 'addressRegion' }) addressRegion: string;
+  @ApiProperty({ description: 'addressStatus' }) addressStatus: string;
+  @ApiProperty({ description: 'addressDescription' })
+  addressDescription: string;
+  @ApiProperty({ description: 'addressNote' }) addressNote: string;
+  @ApiProperty({ description: 'addressType' }) addressType: string;
+}
 export class LocationServiceDataDto {
   @ApiProperty({
     description: 'Mã địa điểm',
@@ -639,4 +658,28 @@ export class LocationListDto {
     required: false,
   })
   services?: LocationServiceDto[];
+
+  @ApiProperty({
+    description: 'Danh sách cơ sở của địa điểm',
+    type: [LocationAddressItemDto],
+    required: false,
+  })
+  address?: LocationAddressItemDto[];
+}
+
+export class GetLocationAddressByLocationCodePayloadDto {
+  @ApiProperty({
+    description: 'Mã location',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  locationCode: string;
+}
+
+export class GetLocationAddressByLocationCodeResponseDto {
+  @ApiProperty({
+    type: [LocationAddressItemDto],
+  })
+  data: LocationAddressItemDto[];
 }

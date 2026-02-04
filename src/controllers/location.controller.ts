@@ -120,7 +120,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Xóa địa điểm' })
-  @Delete('delete-location')
+  @Delete('delete-location-address')
   public async deleteLocationAdress(
     @Body() payload: DeleteLocationAddressesDto,
   ): Promise<DeleteLocationResponseDto> {
