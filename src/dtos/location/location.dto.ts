@@ -683,3 +683,145 @@ export class GetLocationAddressByLocationCodeResponseDto {
   })
   data: LocationAddressItemDto[];
 }
+
+export class GetLocationByFillterDto {
+  @ApiProperty({
+    description: 'locationName',
+    example: '',
+    required: false,
+  })
+  locationName?: string;
+
+  @ApiProperty({
+    description: 'ownerName',
+    example: '',
+    required: false,
+  })
+  ownerName?: string;
+
+  @ApiProperty({
+    description: 'ownerEmail',
+    example: '',
+    required: false,
+  })
+  ownerEmail?: string;
+
+  @ApiProperty({
+    description: 'hasRent',
+    example: '',
+    required: false,
+  })
+  hasRent?: number;
+
+  @ApiProperty({
+    description: 'renderName',
+    example: '',
+    required: false,
+  })
+  renderName?: string;
+
+  @ApiProperty({
+    description: 'renderEmail',
+    example: '',
+    required: false,
+  })
+  renderEmail?: string;
+
+  @ApiProperty({
+    description: 'locationRate',
+    example: '',
+    required: false,
+  })
+  locationRate?: number;
+
+  @ApiProperty({
+    description: 'locationType',
+    example: '',
+    required: false,
+  })
+  locationType?: string;
+
+  @ApiProperty({
+    description: 'typeName',
+    example: '',
+    required: false,
+  })
+  typeName?: string;
+
+  @ApiProperty({
+    description: 'addressLong',
+    example: '',
+    required: false,
+  })
+  addressLong?: string;
+
+  @ApiProperty({
+    description: 'addressLat',
+    example: '',
+    required: false,
+  })
+  addressLat?: string;
+
+  @ApiProperty({
+    description: 'fullAddress',
+    example: '',
+    required: false,
+  })
+  fullAddress?: string;
+
+  @ApiProperty({
+    description: 'addressName',
+    example: '',
+    required: false,
+  })
+  addressName?: string;
+
+  @ApiProperty({
+    description: 'addressWard',
+    example: '',
+    required: false,
+  })
+  addressWard?: string;
+
+  @ApiProperty({
+    description: 'addressDistrict',
+    example: '',
+    required: false,
+  })
+  addressDistrict?: string;
+
+  @ApiProperty({
+    description: 'addressCity',
+    example: '',
+    required: false,
+  })
+  addressCity?: string;
+
+  @ApiProperty({
+    description: 'addressProvince',
+    example: '',
+    required: false,
+  })
+  addressProvince?: string;
+
+  @ApiProperty({
+    description: 'addressCountry',
+    example: '',
+    required: false,
+  })
+  addressCountry?: string;
+
+  @ApiProperty({
+    description: 'addressRegion',
+    example: '',
+    required: false,
+  })
+  addressRegion?: string;
+
+  @ApiProperty({
+    description: 'addressType',
+    example: '',
+    required: false,
+  })
+  addressType?: string;
+}

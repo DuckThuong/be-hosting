@@ -42,6 +42,10 @@ export class ErrorLocationMessage {
   static readonly LOCATION_IN_USE = 'Khu vực đang được sử dụng, không thể xóa.';
   static readonly OWNER_CODE_NOTEMPTY = 'Mã chủ sở hữu không được để trống.';
   static readonly OWNER_CODE_INVALID = 'Mã chủ sở hữu không hợp lệ.';
+  static readonly OWNER_NAME_INVALID = 'Tên chủ sở hữu không hợp lệ.';
+  static readonly OWNER_EMAIL_INVALID = 'Email chủ sở hữu không hợp lệ.';
+  static readonly RENDER_NAME_INVALID = 'Tên người thuê không hợp lệ.';
+  static readonly RENDER_EMAIL_INVALID = 'Email người thuê không hợp lệ.';
   static readonly MIN_TIME_LIMIT_INVALID =
     'Thời gian thuê tối thiểu không hợp lệ.';
   static readonly MAX_TIME_LIMIT_INVALID =
@@ -55,6 +59,7 @@ export class ErrorLocationMessage {
   static readonly LOCATION_RATE_INVALID =
     'Đánh giá khu vực không hợp lệ (từ 0 đến 5).';
   static readonly RENT_STATUS_REQUIRED = 'Trạng thái cho thuê là bắt buộc.';
+  static readonly RENT_STATUS_INVALID = 'Trạng thái cho thuê không hợp lệ.';
 
   static readonly ADDRESS_NOT_FOUND = 'Địa chỉ không tồn tại.';
   static readonly ADDRESS_ALREADY_EXISTS = 'Địa chỉ đã tồn tại.';

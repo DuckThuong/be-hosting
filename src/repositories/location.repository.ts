@@ -1,18 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
 import {
   ErrorLocationMessage,
   SuccessLocationMessage,
 } from '../assests/messages/location.message';
-import { randomString } from '../common/helpers/common.helper';
+import { randomString, validString } from '../common/helpers/common.helper';
 import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
   GetLocationAddressByLocationCodeResponseDto,
+  GetLocationByFillterDto,
   LocationAddressItemDto,
   LocationListDto,
   LocationResponseDto,
@@ -47,6 +48,7 @@ import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
+import { TbUserDefault } from '../entities/user/user_default.entity';
 
 @Injectable()
 export class LocationRepository {
@@ -62,6 +64,9 @@ export class LocationRepository {
 
     @InjectRepository(TbLocationAddress)
     private readonly locationAddress: Repository<TbLocationAddress>,
+
+    @InjectRepository(TbUserDefault)
+    private readonly user: Repository<TbUserDefault>,
   ) {}
 
   public async createLocationType(
@@ -652,6 +657,217 @@ export class LocationRepository {
       .getRawOne<LocationListDto>();
 
     return location as LocationListDto;
+  }
+
+  public async GetLocationByFilter(
+    payload: GetLocationByFillterDto,
+  ): Promise<LocationListDto[]> {
+    const qb = this.location
+      .createQueryBuilder('TL')
+      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .select([
+        'TL.locationCode AS locationCode',
+        'TL.locationName AS locationName',
+        'TL.locationDescription AS locationDescription',
+        'TL.locationNote AS locationNote',
+        'TL.minTimeLimit AS minTime',
+        'TL.maxTimeLimit AS maxTime',
+        'TL.hasRent AS hasRent',
+        'TL.locationRate AS locationRate',
+        'TL.typeCode AS typeCode',
+
+        'TLT.typeName AS typeName',
+        'TLT.typeDescription AS typeDescription',
+        'TLT.typeLogo AS typeLogo',
+        'TLT.typeBackGround AS typeBackGround',
+
+        'TL.ownerCode AS ownerCode',
+        'TUDO.userName AS ownerName',
+        'TUDO.email AS ownerEmail',
+        'TUPO.avatarUrl AS ownerAvatar',
+        'TUPO.coverUrl AS ownerCover',
+        'TUPO.phone AS ownerPhone',
+        'TUPO.fullAddress AS ownerAddress',
+        'TUPO.userCity AS ownerCity',
+
+        'TL.userRentCd AS renterCode',
+        'TUDR.userName AS renterName',
+        'TUDR.email AS renterEmail',
+        'TUPR.avatarUrl AS renterAvatar',
+        'TUPR.coverUrl AS renterCover',
+        'TUPR.phone AS renterPhone',
+        'TUPR.fullAddress AS renterAddress',
+        'TUPR.userCity AS renterCity',
+      ]);
+
+    if (validString(payload.locationName)) {
+      qb.andWhere('TL.locationName LIKE :locationName', {
+        locationName: `%${payload.locationName}%`,
+      });
+    }
+
+    if (validString(payload.locationType)) {
+      qb.andWhere('TL.typeCode LIKE :locationType', {
+        locationType: `%${payload.locationType}%`,
+      });
+    }
+
+    if (validString(payload.typeName)) {
+      const type = await this.locationType.findOneBy({
+        typeName: Like(`%${payload.typeName}%`),
+      });
+      if (type) {
+        qb.andWhere('TL.typeCode LIKE :locationType', {
+          locationType: `%${type.typeCode}%`,
+        });
+      }
+    }
+
+    if (validString(payload.ownerEmail) && validString(payload.ownerName)) {
+      const user = await this.user
+        .createQueryBuilder('u')
+        .where('u.email = :email', { email: payload.ownerEmail })
+        .andWhere('u.username LIKE :username', {
+          username: `%${payload.ownerName}%`,
+        })
+        .getOne();
+
+      if (user) {
+        qb.andWhere('TL.ownerCode LIKE :ownerCode', {
+          ownerCode: `%${user.userCode}%`,
+        });
+      }
+    }
+
+    if (payload.hasRent) {
+      qb.andWhere('TL.hasRent LIKE :hasRent', {
+        hasRent: `%${payload.hasRent}%`,
+      });
+    }
+
+    if (validString(payload.renderEmail) && validString(payload.renderName)) {
+      const user = await this.user
+        .createQueryBuilder('u')
+        .where('u.email = :email', { email: payload.renderEmail })
+        .andWhere('u.username LIKE :username', {
+          username: `%${payload.renderName}%`,
+        })
+        .getOne();
+
+      if (user) {
+        qb.andWhere('TL.userRentCd LIKE :userRentCd', {
+          userRentCd: `%${user.userCode}%`,
+        });
+      }
+    }
+
+    if (payload.locationRate) {
+      qb.andWhere('TL.locationRate LIKE :locationRate', {
+        locationRate: `%${payload.locationRate}%`,
+      });
+    }
+
+    const locationCodes = await this.getLocationCodesByAddress(payload);
+    if (locationCodes && locationCodes.length > 0) {
+      qb.andWhere('TL.locationCode IN (:...locationCodes)', {
+        locationCodes,
+      });
+    }
+    return qb.getRawMany<LocationListDto>();
+  }
+
+  private async getLocationCodesByAddress(
+    payload: GetLocationByFillterDto,
+  ): Promise<string[] | []> {
+    const hasAddressFilter =
+      validString(payload.addressName) ||
+      validString(payload.fullAddress) ||
+      validString(payload.addressWard) ||
+      validString(payload.addressDistrict) ||
+      validString(payload.addressCity) ||
+      validString(payload.addressProvince) ||
+      validString(payload.addressCountry) ||
+      validString(payload.addressRegion) ||
+      validString(payload.addressType) ||
+      (validString(payload.addressLat) && validString(payload.addressLong));
+
+    if (!hasAddressFilter) {
+      return [];
+    }
+
+    const qb = this.locationAddress
+      .createQueryBuilder('TLA')
+      .select('DISTINCT TLA.locationCode', 'locationCode');
+
+    if (validString(payload.addressName)) {
+      qb.andWhere('TLA.addressName LIKE :addressName', {
+        addressName: `%${payload.addressName}%`,
+      });
+    }
+
+    if (validString(payload.fullAddress)) {
+      qb.andWhere('TLA.fullAddress LIKE :fullAddress', {
+        fullAddress: `%${payload.fullAddress}%`,
+      });
+    }
+
+    if (validString(payload.addressWard)) {
+      qb.andWhere('TLA.addressWard LIKE :addressWard', {
+        addressWard: `%${payload.addressWard}%`,
+      });
+    }
+
+    if (validString(payload.addressDistrict)) {
+      qb.andWhere('TLA.addressDistrict LIKE :addressDistrict', {
+        addressDistrict: `%${payload.addressDistrict}%`,
+      });
+    }
+
+    if (validString(payload.addressCity)) {
+      qb.andWhere('TLA.addressCity LIKE :addressCity', {
+        addressCity: `%${payload.addressCity}%`,
+      });
+    }
+
+    if (validString(payload.addressProvince)) {
+      qb.andWhere('TLA.addressProvince LIKE :addressProvince', {
+        addressProvince: `%${payload.addressProvince}%`,
+      });
+    }
+
+    if (validString(payload.addressCountry)) {
+      qb.andWhere('TLA.addressCountry LIKE :addressCountry', {
+        addressCountry: `%${payload.addressCountry}%`,
+      });
+    }
+
+    if (validString(payload.addressRegion)) {
+      qb.andWhere('TLA.addressRegion LIKE :addressRegion', {
+        addressRegion: `%${payload.addressRegion}%`,
+      });
+    }
+
+    if (validString(payload.addressType)) {
+      qb.andWhere('TLA.addressType LIKE :addressType', {
+        addressType: `%${payload.addressType}%`,
+      });
+    }
+
+    if (validString(payload.addressLat) && validString(payload.addressLong)) {
+      qb.andWhere('TLA.addressLat LIKE :addressLat', {
+        addressLat: `%${payload.addressLat}%`,
+      });
+      qb.andWhere('TLA.addressLong LIKE :addressLong', {
+        addressLong: `%${payload.addressLong}%`,
+      });
+    }
+
+    const results = await qb.getRawMany<{ locationCode: string }>();
+    return results.map((r) => r.locationCode);
   }
 
   public async GetLocationServices(

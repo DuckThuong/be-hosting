@@ -7,6 +7,7 @@ import {
   DeleteLocationDto,
   DeleteLocationResponseDto,
   GetLocationAddressByLocationCodePayloadDto,
+  GetLocationByFillterDto,
   LocationListDto,
   LocationResponseDto,
   UpdatelocationPayloadDto,
@@ -843,7 +844,7 @@ export class LocationService {
       if (error instanceof HttpException) {
         throw error;
       }
-      console.error('Error during delete location:', error);
+      console.error('Error during get all location:', error);
       throw new HttpException(
         ErrorLocationMessage.CATCH_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -854,10 +855,31 @@ export class LocationService {
   public async GetLocationByLocationCode(
     payload: GetLocationAddressByLocationCodePayloadDto,
   ): Promise<LocationListDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     try {
       const location = await this.locationRepo.GetLocationByCode(
         payload.locationCode,
       );
+
+      if (!location) {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+          HttpStatus.NOT_FOUND,
+        );
+      }
 
       if (location.locationCode) {
         const service = await this.locationRepo.GetLocationServices(
@@ -877,7 +899,187 @@ export class LocationService {
       if (error instanceof HttpException) {
         throw error;
       }
-      console.error('Error during delete location:', error);
+      console.error('Error during get location by code:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async GetLocationByFilter(
+    payload: GetLocationByFillterDto,
+  ): Promise<LocationListDto[]> {
+    if (payload.locationName && payload.locationName.length > 200) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NAME_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationType && payload.locationType.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.TYPE_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.typeName && payload.typeName.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.TYPE_NAME_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      payload.locationRate !== undefined &&
+      (payload.locationRate < 0 || payload.locationRate > 5)
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_RATE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.ownerName && payload.ownerName.length > 200) {
+      throw new HttpException(
+        ErrorLocationMessage.OWNER_NAME_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.ownerEmail && payload.ownerEmail.length > 200) {
+      throw new HttpException(
+        ErrorLocationMessage.OWNER_EMAIL_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.renderName && payload.renderName.length > 200) {
+      throw new HttpException(
+        ErrorLocationMessage.RENDER_NAME_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.renderEmail && payload.renderEmail.length > 200) {
+      throw new HttpException(
+        ErrorLocationMessage.RENDER_EMAIL_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      payload.hasRent !== undefined &&
+      payload.hasRent !== 0 &&
+      payload.hasRent !== 1
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.RENT_STATUS_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressName && payload.addressName.length > 200) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_NAME_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.fullAddress && payload.fullAddress.length > 500) {
+      throw new HttpException(
+        ErrorLocationMessage.FULL_ADDRESS_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressWard && payload.addressWard.length > 100) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_WARD_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressDistrict && payload.addressDistrict.length > 100) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_DISTRICT_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressCity && payload.addressCity.length > 100) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_CITY_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressProvince && payload.addressProvince.length > 100) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_PROVINCE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressCountry && payload.addressCountry.length > 100) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_COUNTRY_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressRegion && payload.addressRegion.length > 100) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_REGION_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressType && payload.addressType.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressLat && payload.addressLat.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_LAT_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.addressLong && payload.addressLong.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.ADDRESS_LONG_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      const result = await this.locationRepo.GetLocationByFilter(payload);
+      for (const item of result) {
+        if (item.locationCode) {
+          const service = await this.locationRepo.GetLocationServices(
+            item.locationCode,
+          );
+          item.services = service;
+
+          const address =
+            await this.locationRepo.GetLocationAddressByLocationCode(
+              item.locationCode,
+            );
+
+          item.address = address.data;
+        }
+      }
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get location by filter:', error);
       throw new HttpException(
         ErrorLocationMessage.CATCH_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,

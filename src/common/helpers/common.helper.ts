@@ -7,3 +7,11 @@ export const randomString = () => {
   }
   return result;
 };
+
+export const validString = (value?: string) => {
+  if (!value) {
+    return false;
+  } else if (value.trim() === '') {
+    return false;
+  } else return true;
+};

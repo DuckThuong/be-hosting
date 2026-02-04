@@ -5,6 +5,7 @@ import {
   Get,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -14,6 +15,7 @@ import {
   DeleteLocationDto,
   DeleteLocationResponseDto,
   GetLocationAddressByLocationCodePayloadDto,
+  GetLocationByFillterDto,
   LocationListDto,
   LocationResponseDto,
   UpdatelocationPayloadDto,
@@ -137,8 +139,16 @@ export class LocationController {
   @ApiOperation({ summary: 'Lấy địa điểm theo code' })
   @Get('get-location-by-code')
   public async getLocationByCode(
-    @Body() payload: GetLocationAddressByLocationCodePayloadDto,
+    @Query() payload: GetLocationAddressByLocationCodePayloadDto,
   ): Promise<LocationListDto> {
     return this.locationService.GetLocationByLocationCode(payload);
+  }
+
+  @ApiOperation({ summary: 'Lấy địa điểm theo điều kiện' })
+  @Get('get-location-by-filter')
+  public async getLocationByFilter(
+    @Query() payload: GetLocationByFillterDto,
+  ): Promise<LocationListDto[]> {
+    return this.locationService.GetLocationByFilter(payload);
   }
 }
