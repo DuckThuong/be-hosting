@@ -1,11 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { TbUserDefault } from './user_default.entity';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('tb_user_profile')
 export class TbUserProfile {
@@ -14,9 +7,11 @@ export class TbUserProfile {
   })
   id: number;
 
-  @OneToOne(() => TbUserDefault, { eager: true })
-  @JoinColumn({ name: 'user_id' })
-  user: TbUserDefault;
+  @Column({
+    type: 'int',
+    comment: 'User id',
+  })
+  user_id: number;
 
   @Column({
     type: 'varchar',
