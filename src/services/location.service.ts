@@ -6,6 +6,7 @@ import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  GetLocationAddressByLocationCodePayloadDto,
   LocationListDto,
   LocationResponseDto,
   UpdatelocationPayloadDto,
@@ -836,6 +837,40 @@ export class LocationService {
 
           item.address = address.data;
         }
+      }
+      return location;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during delete location:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async GetLocationByLocationCode(
+    payload: GetLocationAddressByLocationCodePayloadDto,
+  ): Promise<LocationListDto> {
+    try {
+      const location = await this.locationRepo.GetLocationByCode(
+        payload.locationCode,
+      );
+
+      if (location.locationCode) {
+        const service = await this.locationRepo.GetLocationServices(
+          location.locationCode,
+        );
+        location.services = service;
+
+        const address =
+          await this.locationRepo.GetLocationAddressByLocationCode(
+            location.locationCode,
+          );
+
+        location.address = address.data;
       }
       return location;
     } catch (error) {

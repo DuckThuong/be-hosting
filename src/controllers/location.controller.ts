@@ -13,6 +13,7 @@ import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  GetLocationAddressByLocationCodePayloadDto,
   LocationListDto,
   LocationResponseDto,
   UpdatelocationPayloadDto,
@@ -131,5 +132,13 @@ export class LocationController {
   @Get('get-all-location')
   public async getAllLocation(): Promise<LocationListDto[]> {
     return this.locationService.GetAllLocation();
+  }
+
+  @ApiOperation({ summary: 'Lấy địa điểm theo code' })
+  @Get('get-location-by-code')
+  public async getLocationByCode(
+    @Body() payload: GetLocationAddressByLocationCodePayloadDto,
+  ): Promise<LocationListDto> {
+    return this.locationService.GetLocationByLocationCode(payload);
   }
 }
