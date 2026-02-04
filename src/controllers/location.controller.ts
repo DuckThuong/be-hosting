@@ -5,6 +5,7 @@ import {
   Get,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -13,11 +14,15 @@ import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  GetLocationAddressByLocationCodePayloadDto,
+  GetLocationByFillterDto,
+  LocationListDto,
   LocationResponseDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
 } from '../dtos/location/location.dto';
+import { DeleteLocationAddressesDto } from '../dtos/location/locationAddress.dto';
 import {
   AddLocationServicePayload,
   LocationServiceResponse,
@@ -115,5 +120,35 @@ export class LocationController {
     @Body() payload: UpdateRentStatusDto,
   ): Promise<UpdateRentStatusResponseDto> {
     return this.locationService.UpdateRentStatus(payload);
+  }
+
+  @ApiOperation({ summary: 'Xóa địa điểm' })
+  @Delete('delete-location-address')
+  public async deleteLocationAdress(
+    @Body() payload: DeleteLocationAddressesDto,
+  ): Promise<DeleteLocationResponseDto> {
+    return this.locationService.DeleteLocationAddressByCode(payload);
+  }
+
+  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm' })
+  @Get('get-all-location')
+  public async getAllLocation(): Promise<LocationListDto[]> {
+    return this.locationService.GetAllLocation();
+  }
+
+  @ApiOperation({ summary: 'Lấy địa điểm theo code' })
+  @Get('get-location-by-code')
+  public async getLocationByCode(
+    @Query() payload: GetLocationAddressByLocationCodePayloadDto,
+  ): Promise<LocationListDto> {
+    return this.locationService.GetLocationByLocationCode(payload);
+  }
+
+  @ApiOperation({ summary: 'Lấy địa điểm theo điều kiện' })
+  @Get('get-location-by-filter')
+  public async getLocationByFilter(
+    @Query() payload: GetLocationByFillterDto,
+  ): Promise<LocationListDto[]> {
+    return this.locationService.GetLocationByFilter(payload);
   }
 }

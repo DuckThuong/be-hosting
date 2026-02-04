@@ -9,6 +9,8 @@ import { LocationModule } from './modules/location.module';
 import { TbLocation } from './entities/location/location.entity';
 import { TbLocationService } from './entities/location/locationService.entity';
 import { TbLocationType } from './entities/location/locationType.entity';
+import { UserModule } from './modules/user.module';
+import { TbUserProfile } from './entities/user/user_profile.entity';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { TbLocationType } from './entities/location/locationType.entity';
       logging: process.env.TYPEORM_LOGGING === 'true',
       entities: [
         TbUserDefault,
+        TbUserProfile,
         TbService,
         TbLocation,
         TbLocationService,
@@ -42,6 +45,7 @@ import { TbLocationType } from './entities/location/locationType.entity';
     AuthModule,
     ServiceModule,
     LocationModule,
+    UserModule,
   ],
   controllers: [],
   providers: [],

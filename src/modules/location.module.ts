@@ -7,6 +7,7 @@ import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationRepository } from '../repositories/location.repository';
 import { LocationService } from '../services/location.service';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
+import { TbUserDefault } from '../entities/user/user_default.entity';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TbLocationAddress } from '../entities/location/locationAddress.entity';
       TbLocationType,
       TbLocationAddress,
       TbLocationService,
+      TbUserDefault,
     ]),
   ],
   providers: [LocationService, LocationRepository],

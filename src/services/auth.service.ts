@@ -98,7 +98,6 @@ export class AuthService {
         userCode: user.userCode,
         username: user.username,
         email: user.email,
-        phone: user.phone,
         fullName: user.fullName,
         dateOfBirth: user.dateOfBirth,
         status: user.status,
