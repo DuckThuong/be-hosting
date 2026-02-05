@@ -447,7 +447,7 @@ export class LocationRepository {
       locationDescription: payload.locationDescription,
       locationNote: payload.locationNote,
       locationStatus: payload.locationStatus,
-      locationRate: payload.locationRate,
+      locationRate: payload.locationRate || 0,
     });
 
     const savedLocation = await this.location.save(location);
