@@ -33,6 +33,7 @@ import {
   DeleteLocationAddressResponseDto,
   UpdateLocationAddressPayloadDto,
 } from '../dtos/location/locationAddress.dto';
+import { validString } from '../common/helpers/common.helper';
 
 @Injectable()
 export class LocationService {
@@ -361,14 +362,14 @@ export class LocationService {
       );
     }
 
-    if (payload.minTimeLimit !== undefined && payload.minTimeLimit < 0) {
+    if (payload.minTimeLimit !== undefined) {
       throw new HttpException(
         ErrorLocationMessage.MIN_TIME_LIMIT_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    if (payload.maxTimeLimit !== undefined && payload.maxTimeLimit < 0) {
+    if (payload.maxTimeLimit !== undefined) {
       throw new HttpException(
         ErrorLocationMessage.MAX_TIME_LIMIT_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
@@ -563,20 +564,14 @@ export class LocationService {
     }
 
     // Validate time limits
-    if (
-      payload.data.minTimeLimit !== undefined &&
-      payload.data.minTimeLimit < 0
-    ) {
+    if (validString(payload.data.minTimeLimit)) {
       throw new HttpException(
         ErrorLocationMessage.MIN_TIME_LIMIT_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    if (
-      payload.data.maxTimeLimit !== undefined &&
-      payload.data.maxTimeLimit < 0
-    ) {
+    if (validString(payload.data.maxTimeLimit)) {
       throw new HttpException(
         ErrorLocationMessage.MAX_TIME_LIMIT_INVALID.toString(),
         HttpStatus.BAD_REQUEST,

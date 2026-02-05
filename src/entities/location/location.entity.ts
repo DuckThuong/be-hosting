@@ -20,10 +20,10 @@ export class TbLocation {
   locationCode: string;
 
   @Column({ type: 'int', unique: false, nullable: true })
-  minTimeLimit: number;
+  minTimeLimit: string;
 
   @Column({ type: 'int', unique: false, nullable: true })
-  maxTimeLimit: number;
+  maxTimeLimit: string;
 
   @Column({ type: 'int', unique: false, nullable: true })
   hasRent: number;

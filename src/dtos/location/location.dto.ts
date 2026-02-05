@@ -62,22 +62,22 @@ export class CreateLocationDto {
   locationCode: string;
 
   @ApiProperty({
-    description: 'Giới hạn thời gian tối thiểu (phút)',
+    description: 'Giới hạn thời gian tối thiểu ',
     example: 30,
     required: false,
   })
   @IsOptional()
   @IsInt()
-  minTimeLimit?: number;
+  minTimeLimit?: string;
 
   @ApiProperty({
-    description: 'Giới hạn thời gian tối đa (phút)',
+    description: 'Giới hạn thời gian tối đa ',
     example: 120,
     required: false,
   })
   @IsOptional()
   @IsInt()
-  maxTimeLimit?: number;
+  maxTimeLimit?: string;
 
   @ApiProperty({
     description: 'Trạng thái cho thuê (0: Không, 1: Có)',
@@ -179,22 +179,22 @@ export class UpdateLocationDto {
   locationName: string;
 
   @ApiProperty({
-    description: 'Giới hạn thời gian tối thiểu (phút)',
+    description: 'Giới hạn thời gian tối thiểu ',
     example: 30,
     required: false,
   })
   @IsOptional()
   @IsInt()
-  minTimeLimit?: number;
+  minTimeLimit?: string;
 
   @ApiProperty({
-    description: 'Giới hạn thời gian tối đa (phút)',
+    description: 'Giới hạn thời gian tối đa ',
     example: 120,
     required: false,
   })
   @IsOptional()
   @IsInt()
-  maxTimeLimit?: number;
+  maxTimeLimit?: string;
 
   @ApiProperty({
     description: 'Trạng thái cho thuê (0: Không, 1: Có)',
