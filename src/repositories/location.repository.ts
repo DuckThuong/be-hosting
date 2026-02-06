@@ -243,7 +243,7 @@ export class LocationRepository {
           addressLat: addressData.addressLat,
           addressLong: addressData.addressLong,
           addressRegion: addressData.addressRegion,
-          addressStatus: addressData.addressStatus,
+          addressStatus: ADDRESS_STATUS.ACTIVE.toString(),
           addressDescription: addressData.addressDescription ?? '',
           addressNote: addressData.addressNote ?? '',
           addressType:
@@ -313,7 +313,7 @@ export class LocationRepository {
             addressLat: address.addressLat,
             addressLong: address.addressLong,
             addressRegion: address.addressRegion,
-            addressStatus: ADDRESS_STATUS.ACTIVE,
+            addressStatus: ADDRESS_STATUS.ACTIVE.toString(),
             addressDescription: address.addressDescription ?? '',
             addressNote: address.addressNote ?? '',
             addressType:
