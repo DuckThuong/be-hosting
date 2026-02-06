@@ -36,6 +36,7 @@ import {
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
 import { User } from '../user.decorator';
+import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 
 @Controller('location')
 @UseGuards(JwtAuthGuard)
@@ -134,6 +135,24 @@ export class LocationController {
   @Get('get-all-location')
   public async getAllLocation(): Promise<LocationListDto[]> {
     return this.locationService.GetAllLocation();
+  }
+
+  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm' })
+  @Get('get-all-location-on-owner')
+  public async getAllLocationOnOwner(@User() user): Promise<LocationListDto[]> {
+    return this.locationService.GetAllLocationOnOwner(
+      user as UserDecoratorDtoResponse,
+    );
+  }
+
+  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm' })
+  @Get('get-all-location')
+  public async getAllLocationOnRenter(
+    @User() user,
+  ): Promise<LocationListDto[]> {
+    return this.locationService.GetAllLocationOnRenter(
+      user as UserDecoratorDtoResponse,
+    );
   }
 
   @ApiOperation({ summary: 'Lấy địa điểm theo code' })

@@ -11,3 +11,13 @@ export const LOCATION_RENT_STATUS = {
   HAS_RENT: 1,
   READY: 0,
 };
+
+export const ADDRESS_TYPE = {
+  MAIN_ADDRESS: 1,
+  SUB_ADDRESS: 2,
+};
+
+export const ADDRESS_STATUS = {
+  ACTIVE: 0,
+  IN_ACTIVE: 1,
+};

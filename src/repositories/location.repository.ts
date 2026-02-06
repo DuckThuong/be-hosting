@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Like, Repository } from 'typeorm';
-import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
+import {
+  ADDRESS_STATUS,
+  ADDRESS_TYPE,
+  LOCATION_RENT_STATUS,
+} from '../assests/constants/constants';
 import {
   ErrorLocationMessage,
   SuccessLocationMessage,
@@ -44,6 +48,7 @@ import {
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
+import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
@@ -219,6 +224,9 @@ export class LocationRepository {
 
     try {
       const savedAddresses: LocationAddressDto[] = [];
+      const addressLength = await this.locationAddress.findBy({
+        locationCode: payload.locationCode,
+      });
 
       for (const addressData of payload.data) {
         const newAddress = this.locationAddress.create({
@@ -235,10 +243,13 @@ export class LocationRepository {
           addressLat: addressData.addressLat,
           addressLong: addressData.addressLong,
           addressRegion: addressData.addressRegion,
-          addressStatus: addressData.addressStatus,
+          addressStatus: ADDRESS_STATUS.ACTIVE.toString(),
           addressDescription: addressData.addressDescription ?? '',
           addressNote: addressData.addressNote ?? '',
-          addressType: addressData.addressType,
+          addressType:
+            addressLength.length === 0
+              ? ADDRESS_TYPE.MAIN_ADDRESS.toString()
+              : ADDRESS_TYPE.SUB_ADDRESS.toString(),
         });
 
         const savedAddress = await queryRunner.manager.save(newAddress);
@@ -275,7 +286,9 @@ export class LocationRepository {
 
     try {
       const updatedAddresses: any[] = [];
-
+      const addressLength = await this.locationAddress.findBy({
+        locationCode: payload.locationCode,
+      });
       for (const address of payload.data) {
         const existingAddress = await queryRunner.manager.findOneBy(
           TbLocationAddress,
@@ -300,10 +313,13 @@ export class LocationRepository {
             addressLat: address.addressLat,
             addressLong: address.addressLong,
             addressRegion: address.addressRegion,
-            addressStatus: address.addressStatus,
+            addressStatus: ADDRESS_STATUS.ACTIVE.toString(),
             addressDescription: address.addressDescription ?? '',
             addressNote: address.addressNote ?? '',
-            addressType: address.addressType,
+            addressType:
+              addressLength.length === 0
+                ? ADDRESS_TYPE.MAIN_ADDRESS.toString()
+                : ADDRESS_TYPE.SUB_ADDRESS.toString(),
           });
 
           const savedAddress = await queryRunner.manager.save(newAddress);
@@ -353,8 +369,10 @@ export class LocationRepository {
           if (address.addressNote !== undefined) {
             updateData.addressNote = address.addressNote;
           }
-          if (address.addressType !== undefined) {
-            updateData.addressType = address.addressType;
+          if (addressLength.length === 0) {
+            updateData.addressType = ADDRESS_TYPE.MAIN_ADDRESS.toString();
+          } else {
+            updateData.addressType = ADDRESS_TYPE.SUB_ADDRESS.toString();
           }
 
           const updatedEntity = queryRunner.manager.merge(
@@ -447,7 +465,7 @@ export class LocationRepository {
       locationDescription: payload.locationDescription,
       locationNote: payload.locationNote,
       locationStatus: payload.locationStatus,
-      locationRate: payload.locationRate,
+      locationRate: payload.locationRate || 0,
     });
 
     const savedLocation = await this.location.save(location);
@@ -609,6 +627,96 @@ export class LocationRepository {
       .addSelect('TUPR.phone', 'renterPhone')
       .addSelect('TUPR.fullAddress', 'renterAddress')
       .addSelect('TUPR.userCity', 'renterCity')
+      .getRawMany<LocationListDto>();
+
+    return locations;
+  }
+
+  public async GetAllLocationOnUserOwner(
+    user: UserDecoratorDtoResponse,
+  ): Promise<LocationListDto[]> {
+    const locations = await this.location
+      .createQueryBuilder('TL')
+      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .select('TL.locationCode', 'locationCode')
+      .addSelect('TL.locationName', 'locationName')
+      .addSelect('TL.locationDescription', 'locationDescription')
+      .addSelect('TL.locationNote', 'locationNote')
+      .addSelect('TL.minTimeLimit', 'minTime')
+      .addSelect('TL.maxTimeLimit', 'maxTime')
+      .addSelect('TL.hasRent', 'hasRent')
+      .addSelect('TL.locationRate', 'locationRate')
+      .addSelect('TL.typeCode', 'typeCode')
+      .addSelect('TLT.typeName', 'typeName')
+      .addSelect('TLT.typeDescription', 'typeDescription')
+      .addSelect('TLT.typeLogo', 'typeLogo')
+      .addSelect('TLT.typeBackGround', 'typeBackGround')
+      .addSelect('TL.ownerCode', 'ownerCode')
+      .addSelect('TUDO.userName', 'ownerName')
+      .addSelect('TUDO.email', 'ownerEmail')
+      .addSelect('TUPO.avatarUrl', 'ownerAvatar')
+      .addSelect('TUPO.coverUrl', 'ownerCover')
+      .addSelect('TUPO.phone', 'ownerPhone')
+      .addSelect('TUPO.fullAddress', 'ownerAddress')
+      .addSelect('TUPO.userCity', 'ownerCity')
+      .addSelect('TL.userRentCd', 'renterCode')
+      .addSelect('TUDR.userName', 'renterName')
+      .addSelect('TUDR.email', 'renterEmail')
+      .addSelect('TUPR.avatarUrl', 'renterAvatar')
+      .addSelect('TUPR.coverUrl', 'renterCover')
+      .addSelect('TUPR.phone', 'renterPhone')
+      .addSelect('TUPR.fullAddress', 'renterAddress')
+      .addSelect('TUPR.userCity', 'renterCity')
+      .where('TL.ownerCode = :ownerCode', { ownerCode: user.userCode })
+      .getRawMany<LocationListDto>();
+
+    return locations;
+  }
+
+  public async GetAllLocationOnUserRenter(
+    user: UserDecoratorDtoResponse,
+  ): Promise<LocationListDto[]> {
+    const locations = await this.location
+      .createQueryBuilder('TL')
+      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .select('TL.locationCode', 'locationCode')
+      .addSelect('TL.locationName', 'locationName')
+      .addSelect('TL.locationDescription', 'locationDescription')
+      .addSelect('TL.locationNote', 'locationNote')
+      .addSelect('TL.minTimeLimit', 'minTime')
+      .addSelect('TL.maxTimeLimit', 'maxTime')
+      .addSelect('TL.hasRent', 'hasRent')
+      .addSelect('TL.locationRate', 'locationRate')
+      .addSelect('TL.typeCode', 'typeCode')
+      .addSelect('TLT.typeName', 'typeName')
+      .addSelect('TLT.typeDescription', 'typeDescription')
+      .addSelect('TLT.typeLogo', 'typeLogo')
+      .addSelect('TLT.typeBackGround', 'typeBackGround')
+      .addSelect('TL.ownerCode', 'ownerCode')
+      .addSelect('TUDO.userName', 'ownerName')
+      .addSelect('TUDO.email', 'ownerEmail')
+      .addSelect('TUPO.avatarUrl', 'ownerAvatar')
+      .addSelect('TUPO.coverUrl', 'ownerCover')
+      .addSelect('TUPO.phone', 'ownerPhone')
+      .addSelect('TUPO.fullAddress', 'ownerAddress')
+      .addSelect('TUPO.userCity', 'ownerCity')
+      .addSelect('TL.userRentCd', 'renterCode')
+      .addSelect('TUDR.userName', 'renterName')
+      .addSelect('TUDR.email', 'renterEmail')
+      .addSelect('TUPR.avatarUrl', 'renterAvatar')
+      .addSelect('TUPR.coverUrl', 'renterCover')
+      .addSelect('TUPR.phone', 'renterPhone')
+      .addSelect('TUPR.fullAddress', 'renterAddress')
+      .addSelect('TUPR.userCity', 'renterCity')
+      .where('TL.userRentCd = :userRentCd', { userRentCd: user.userCode })
       .getRawMany<LocationListDto>();
 
     return locations;
