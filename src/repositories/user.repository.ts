@@ -29,7 +29,6 @@ export class UserRepository {
     const mergeData = this.userDefault.merge(userData as TbUserDefault, {
       username: payload.data?.userName || userData?.username,
       fullName: payload.data?.fullName || userData?.fullName,
-      dateOfBirth: payload.data?.dateOfBirth || userData?.dateOfBirth,
     });
 
     const updatedData = await this.userDefault.save(mergeData);
@@ -59,6 +58,7 @@ export class UserRepository {
         userDescription:
           payload.data?.userDescription || userProfileData?.userDescription,
         userNote: payload.data?.userNote || userProfileData?.userNote,
+        dateOfBirth: payload.data?.dateOfBirth || userProfileData?.dateOfBirth,
       },
     );
 

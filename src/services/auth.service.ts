@@ -99,7 +99,6 @@ export class AuthService {
         username: user.username,
         email: user.email,
         fullName: user.fullName,
-        dateOfBirth: user.dateOfBirth,
         status: user.status,
         role: user.role,
         isEmailVerified: user.isEmailVerified,
