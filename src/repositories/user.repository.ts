@@ -80,10 +80,10 @@ export class UserRepository {
         'TUD.username AS username',
         'TUD.email AS email',
         'TUD.fullName AS fullName',
-        'TUD.dateOfBirth AS dateOfBirth',
         'TUD.role AS role',
         'TUD.isEmailVerified AS isEmailVerified',
 
+        'TUP.dateOfBirth AS dateOfBirth',
         'TUP.avatarUrl AS avatarUrl',
         'TUP.coverUrl AS coverUrl',
         'TUP.BIO AS bio',
