@@ -46,13 +46,6 @@ export class TbUserDefault {
   fullName?: string;
 
   @Column({
-    type: 'date',
-    nullable: true,
-    comment: 'Date of birth',
-  })
-  dateOfBirth?: Date;
-
-  @Column({
     type: 'enum',
     enum: UserStatus,
     default: UserStatus.ACTIVE,

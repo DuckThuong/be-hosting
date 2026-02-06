@@ -37,6 +37,13 @@ export class TbUserProfile {
   bio?: string;
 
   @Column({
+    type: 'date',
+    nullable: true,
+    comment: 'Date of birth',
+  })
+  dateOfBirth?: Date;
+
+  @Column({
     type: 'varchar',
     length: 20,
     nullable: true,
