@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Like, Repository } from 'typeorm';
 import {
+  ADDRESS_STATUS,
   ADDRESS_TYPE,
   LOCATION_RENT_STATUS,
 } from '../assests/constants/constants';
@@ -312,7 +313,7 @@ export class LocationRepository {
             addressLat: address.addressLat,
             addressLong: address.addressLong,
             addressRegion: address.addressRegion,
-            addressStatus: address.addressStatus,
+            addressStatus: ADDRESS_STATUS.ACTIVE,
             addressDescription: address.addressDescription ?? '',
             addressNote: address.addressNote ?? '',
             addressType:
