@@ -847,6 +847,74 @@ export class LocationService {
     }
   }
 
+  public async GetAllLocationOnOwner(
+    user: UserDecoratorDtoResponse,
+  ): Promise<LocationListDto[]> {
+    try {
+      const location = await this.locationRepo.GetAllLocationOnUserOwner(user);
+
+      for (const item of location) {
+        if (item.locationCode) {
+          const service = await this.locationRepo.GetLocationServices(
+            item.locationCode,
+          );
+          item.services = service;
+
+          const address =
+            await this.locationRepo.GetLocationAddressByLocationCode(
+              item.locationCode,
+            );
+
+          item.address = address.data;
+        }
+      }
+      return location;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get all location:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async GetAllLocationOnRenter(
+    user: UserDecoratorDtoResponse,
+  ): Promise<LocationListDto[]> {
+    try {
+      const location = await this.locationRepo.GetAllLocationOnUserRenter(user);
+
+      for (const item of location) {
+        if (item.locationCode) {
+          const service = await this.locationRepo.GetLocationServices(
+            item.locationCode,
+          );
+          item.services = service;
+
+          const address =
+            await this.locationRepo.GetLocationAddressByLocationCode(
+              item.locationCode,
+            );
+
+          item.address = address.data;
+        }
+      }
+      return location;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get all location:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   public async GetLocationByLocationCode(
     payload: GetLocationAddressByLocationCodePayloadDto,
   ): Promise<LocationListDto> {
