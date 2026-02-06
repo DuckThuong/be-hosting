@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Like, Repository } from 'typeorm';
-import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
+import {
+  ADDRESS_TYPE,
+  LOCATION_RENT_STATUS,
+} from '../assests/constants/constants';
 import {
   ErrorLocationMessage,
   SuccessLocationMessage,
@@ -44,12 +47,12 @@ import {
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
+import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { TbUserDefault } from '../entities/user/user_default.entity';
-import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 
 @Injectable()
 export class LocationRepository {
@@ -220,6 +223,9 @@ export class LocationRepository {
 
     try {
       const savedAddresses: LocationAddressDto[] = [];
+      const addressLength = await this.locationAddress.findBy({
+        locationCode: payload.locationCode,
+      });
 
       for (const addressData of payload.data) {
         const newAddress = this.locationAddress.create({
@@ -239,7 +245,10 @@ export class LocationRepository {
           addressStatus: addressData.addressStatus,
           addressDescription: addressData.addressDescription ?? '',
           addressNote: addressData.addressNote ?? '',
-          addressType: addressData.addressType,
+          addressType:
+            addressLength.length === 0
+              ? ADDRESS_TYPE.MAIN_ADDRESS.toString()
+              : ADDRESS_TYPE.SUB_ADDRESS.toString(),
         });
 
         const savedAddress = await queryRunner.manager.save(newAddress);
@@ -276,7 +285,9 @@ export class LocationRepository {
 
     try {
       const updatedAddresses: any[] = [];
-
+      const addressLength = await this.locationAddress.findBy({
+        locationCode: payload.locationCode,
+      });
       for (const address of payload.data) {
         const existingAddress = await queryRunner.manager.findOneBy(
           TbLocationAddress,
@@ -304,7 +315,10 @@ export class LocationRepository {
             addressStatus: address.addressStatus,
             addressDescription: address.addressDescription ?? '',
             addressNote: address.addressNote ?? '',
-            addressType: address.addressType,
+            addressType:
+              addressLength.length === 0
+                ? ADDRESS_TYPE.MAIN_ADDRESS.toString()
+                : ADDRESS_TYPE.SUB_ADDRESS.toString(),
           });
 
           const savedAddress = await queryRunner.manager.save(newAddress);
@@ -354,8 +368,10 @@ export class LocationRepository {
           if (address.addressNote !== undefined) {
             updateData.addressNote = address.addressNote;
           }
-          if (address.addressType !== undefined) {
-            updateData.addressType = address.addressType;
+          if (addressLength.length === 0) {
+            updateData.addressType = ADDRESS_TYPE.MAIN_ADDRESS.toString();
+          } else {
+            updateData.addressType = ADDRESS_TYPE.SUB_ADDRESS.toString();
           }
 
           const updatedEntity = queryRunner.manager.merge(
