@@ -13,6 +13,9 @@ export class TbLocation {
   @Column({ type: 'varchar', length: 100, unique: false })
   locationName: string;
 
+  @Column({ type: 'varchar', length: 250, unique: false })
+  locationLogo: string;
+
   @Column({ type: 'varchar', length: 100, unique: false })
   ownerCode: string;
 

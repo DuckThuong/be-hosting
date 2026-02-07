@@ -48,6 +48,17 @@ export class CreateLocationDto {
   @MaxLength(100)
   locationName: string;
 
+  @ApiProperty({
+    description: 'Ảnh',
+    example: 'Kho A - Tầng 1',
+    required: true,
+    maxLength: 100,
+  })
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(255)
+  locationLogo: string;
+
   ownerCode: string;
 
   @ApiProperty({

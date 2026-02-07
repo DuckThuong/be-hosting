@@ -457,6 +457,7 @@ export class LocationRepository {
       locationCode: randomString(),
       typeCode: payload.typeCode,
       locationName: payload.locationName,
+      locationLogo: payload.locationLogo,
       ownerCode: payload.ownerCode,
       locationPriceStart: payload.locationPriceStart,
       locationPriceEnd: payload.locationPriceEnd,
