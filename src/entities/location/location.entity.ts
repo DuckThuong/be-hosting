@@ -25,6 +25,15 @@ export class TbLocation {
   @Column({ type: 'int', unique: false, nullable: true })
   maxTimeLimit: string;
 
+  @Column({ type: 'decimal', unique: false, nullable: true })
+  locationPriceStart: number;
+
+  @Column({ type: 'decimal', unique: false, nullable: true })
+  locationPriceEnd: number;
+
+  @Column({ type: 'decimal', unique: false, nullable: true })
+  locationPriceAfterDeal: number;
+
   @Column({ type: 'int', unique: false, nullable: true })
   hasRent: number;
 

@@ -80,6 +80,31 @@ export class CreateLocationDto {
   maxTimeLimit?: string;
 
   @ApiProperty({
+    description: 'Giá bắt đầu',
+    example: 30,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  locationPriceStart?: number;
+
+  @ApiProperty({
+    description: 'Giá cuối',
+    example: 30,
+    required: false,
+  })
+  @IsInt()
+  locationPriceEnd?: number;
+
+  @ApiProperty({
+    description: 'Giá sau thương lượng',
+    example: 30,
+    required: false,
+  })
+  @IsInt()
+  locationPriceAfterDeal?: number;
+
+  @ApiProperty({
     description: 'Trạng thái cho thuê (0: Không, 1: Có)',
     example: 1,
     required: false,
@@ -177,6 +202,31 @@ export class UpdateLocationDto {
   @IsString()
   @MaxLength(100)
   locationName: string;
+
+  @ApiProperty({
+    description: 'Giá bắt đầu',
+    example: 30,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  locationPriceStart?: number;
+
+  @ApiProperty({
+    description: 'Giá cuối',
+    example: 30,
+    required: false,
+  })
+  @IsInt()
+  locationPriceEnd?: number;
+
+  @ApiProperty({
+    description: 'Giá sau thương lượng',
+    example: 30,
+    required: false,
+  })
+  @IsInt()
+  locationPriceAfterDeal?: number;
 
   @ApiProperty({
     description: 'Giới hạn thời gian tối thiểu ',
