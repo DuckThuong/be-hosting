@@ -21,3 +21,5 @@ export const ADDRESS_STATUS = {
   ACTIVE: 0,
   IN_ACTIVE: 1,
 };
+
+export const RESOURCE_TYPE = 'auto';

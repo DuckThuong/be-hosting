@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupSwagger } from './swagger.config';
+import 'dotenv/config';
 
 declare const module: {
   hot?: {
