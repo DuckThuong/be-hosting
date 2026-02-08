@@ -1,15 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
-  IsOptional,
-  IsNotEmpty,
-  ValidateNested,
   IsDateString,
+  IsOptional,
+  IsString,
   IsUrl,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 export class UserDecoratorDtoResponse {
   id: number;
   userCode: string;
@@ -37,95 +34,174 @@ export enum UserRole {
 }
 
 export class UserProfileInformationDto {
+  @ApiProperty({
+    description: 'userName',
+    example: 'john_doe_2024',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MinLength(3)
   @MaxLength(50)
   userName?: string;
 
+  @ApiProperty({
+    description: 'Full name of the user',
+    example: 'Nguyễn Văn A',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   fullName?: string;
 
+  @ApiProperty({
+    description: 'Date of birth',
+    example: '1990-01-15',
+    required: false,
+  })
   @IsOptional()
   @IsDateString()
   dateOfBirth?: string;
 
+  @ApiProperty({
+    description: 'Avatar URL',
+    example: 'https://example.com/avatar.jpg',
+    required: false,
+  })
   @IsOptional()
   @IsUrl()
-  avartar?: string;
+  avatarUrl?: string;
 
+  @ApiProperty({
+    description: 'Cover image URL',
+    example: 'https://example.com/cover.jpg',
+    required: false,
+  })
   @IsOptional()
   @IsUrl()
   coverUrl?: string;
 
+  @ApiProperty({
+    description: 'User biography',
+    example: 'Software developer passionate about web technologies',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   bio?: string;
 
+  @ApiProperty({
+    description: 'Phone number',
+    example: '+84901234567',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   phone?: string;
 
+  @ApiProperty({
+    description: 'Full address',
+    example: '123 Nguyễn Huệ, Phường Bến Nghé',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(200)
   fullAddress?: string;
 
+  @ApiProperty({
+    description: 'Ward/Commune',
+    example: 'Phường Bến Nghé',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   userWard?: string;
 
+  @ApiProperty({
+    description: 'District',
+    example: 'Quận 1',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   userDistrict?: string;
 
+  @ApiProperty({
+    description: 'City',
+    example: 'Thành phố Hồ Chí Minh',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   userCity?: string;
 
+  @ApiProperty({
+    description: 'Province',
+    example: 'Hồ Chí Minh',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   userProvince?: string;
 
+  @ApiProperty({
+    description: 'Country',
+    example: 'Vietnam',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   userCountry?: string;
 
+  @ApiProperty({
+    description: 'Postal code',
+    example: '700000',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   userPortal?: string;
 
+  @ApiProperty({
+    description: 'Latitude coordinate',
+    example: '10.762622',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   userLat?: string;
 
+  @ApiProperty({
+    description: 'Longitude coordinate',
+    example: '106.660172',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   userLong?: string;
 
+  @ApiProperty({
+    description: 'User description',
+    example: 'Experienced developer with 5+ years in NestJS and TypeScript',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(1000)
   userDescription?: string;
 
+  @ApiProperty({
+    description: 'Additional notes',
+    example: 'Prefer communication via email',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   userNote?: string;
-}
-
-export class UpdateUserProfileInformationPayload {
-  @IsNotEmpty()
-  @IsString()
-  userCode: string;
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UserProfileInformationDto)
-  data?: UserProfileInformationDto;
 }
 
 export class UserResponseDto {
@@ -158,11 +234,11 @@ export class UserResponseDto {
   dateOfBirth?: string;
 
   @ApiProperty({
-    description: 'avartar',
+    description: 'avatarUrl',
     example: '',
     required: false,
   })
-  avartar?: string;
+  avatarUrl?: string;
 
   @ApiProperty({
     description: 'coverUrl',

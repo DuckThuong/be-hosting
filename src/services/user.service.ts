@@ -1,9 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ErrorUserMessage } from '../assests/messages/user.message';
-import { validString } from '../common/helpers/common.helper';
 import {
-  UpdateUserProfileInformationPayload,
   UserDecoratorDtoResponse,
+  UserProfileInformationDto,
   UserResponseDto,
 } from '../dtos/user/user.dto';
 import { UserRepository } from '../repositories/user.repository';
@@ -13,21 +12,19 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   public async UpdateUserProfile(
-    payload: UpdateUserProfileInformationPayload,
+    user: UserDecoratorDtoResponse,
+    payload: UserProfileInformationDto,
   ): Promise<UserResponseDto> {
-    if (!validString(payload.userCode)) {
-      throw new HttpException(
-        ErrorUserMessage.USER_CD_EMPTY.toString(),
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
     try {
-      return await this.userRepository.UpdateUserProfile(payload);
+      return await this.userRepository.UpdateUserProfile(
+        user.userCode,
+        payload,
+      );
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
+      console.log(error);
       throw new HttpException(
         ErrorUserMessage.CATCH_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
