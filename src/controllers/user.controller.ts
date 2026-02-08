@@ -2,8 +2,8 @@ import { Body, Controller, Get, Put, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
 import {
-  UpdateUserProfileInformationPayload,
   UserDecoratorDtoResponse,
+  UserProfileInformationDto,
   UserResponseDto,
 } from '../dtos/user/user.dto';
 import { UserService } from '../services/user.service';
@@ -26,8 +26,9 @@ export class UserController {
   @ApiOperation({ summary: 'Cập nhật thông tin người dùng.' })
   @Put('update-user-profile')
   public async UpdateUserProfile(
-    @Body() payload: UpdateUserProfileInformationPayload,
+    @User() user: UserDecoratorDtoResponse,
+    @Body() payload: UserProfileInformationDto,
   ): Promise<UserResponseDto> {
-    return this.userService.UpdateUserProfile(payload);
+    return this.userService.UpdateUserProfile(user, payload);
   }
 }

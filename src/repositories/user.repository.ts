@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TbUserDefault } from '../entities/user/user_default.entity';
+import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
-import { TbUserProfile } from '../entities/user/user_profile.entity';
 import {
-  UpdateUserProfileInformationPayload,
+  UserProfileInformationDto,
   UserResponseDto,
 } from '../dtos/user/user.dto';
-import { plainToInstance } from 'class-transformer';
+import { TbUserDefault } from '../entities/user/user_default.entity';
+import { TbUserProfile } from '../entities/user/user_profile.entity';
 
 @Injectable()
 export class UserRepository {
@@ -20,47 +20,49 @@ export class UserRepository {
   ) {}
 
   public async UpdateUserProfile(
-    payload: UpdateUserProfileInformationPayload,
+    userCode: string,
+    payload: UserProfileInformationDto,
   ): Promise<UserResponseDto> {
     const userData = await this.userDefault.findOneBy({
-      userCode: payload.userCode,
+      userCode: userCode,
     });
 
     const mergeData = this.userDefault.merge(userData as TbUserDefault, {
-      username: payload.data?.userName || userData?.username,
-      fullName: payload.data?.fullName || userData?.fullName,
+      username: payload.userName || userData?.username,
+      fullName: payload.fullName || userData?.fullName,
     });
 
     const updatedData = await this.userDefault.save(mergeData);
 
-    const userProfileData = await this.userProfile.findOneBy({
+    let userProfileData = await this.userProfile.findOneBy({
       user_id: updatedData.id,
     });
 
-    const userMergeData = this.userProfile.merge(
-      userProfileData as TbUserProfile,
-      {
-        avatarUrl: payload.data?.avartar || userProfileData?.avatarUrl,
-        coverUrl: payload.data?.coverUrl || userProfileData?.coverUrl,
-        bio: payload.data?.bio || userProfileData?.bio,
-        phone: payload.data?.phone || userProfileData?.phone,
-        fullAddress: payload.data?.fullAddress || userProfileData?.fullAddress,
-        userWard: payload.data?.userWard || userProfileData?.userWard,
-        userDistrict:
-          payload.data?.userDistrict || userProfileData?.userDistrict,
-        userCity: payload.data?.userCity || userProfileData?.userCity,
-        userProvince:
-          payload.data?.userProvince || userProfileData?.userProvince,
-        userCountry: payload.data?.userCountry || userProfileData?.userCountry,
-        userPortal: payload.data?.userPortal || userProfileData?.userPortal,
-        userLat: payload.data?.userLat || userProfileData?.userLat,
-        userLong: payload.data?.userLong || userProfileData?.userLong,
-        userDescription:
-          payload.data?.userDescription || userProfileData?.userDescription,
-        userNote: payload.data?.userNote || userProfileData?.userNote,
-        dateOfBirth: payload.data?.dateOfBirth || userProfileData?.dateOfBirth,
-      },
-    );
+    if (!userProfileData) {
+      userProfileData = this.userProfile.create({
+        user_id: updatedData.id,
+      });
+    }
+
+    const userMergeData = this.userProfile.merge(userProfileData, {
+      avatarUrl: payload.avatarUrl || userProfileData?.avatarUrl,
+      coverUrl: payload.coverUrl || userProfileData?.coverUrl,
+      bio: payload.bio || userProfileData?.bio,
+      phone: payload.phone || userProfileData?.phone,
+      fullAddress: payload.fullAddress || userProfileData?.fullAddress,
+      userWard: payload.userWard || userProfileData?.userWard,
+      userDistrict: payload.userDistrict || userProfileData?.userDistrict,
+      userCity: payload.userCity || userProfileData?.userCity,
+      userProvince: payload.userProvince || userProfileData?.userProvince,
+      userCountry: payload.userCountry || userProfileData?.userCountry,
+      userPortal: payload.userPortal || userProfileData?.userPortal,
+      userLat: payload.userLat || userProfileData?.userLat,
+      userLong: payload.userLong || userProfileData?.userLong,
+      userDescription:
+        payload.userDescription || userProfileData?.userDescription,
+      userNote: payload.userNote || userProfileData?.userNote,
+      dateOfBirth: payload.dateOfBirth || userProfileData?.dateOfBirth,
+    });
 
     const updatedProfileData = await this.userProfile.save(userMergeData);
 
