@@ -13,6 +13,9 @@ export class TbLocation {
   @Column({ type: 'varchar', length: 100, unique: false })
   locationName: string;
 
+  @Column({ type: 'varchar', length: 250, unique: false })
+  locationLogo: string;
+
   @Column({ type: 'varchar', length: 100, unique: false })
   ownerCode: string;
 
@@ -24,6 +27,15 @@ export class TbLocation {
 
   @Column({ type: 'int', unique: false, nullable: true })
   maxTimeLimit: string;
+
+  @Column({ type: 'decimal', unique: false, nullable: true })
+  locationPriceStart: number;
+
+  @Column({ type: 'decimal', unique: false, nullable: true })
+  locationPriceEnd: number;
+
+  @Column({ type: 'decimal', unique: false, nullable: true })
+  locationPriceAfterDeal: number;
 
   @Column({ type: 'int', unique: false, nullable: true })
   hasRent: number;

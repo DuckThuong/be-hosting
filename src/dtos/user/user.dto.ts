@@ -1,5 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-
+import {
+  IsString,
+  IsOptional,
+  IsNotEmpty,
+  ValidateNested,
+  IsDateString,
+  IsUrl,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 export class UserDecoratorDtoResponse {
   id: number;
   userCode: string;
@@ -27,146 +37,94 @@ export enum UserRole {
 }
 
 export class UserProfileInformationDto {
-  @ApiProperty({
-    description: 'userName',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(50)
   userName?: string;
 
-  @ApiProperty({
-    description: 'fullName',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
   fullName?: string;
 
-  @ApiProperty({
-    description: 'dateOfBirth',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsDateString()
   dateOfBirth?: string;
 
-  @ApiProperty({
-    description: 'avartar',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsUrl()
   avartar?: string;
 
-  @ApiProperty({
-    description: 'coverUrl',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsUrl()
   coverUrl?: string;
 
-  @ApiProperty({
-    description: 'bio',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
   bio?: string;
 
-  @ApiProperty({
-    description: 'phone',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   phone?: string;
 
-  @ApiProperty({
-    description: 'fullAddress',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
   fullAddress?: string;
 
-  @ApiProperty({
-    description: 'userWard',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   userWard?: string;
 
-  @ApiProperty({
-    description: 'userDistrict',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   userDistrict?: string;
 
-  @ApiProperty({
-    description: 'userCity',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   userCity?: string;
 
-  @ApiProperty({
-    description: 'userProvince',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   userProvince?: string;
 
-  @ApiProperty({
-    description: 'userCountry',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   userCountry?: string;
 
-  @ApiProperty({
-    description: 'userPortal',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   userPortal?: string;
 
-  @ApiProperty({
-    description: 'userLat',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   userLat?: string;
 
-  @ApiProperty({
-    description: 'userLong',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
   userLong?: string;
 
-  @ApiProperty({
-    description: 'userDescription',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
   userDescription?: string;
 
-  @ApiProperty({
-    description: 'userNote',
-    example: '',
-    required: false,
-  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
   userNote?: string;
 }
 
 export class UpdateUserProfileInformationPayload {
-  @ApiProperty({
-    description: 'userCode',
-    example: '',
-    required: false,
-  })
-  userCode?: string;
+  @IsNotEmpty()
+  @IsString()
+  userCode: string;
 
-  @ApiProperty({
-    description: 'Danh sách cơ sở của địa điểm',
-    type: [UserProfileInformationDto],
-    required: false,
-  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserProfileInformationDto)
   data?: UserProfileInformationDto;
 }
 

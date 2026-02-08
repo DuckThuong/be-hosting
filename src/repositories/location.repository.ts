@@ -457,7 +457,11 @@ export class LocationRepository {
       locationCode: randomString(),
       typeCode: payload.typeCode,
       locationName: payload.locationName,
+      locationLogo: payload.locationLogo,
       ownerCode: payload.ownerCode,
+      locationPriceStart: payload.locationPriceStart,
+      locationPriceEnd: payload.locationPriceEnd,
+      locationPriceAfterDeal: payload.locationPriceAfterDeal,
       minTimeLimit: payload.minTimeLimit,
       maxTimeLimit: payload.maxTimeLimit,
       hasRent: payload.hasRent ?? 0,
@@ -510,6 +514,16 @@ export class LocationRepository {
       }
       if (payload.data.locationRate !== undefined) {
         updateData.locationRate = payload.data.locationRate;
+      }
+
+      if (payload.data.locationPriceStart !== undefined) {
+        updateData.locationPriceStart = payload.data.locationPriceStart;
+      }
+      if (payload.data.locationPriceEnd !== undefined) {
+        updateData.locationPriceEnd = payload.data.locationPriceEnd;
+      }
+      if (payload.data.locationPriceAfterDeal !== undefined) {
+        updateData.locationPriceAfterDeal = payload.data.locationPriceAfterDeal;
       }
 
       const updatedEntity = this.location.merge(existingLocation, updateData);
@@ -602,6 +616,9 @@ export class LocationRepository {
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationNote', 'locationNote')
+      .addSelect('TL.locationPriceStart', 'locationPriceStart')
+      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -646,6 +663,9 @@ export class LocationRepository {
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationNote', 'locationNote')
+      .addSelect('TL.locationPriceStart', 'locationPriceStart')
+      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -691,6 +711,9 @@ export class LocationRepository {
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationNote', 'locationNote')
+      .addSelect('TL.locationPriceStart', 'locationPriceStart')
+      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -736,6 +759,9 @@ export class LocationRepository {
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationNote', 'locationNote')
+      .addSelect('TL.locationPriceStart', 'locationPriceStart')
+      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -787,6 +813,9 @@ export class LocationRepository {
         'TL.hasRent AS hasRent',
         'TL.locationRate AS locationRate',
         'TL.typeCode AS typeCode',
+        'TL.locationPriceStart AS locationPriceStart',
+        'TL.locationPriceEnd AS locationPriceEnd',
+        'TL.locationPriceAfterDeal AS locationPriceAfterDeal',
 
         'TLT.typeName AS typeName',
         'TLT.typeDescription AS typeDescription',

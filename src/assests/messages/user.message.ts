@@ -7,4 +7,6 @@ export class ErrorUserMessage {
   static readonly GET_USER_BY_USER_INFO_FAILED =
     'Lấy thông tin người dùng thất bại';
   static readonly USER_NOT_AUTHORIZED = 'Bạn không có quyền truy cập';
+
+  static readonly CATCH_ERROR = 'Thao tác thất bại';
 }

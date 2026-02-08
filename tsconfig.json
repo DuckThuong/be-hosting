@@ -2,6 +2,8 @@
   "compilerOptions": {
     "module": "commonjs",
     "moduleResolution": "node",
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": true,
@@ -20,5 +22,7 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "strictPropertyInitialization": false
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
 }
