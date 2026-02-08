@@ -93,7 +93,7 @@ export class LocationController {
   @ApiOperation({ summary: 'Tạo mới địa điểm cho thuê' })
   @Post('create-location')
   public async createLocation(
-    @User() user,
+    @User() user: UserDecoratorDtoResponse,
     @Body() payload: CreateLocationDto,
   ): Promise<LocationResponseDto> {
     return this.locationService.CreateLocation(user, payload);

@@ -66,7 +66,7 @@ export class LocationAddressDto {
     description: 'Mã bưu chính',
     example: '700000',
   })
-  addRessPortal: string;
+  addressPortal: string;
 
   @ApiProperty({
     description: 'Vĩ độ',
@@ -158,7 +158,7 @@ export class LocationAddressPayloadDto {
     description: 'Mã bưu chính',
     example: '700000',
   })
-  addRessPortal: string;
+  addressPortal: string;
 
   @ApiProperty({
     description: 'Vĩ độ',
@@ -256,7 +256,7 @@ export class LocationAddressUpdateDto {
     description: 'Mã bưu chính',
     example: '700000',
   })
-  addRessPortal: string;
+  addressPortal: string;
 
   @ApiProperty({
     description: 'Vĩ độ',

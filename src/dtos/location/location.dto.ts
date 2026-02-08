@@ -492,7 +492,7 @@ export class LocationAddressItemDto {
   @ApiProperty({ description: 'addressCity' }) addressCity: string;
   @ApiProperty({ description: 'addressProvince' }) addressProvince: string;
   @ApiProperty({ description: 'addressCountry' }) addressCountry: string;
-  @ApiProperty({ description: 'addRessPortal' }) addRessPortal: string;
+  @ApiProperty({ description: 'addressPortal' }) addressPortal: string;
   @ApiProperty({ description: 'addressLat' }) addressLat: number;
   @ApiProperty({ description: 'addressLong' }) addressLong: number;
   @ApiProperty({ description: 'addressRegion' }) addressRegion: string;

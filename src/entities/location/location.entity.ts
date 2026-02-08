@@ -22,10 +22,10 @@ export class TbLocation {
   @Column({ type: 'varchar', length: 25, unique: true })
   locationCode: string;
 
-  @Column({ type: 'int', unique: false, nullable: true })
+  @Column({ type: 'varchar', unique: false, nullable: true })
   minTimeLimit: string;
 
-  @Column({ type: 'int', unique: false, nullable: true })
+  @Column({ type: 'varchar', unique: false, nullable: true })
   maxTimeLimit: string;
 
   @Column({ type: 'decimal', unique: false, nullable: true })

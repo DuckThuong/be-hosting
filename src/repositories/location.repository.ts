@@ -239,7 +239,7 @@ export class LocationRepository {
           addressCity: addressData.addressCity,
           addressProvince: addressData.addressProvince,
           addressCountry: addressData.addressCountry,
-          addRessPortal: addressData.addRessPortal,
+          addressPortal: addressData.addressPortal,
           addressLat: addressData.addressLat,
           addressLong: addressData.addressLong,
           addressRegion: addressData.addressRegion,
@@ -309,7 +309,7 @@ export class LocationRepository {
             addressCity: address.addressCity,
             addressProvince: address.addressProvince,
             addressCountry: address.addressCountry,
-            addRessPortal: address.addRessPortal,
+            addressPortal: address.addressPortal,
             addressLat: address.addressLat,
             addressLong: address.addressLong,
             addressRegion: address.addressRegion,
@@ -348,8 +348,8 @@ export class LocationRepository {
           if (address.addressCountry !== undefined) {
             updateData.addressCountry = address.addressCountry;
           }
-          if (address.addRessPortal !== undefined) {
-            updateData.addRessPortal = address.addRessPortal;
+          if (address.addressPortal !== undefined) {
+            updateData.addressPortal = address.addressPortal;
           }
           if (address.addressLat !== undefined) {
             updateData.addressLat = address.addressLat;
@@ -1041,7 +1041,7 @@ export class LocationRepository {
         'tla.addressCity AS addressCity',
         'tla.addressProvince AS addressProvince',
         'tla.addressCountry AS addressCountry',
-        'tla.addRessPortal AS addRessPortal',
+        'tla.addressPortal AS addressPortal',
         'tla.addressLat AS addressLat',
         'tla.addressLong AS addressLong',
         'tla.addressRegion AS addressRegion',
