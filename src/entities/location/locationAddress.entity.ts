@@ -80,7 +80,7 @@ export class TbLocationAddress {
     length: 255,
     unique: false,
   })
-  addRessPortal: string;
+  addressPortal: string;
 
   @Column({
     type: 'varchar',

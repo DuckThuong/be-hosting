@@ -10,7 +10,7 @@ export class TbLocationService {
   @Column({ type: 'varchar', length: 50, unique: false, nullable: false })
   locationCode: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true, nullable: false })
+  @Column({ type: 'varchar', length: 50, unique: false, nullable: false })
   serviceCode: string;
 
   @Column({ type: 'varchar', length: 2000, nullable: false })

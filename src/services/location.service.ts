@@ -362,14 +362,14 @@ export class LocationService {
       );
     }
 
-    if (payload.minTimeLimit !== undefined) {
+    if (payload.minTimeLimit && isNaN(Date.parse(payload.minTimeLimit))) {
       throw new HttpException(
-        ErrorLocationMessage.MIN_TIME_LIMIT_INVALID.toString(),
+        ErrorLocationMessage.MAX_TIME_LIMIT_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    if (payload.maxTimeLimit !== undefined) {
+    if (payload.maxTimeLimit && isNaN(Date.parse(payload.maxTimeLimit))) {
       throw new HttpException(
         ErrorLocationMessage.MAX_TIME_LIMIT_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
@@ -377,9 +377,9 @@ export class LocationService {
     }
 
     if (
-      payload.minTimeLimit !== undefined &&
-      payload.maxTimeLimit !== undefined &&
-      payload.minTimeLimit > payload.maxTimeLimit
+      payload.minTimeLimit &&
+      payload.maxTimeLimit &&
+      new Date(payload.minTimeLimit) > new Date(payload.maxTimeLimit)
     ) {
       throw new HttpException(
         ErrorLocationMessage.TIME_LIMIT_RANGE_INVALID.toString(),
@@ -487,7 +487,7 @@ export class LocationService {
             addressCity: item.addressCity,
             addressProvince: item.addressProvince,
             addressCountry: item.addressCountry,
-            addRessPortal: item.addRessPortal,
+            addressPortal: item.addressPortal,
             addressLat: item.addressLat,
             addressLong: item.addressLong,
             addressRegion: item.addressRegion,
@@ -499,7 +499,6 @@ export class LocationService {
         };
         await this.locationRepo.UpdateLocationAddress(addressData);
       }
-
       return location;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -670,7 +669,7 @@ export class LocationService {
             addressCity: item.addressCity,
             addressProvince: item.addressProvince,
             addressCountry: item.addressCountry,
-            addRessPortal: item.addRessPortal,
+            addressPortal: item.addressPortal,
             addressLat: item.addressLat,
             addressLong: item.addressLong,
             addressRegion: item.addressRegion,

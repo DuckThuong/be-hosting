@@ -32,8 +32,8 @@ export enum UserStatus {
 
 export enum UserRole {
   ADMIN = 0,
-  USER = 1,
-  CUSTOMER = 2,
+  OWNER = 1,
+  USER = 2,
 }
 
 export class UserProfileInformationDto {

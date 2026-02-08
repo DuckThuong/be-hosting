@@ -23,3 +23,9 @@ export const ADDRESS_STATUS = {
 };
 
 export const RESOURCE_TYPE = 'auto';
+
+export const USER_ROLE = {
+  ADMIN: 0,
+  OWNER: 1,
+  USER: 2,
+};
