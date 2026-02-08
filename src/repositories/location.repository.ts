@@ -48,7 +48,7 @@ import {
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
-import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
+import { UserDecoratorDtoResponse, UserRole } from '../dtos/user/user.dto';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
@@ -471,7 +471,11 @@ export class LocationRepository {
       locationStatus: payload.locationStatus,
       locationRate: payload.locationRate || 0,
     });
-
+    const user = await this.user.findOneBy({ userCode: payload.ownerCode });
+    if (user) {
+      user.role = UserRole.OWNER;
+      await this.user.save(user);
+    }
     const savedLocation = await this.location.save(location);
 
     return {
