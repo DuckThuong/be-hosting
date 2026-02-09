@@ -20,9 +20,8 @@ import { CloudinaryModule } from './modules/cloudinary.module';
       envFilePath: '.env',
     }),
 
-    // Đổi từ forRoot() sang forRootAsync()
     TypeOrmModule.forRootAsync({
-      inject: [ConfigService], // Inject ConfigService
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'mysql',
         host: configService.get('MYSQLHOST'),
