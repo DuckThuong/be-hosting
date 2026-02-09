@@ -25,13 +25,19 @@ import { CloudinaryModule } from './modules/cloudinary.module';
       useFactory: (configService: ConfigService) => ({
         type: 'mysql',
         host: configService.get('MYSQLHOST'),
-        port: configService.get<number>('MYSQLPORT'),
+        port: Number(configService.get('MYSQLPORT')),
         username: configService.get('MYSQLUSER'),
         password: configService.get('MYSQLPASSWORD'),
         database: configService.get('MYSQLDATABASE'),
         autoLoadEntities: true,
         synchronize: configService.get('TYPEORM_SYNC') === 'true',
         logging: configService.get('TYPEORM_LOGGING') === 'true',
+        ssl: {
+          rejectUnauthorized: false,
+        },
+        extra: {
+          connectTimeout: 60000,
+        },
         entities: [
           TbUserDefault,
           TbUserProfile,
