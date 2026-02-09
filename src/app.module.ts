@@ -23,11 +23,11 @@ import { CloudinaryModule } from './modules/cloudinary.module';
 
     TypeOrmModule.forRoot({
       type: process.env.DB_TYPE as 'mysql',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
+      host: process.env.MYSQLHOST,
+      port: Number(process.env.MYSQLPORT),
+      username: process.env.MYSQLUSER,
+      password: process.env.MYSQLPASSWORD,
+      database: process.env.MYSQLDATABASE,
 
       autoLoadEntities: true,
       synchronize: process.env.TYPEORM_SYNC === 'true',
