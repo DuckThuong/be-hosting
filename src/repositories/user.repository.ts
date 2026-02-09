@@ -76,7 +76,7 @@ export class UserRepository {
   public async GetUserInfomation(userCode: string): Promise<UserResponseDto> {
     const user = await this.userDefault
       .createQueryBuilder('TUD')
-      .leftJoin('tb_user_profile', 'TUP', 'TUD.ID = TUP.USER_ID')
+      .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
       .select([
         'TUD.userCode AS userCode',
         'TUD.username AS username',
