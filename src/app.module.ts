@@ -22,7 +22,7 @@ import { CloudinaryModule } from './modules/cloudinary.module';
     }),
 
     TypeOrmModule.forRoot({
-      type: process.env.DB_TYPE as 'mysql',
+      type: 'mysql',
       host: process.env.MYSQLHOST,
       port: Number(process.env.MYSQLPORT),
       username: process.env.MYSQLUSER,
