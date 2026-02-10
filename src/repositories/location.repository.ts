@@ -620,6 +620,7 @@ export class LocationRepository {
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationNote', 'locationNote')
+      .addSelect('TL.locationLogo', 'locationLogo')
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
@@ -666,6 +667,7 @@ export class LocationRepository {
       .select('TL.locationCode', 'locationCode')
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
+      .addSelect('TL.locationLogo', 'locationLogo')
       .addSelect('TL.locationNote', 'locationNote')
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
@@ -714,6 +716,7 @@ export class LocationRepository {
       .select('TL.locationCode', 'locationCode')
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
+      .addSelect('TL.locationLogo', 'locationLogo')
       .addSelect('TL.locationNote', 'locationNote')
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
@@ -762,6 +765,7 @@ export class LocationRepository {
       .select('TL.locationCode', 'locationCode')
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
+      .addSelect('TL.locationLogo', 'locationLogo')
       .addSelect('TL.locationNote', 'locationNote')
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
@@ -812,6 +816,7 @@ export class LocationRepository {
         'TL.locationName AS locationName',
         'TL.locationDescription AS locationDescription',
         'TL.locationNote AS locationNote',
+        'TL.locationLogo AS locationLogo',
         'TL.minTimeLimit AS minTime',
         'TL.maxTimeLimit AS maxTime',
         'TL.hasRent AS hasRent',
