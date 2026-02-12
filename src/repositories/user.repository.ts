@@ -64,6 +64,9 @@ export class UserRepository {
       dateOfBirth: payload.dateOfBirth || userProfileData?.dateOfBirth,
     });
 
+    console.log('payload', payload);
+    console.log('userMergeData', userMergeData);
+
     const updatedProfileData = await this.userProfile.save(userMergeData);
 
     const rawData = {

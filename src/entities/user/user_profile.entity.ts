@@ -63,6 +63,7 @@ export class TbUserProfile {
     type: 'varchar',
     comment: 'Phường | xã',
     length: 255,
+    nullable: true,
     unique: false,
   })
   userWard: string;
@@ -71,6 +72,7 @@ export class TbUserProfile {
     type: 'varchar',
     comment: 'Quận | huyện',
     length: 255,
+    nullable: true,
     unique: false,
   })
   userDistrict: string;
@@ -80,6 +82,7 @@ export class TbUserProfile {
     comment: 'Thành Phố',
     length: 255,
     unique: false,
+    nullable: true,
   })
   userCity: string;
 
@@ -88,6 +91,7 @@ export class TbUserProfile {
     comment: 'Tỉnh',
     length: 255,
     unique: false,
+    nullable: true,
   })
   userProvince: string;
 
@@ -96,6 +100,7 @@ export class TbUserProfile {
     comment: 'Quốc gia',
     length: 255,
     unique: false,
+    nullable: true,
   })
   userCountry: string;
 
@@ -104,6 +109,7 @@ export class TbUserProfile {
     comment: 'Mã bưu chính',
     length: 255,
     unique: false,
+    nullable: true,
   })
   userPortal: string;
 
@@ -112,6 +118,7 @@ export class TbUserProfile {
     comment: 'Vĩ độ',
     length: 255,
     unique: false,
+    nullable: true,
   })
   userLat: string;
 
@@ -120,6 +127,7 @@ export class TbUserProfile {
     comment: 'Kinh độ',
     length: 255,
     unique: false,
+    nullable: true,
   })
   userLong: string;
 
@@ -128,6 +136,7 @@ export class TbUserProfile {
     comment: 'Mô tả',
     length: 255,
     unique: false,
+    nullable: true,
   })
   userDescription: string;
 
@@ -136,6 +145,7 @@ export class TbUserProfile {
     comment: 'Ghi chú',
     length: 255,
     unique: false,
+    nullable: true,
   })
   userNote: string;
 }
