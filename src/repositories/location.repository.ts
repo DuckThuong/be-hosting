@@ -611,11 +611,11 @@ export class LocationRepository {
   public async GetAllLocation(): Promise<LocationListDto[]> {
     const locations = await this.location
       .createQueryBuilder('TL')
-      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
-      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
-      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
-      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
-      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('tb_user_default', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('tb_user_profile', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('tb_user_default', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('tb_user_profile', 'TUPR', 'TUPR.user_id = TUDR.id')
       .select('TL.locationCode', 'locationCode')
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
@@ -659,11 +659,11 @@ export class LocationRepository {
   ): Promise<LocationListDto[]> {
     const locations = await this.location
       .createQueryBuilder('TL')
-      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
-      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
-      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
-      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
-      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('tb_user_default', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('tb_user_profile', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('tb_user_default', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('tb_user_profile', 'TUPR', 'TUPR.user_id = TUDR.id')
       .select('TL.locationCode', 'locationCode')
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
@@ -708,11 +708,11 @@ export class LocationRepository {
   ): Promise<LocationListDto[]> {
     const locations = await this.location
       .createQueryBuilder('TL')
-      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
-      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
-      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
-      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
-      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('tb_user_default', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('tb_user_profile', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('tb_user_default', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('tb_user_profile', 'TUPR', 'TUPR.user_id = TUDR.id')
       .select('TL.locationCode', 'locationCode')
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
@@ -757,11 +757,11 @@ export class LocationRepository {
   ): Promise<LocationListDto> {
     const location = await this.location
       .createQueryBuilder('TL')
-      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
-      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
-      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
-      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
-      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('tb_user_default', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('tb_user_profile', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('tb_user_default', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('tb_user_profile', 'TUPR', 'TUPR.user_id = TUDR.id')
       .select('TL.locationCode', 'locationCode')
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationDescription', 'locationDescription')
@@ -806,11 +806,11 @@ export class LocationRepository {
   ): Promise<LocationListDto[]> {
     const qb = this.location
       .createQueryBuilder('TL')
-      .leftJoin('TB_LOCATION-TYPE', 'TLT', 'TLT.typeCode = TL.typeCode')
-      .leftJoin('TB_USER_DEFAULT', 'TUDO', 'TUDO.userCode = TL.ownerCode')
-      .leftJoin('TB_USER_PROFILE', 'TUPO', 'TUPO.user_id = TUDO.id')
-      .leftJoin('TB_USER_DEFAULT', 'TUDR', 'TUDR.userCode = TL.userRentCd')
-      .leftJoin('TB_USER_PROFILE', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('tb_user_default', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('tb_user_profile', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('tb_user_default', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('tb_user_profile', 'TUPR', 'TUPR.user_id = TUDR.id')
       .select([
         'TL.locationCode AS locationCode',
         'TL.locationName AS locationName',
