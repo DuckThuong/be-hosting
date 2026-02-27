@@ -6,6 +6,7 @@ import { TbConversationParticipant } from '../entities/chat/converation_paticipa
 import { TbMessage } from '../entities/chat/message.entity';
 import { ChatRepository } from '../repositories/chat.repository';
 import { ChatService } from '../services/chat.service';
+import { UserRepository } from '../repositories/user.repository';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { ChatService } from '../services/chat.service';
       TbMessage,
     ]),
   ],
-  providers: [ChatService, ChatRepository],
+  providers: [ChatService, ChatRepository, UserRepository],
   controllers: [ChatController],
   exports: [ChatService],
 })
