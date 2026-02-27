@@ -12,6 +12,10 @@ import { TbLocationType } from './entities/location/locationType.entity';
 import { UserModule } from './modules/user.module';
 import { TbUserProfile } from './entities/user/user_profile.entity';
 import { CloudinaryModule } from './modules/cloudinary.module';
+import { ChatModule } from './modules/chat.module';
+import { TbMessage } from './entities/chat/message.entity';
+import { TbConversationParticipant } from './entities/chat/converation_paticipant.entity';
+import { TbConversation } from './entities/chat/converation.entity';
 
 @Module({
   imports: [
@@ -45,6 +49,9 @@ import { CloudinaryModule } from './modules/cloudinary.module';
           TbLocation,
           TbLocationService,
           TbLocationType,
+          TbConversation,
+          TbConversationParticipant,
+          TbMessage,
         ],
         migrations: [__dirname + '/../migrations/*{.ts,.js}'],
         migrationsRun: false,
@@ -56,6 +63,7 @@ import { CloudinaryModule } from './modules/cloudinary.module';
     LocationModule,
     UserModule,
     CloudinaryModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],
