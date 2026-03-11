@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
-import { ContactToUserDto } from '../dtos/chat/chat.dto';
+import { ContactToUserPayloadDto } from '../dtos/chat/chat.dto';
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { ChatService } from '../services/chat.service';
 import { User } from '../user.decorator';
@@ -24,11 +24,11 @@ export class ChatController {
   @ApiOperation({ summary: 'Tạo hoặc lấy cuộc trò chuyện với người dùng khác' })
   @Post('contact')
   public async contactToUser(
-    @Body() body: ContactToUserDto,
+    @Body() body: ContactToUserPayloadDto,
     @User() user: UserDecoratorDtoResponse,
   ): Promise<any> {
     return this.chatService.contactToUser({
-      fromUserId: user.id,
+      fromUser: user,
       toUserId: body.toUserId,
     });
   }

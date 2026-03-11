@@ -17,12 +17,12 @@ export class ChatService {
   ) {}
 
   public async contactToUser(payload: ContactToUserDto): Promise<any> {
-    if (payload.fromUserId === payload.toUserId) {
+    if (payload.fromUser.id === payload.toUserId) {
       throw new BadRequestException(ErrorChatMessage.CANNOT_CHAT_WITH_YOURSELF);
     }
 
     const [fromUser, toUser] = await Promise.all([
-      this.userRepository.getUserProfileByUserId(payload.fromUserId),
+      this.userRepository.getUserProfileByUserId(payload.fromUser.id),
       this.userRepository.getUserProfileByUserId(payload.toUserId),
     ]);
 

@@ -1,15 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MessageType } from '../../entities/chat/message.entity';
 import { ConversationType } from '../../entities/chat/converation.entity';
+import { UserDecoratorDtoResponse } from '../user/user.dto';
 
-export class ContactToUserDto {
+export class ContactToUserPayloadDto {
   @ApiProperty({
-    description: 'Người gửi tin nhắn',
-    example: 'fromUserId',
+    description: 'Người nhận tin nhắn',
+    example: 'toUserId',
     required: true,
     maxLength: 50,
   })
-  fromUserId: number;
+  toUserId: number;
+}
+export class ContactToUserDto {
+  fromUser: UserDecoratorDtoResponse;
 
   @ApiProperty({
     description: 'Người nhận tin nhắn',

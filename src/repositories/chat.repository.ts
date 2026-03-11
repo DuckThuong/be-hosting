@@ -9,6 +9,7 @@ import {
 import { TbConversationParticipant } from '../entities/chat/converation_paticipant.entity';
 import { TbMessage } from '../entities/chat/message.entity';
 import { UserRepository } from './user.repository';
+import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 
 @Injectable()
 export class ChatRepository {
@@ -26,15 +27,13 @@ export class ChatRepository {
   ) {}
 
   private async createConversation(
-    userId: number,
+    user: UserDecoratorDtoResponse,
     contactId: number,
   ): Promise<TbConversation> {
-    const user = await this.userRepo.getUserProfileByUserId(userId);
     const contact = await this.userRepo.getUserProfileByUserId(contactId);
-
     const newConversation = this.conversation.create({
       type: ConversationType.PRIVATE,
-      name: `Cuộc trò chuyện giữa ${user.fullName} và ${contact.fullName}`,
+      name: `Cuộc trò chuyện giữa ${user.fullName ?? user.username} và ${contact.fullName ?? contact.userName}`,
       avatar: contact.avatarUrl || '',
       lastMessage: 'Xin chào!',
       lastMessageAt: new Date(),
@@ -44,7 +43,7 @@ export class ChatRepository {
     const savedConversation = await this.conversation.save(newConversation);
 
     const participants = this.conversationParticipant.create([
-      { conversationId: savedConversation.id, userId: userId },
+      { conversationId: savedConversation.id, userId: user.id },
       { conversationId: savedConversation.id, userId: contactId },
     ]);
     await this.conversationParticipant.save(participants);
@@ -53,7 +52,7 @@ export class ChatRepository {
   }
 
   private async checkConversationExistence(
-    userId: number,
+    user: UserDecoratorDtoResponse,
     contactId: number,
   ): Promise<TbConversation> {
     const result = await this.conversation
@@ -62,7 +61,7 @@ export class ChatRepository {
         'tb_conversation_participant',
         'p1',
         'p1.conversationId = c.id AND p1.userId = :userA',
-        { userA: userId },
+        { userA: user.id },
       )
       .innerJoin(
         'tb_conversation_participant',
@@ -75,7 +74,7 @@ export class ChatRepository {
       .getOne();
 
     if (result === null) {
-      return this.createConversation(userId, contactId);
+      return this.createConversation(user, contactId);
     } else {
       return result;
     }
@@ -101,7 +100,7 @@ export class ChatRepository {
 
   public async contactToUser(payload: ContactToUserDto): Promise<any> {
     const conversation = await this.checkConversationExistence(
-      payload.fromUserId,
+      payload.fromUser,
       payload.toUserId,
     );
     return conversation;
