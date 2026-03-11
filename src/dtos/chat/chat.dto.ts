@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MessageType } from '../../entities/chat/message.entity';
 import { ConversationType } from '../../entities/chat/converation.entity';
-import { UserDecoratorDtoResponse } from '../user/user.dto';
+import { UserDecoratorDtoResponse, UserResponseDto } from '../user/user.dto';
 
 export class ContactToUserPayloadDto {
   @ApiProperty({
@@ -90,4 +90,28 @@ export class ChatResponseDto {
 
   @ApiProperty({ type: () => [ChatResponseDto], nullable: true })
   data?: ChatResponseDto[];
+}
+
+export class ParticipantDto {
+  id: number;
+  conversationId: number;
+  userId: number;
+  unreadCount: number;
+  lastReadMessageId: number | null;
+  isMuted: boolean;
+  isPinned: boolean;
+  isDeleted: boolean;
+}
+export class ConversationResponseDto {
+  conversationId: number;
+  conversationType: string;
+  conversationName: string;
+  conversationAvatar: string;
+  lastMessage: string;
+  lastMessageAt: Date;
+  conversationCreatedAt: Date;
+
+  participants: ParticipantDto[];
+
+  toUser: UserResponseDto;
 }

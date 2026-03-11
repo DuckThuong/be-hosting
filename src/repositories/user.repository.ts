@@ -147,4 +147,41 @@ export class UserRepository {
 
     return user as UserResponseDto;
   }
+
+  public async getUserProfilesByUserIds(
+    userIds: number[],
+  ): Promise<UserResponseDto[]> {
+    if (userIds.length === 0) return [];
+
+    return await this.userDefault
+      .createQueryBuilder('TUD')
+      .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
+      .select([
+        'TUD.id AS id',
+        'TUD.userCode AS userCode',
+        'TUD.username AS username',
+        'TUD.email AS email',
+        'TUD.fullName AS fullName',
+        'TUD.role AS role',
+        'TUD.isEmailVerified AS isEmailVerified',
+        'TUP.dateOfBirth AS dateOfBirth',
+        'TUP.avatarUrl AS avatarUrl',
+        'TUP.coverUrl AS coverUrl',
+        'TUP.BIO AS bio',
+        'TUP.PHONE AS phone',
+        'TUP.fullAddress AS fullAddress',
+        'TUP.userWard AS userWard',
+        'TUP.userDistrict AS userDistrict',
+        'TUP.userCity AS userCity',
+        'TUP.userProvince AS userProvince',
+        'TUP.userCountry AS userCountry',
+        'TUP.userPortal AS userPortal',
+        'TUP.userLat AS userLat',
+        'TUP.userLONG AS userLong',
+        'TUP.userDescription AS userDescription',
+        'TUP.userNote AS userNote',
+      ])
+      .where('TUD.id IN (:...userIds)', { userIds })
+      .getRawMany<UserResponseDto>();
+  }
 }

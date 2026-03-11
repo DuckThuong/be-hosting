@@ -39,7 +39,7 @@ export class ChatService {
     if (!user)
       throw new NotFoundException(ErrorChatMessage.FROM_USER_NOT_FOUND);
 
-    return this.chatRepository.getConversations(userId);
+    return this.chatRepository.getAllConversations(userId);
   }
 
   public async getMessages(

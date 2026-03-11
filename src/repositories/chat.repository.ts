@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ContactToUserDto } from '../dtos/chat/chat.dto';
+import {
+  ContactToUserDto,
+  ConversationResponseDto,
+} from '../dtos/chat/chat.dto';
 import {
   ConversationType,
   TbConversation,
@@ -151,5 +154,65 @@ export class ChatRepository {
     });
 
     return saved;
+  }
+
+  public async getAllConversations(
+    userId: number,
+  ): Promise<ConversationResponseDto[]> {
+    const conversations = await this.getConversations(userId);
+    if (conversations.length === 0) return [];
+
+    const conversationIds = conversations.map((c) => c.id);
+
+    const allParticipants = await this.conversationParticipant
+      .createQueryBuilder('cp')
+      .where('cp.conversationId IN (:...conversationIds)', { conversationIds })
+      .getMany();
+
+    const lastMessages = await this.message
+      .createQueryBuilder('m')
+      .where('m.conversationId IN (:...conversationIds)', { conversationIds })
+      .orderBy('m.createdAt', 'DESC')
+      .getMany();
+
+    const otherParticipantIds = [
+      ...new Set(
+        allParticipants
+          .filter((cp) => cp.userId !== userId)
+          .map((cp) => cp.userId),
+      ),
+    ];
+
+    const otherUsers =
+      await this.userRepo.getUserProfilesByUserIds(otherParticipantIds);
+
+    const userMap = new Map(otherUsers.map((u) => [u.id, u]));
+
+    return conversations.map((conversation) => {
+      const participants = allParticipants.filter(
+        (cp) => cp.conversationId === conversation.id,
+      );
+
+      const otherParticipant = participants.find((cp) => cp.userId !== userId);
+
+      const toUser = otherParticipant
+        ? (userMap.get(otherParticipant.userId) ?? null)
+        : null;
+
+      const lastMessage =
+        lastMessages.find((m) => m.conversationId === conversation.id) ?? null;
+
+      return {
+        conversationId: conversation.id,
+        conversationType: conversation.type,
+        conversationName: conversation.name,
+        conversationAvatar: conversation.avatar,
+        lastMessage: lastMessage?.content ?? conversation.lastMessage,
+        lastMessageAt: conversation.lastMessageAt,
+        conversationCreatedAt: conversation.createdAt,
+        participants,
+        toUser,
+      } as ConversationResponseDto;
+    });
   }
 }
