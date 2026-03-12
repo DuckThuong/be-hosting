@@ -64,9 +64,6 @@ export class UserRepository {
       dateOfBirth: payload.dateOfBirth || userProfileData?.dateOfBirth,
     });
 
-    console.log('payload', payload);
-    console.log('userMergeData', userMergeData);
-
     const updatedProfileData = await this.userProfile.save(userMergeData);
 
     const rawData = {
@@ -151,6 +148,7 @@ export class UserRepository {
   public async getUserProfilesByUserIds(
     userIds: number[],
   ): Promise<UserResponseDto[]> {
+    console.log('userIds', userIds);
     if (userIds.length === 0) return [];
 
     return await this.userDefault

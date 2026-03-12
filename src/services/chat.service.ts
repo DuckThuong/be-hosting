@@ -38,7 +38,6 @@ export class ChatService {
     const user = await this.userRepository.getUserProfileByUserId(userId);
     if (!user)
       throw new NotFoundException(ErrorChatMessage.FROM_USER_NOT_FOUND);
-
     return this.chatRepository.getAllConversations(userId);
   }
 
