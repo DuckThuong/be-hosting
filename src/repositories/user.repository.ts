@@ -8,6 +8,8 @@ import {
 } from '../dtos/user/user.dto';
 import { TbUserDefault } from '../entities/user/user_default.entity';
 import { TbUserProfile } from '../entities/user/user_profile.entity';
+import { ChatRepository } from './chat.repository';
+import { TbConversation } from '../entities/chat/converation.entity';
 
 @Injectable()
 export class UserRepository {
@@ -17,6 +19,11 @@ export class UserRepository {
 
     @InjectRepository(TbUserProfile)
     private readonly userProfile: Repository<TbUserProfile>,
+
+    @InjectRepository(TbConversation)
+    private readonly conversationRepository: Repository<TbConversation>,
+
+    private readonly chatRepo: ChatRepository,
   ) {}
 
   public async UpdateUserProfile(
@@ -63,6 +70,18 @@ export class UserRepository {
       userNote: payload.userNote || userProfileData?.userNote,
       dateOfBirth: payload.dateOfBirth || userProfileData?.dateOfBirth,
     });
+
+    if (userMergeData.avatarUrl) {
+      const conversations = await this.chatRepo.getConversations(updatedData.id);
+
+      if (conversations?.length) {
+        conversations.forEach((c) => {
+          c.avatar = userMergeData.avatarUrl;
+        });
+
+        await this.conversationRepository.save(conversations);
+      }
+    }
 
     const updatedProfileData = await this.userProfile.save(userMergeData);
 
