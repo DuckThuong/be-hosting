@@ -18,6 +18,7 @@ import {
   GetLocationByFillterDto,
   LocationListDto,
   LocationResponseDto,
+  PaginatedLocationListDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
@@ -167,7 +168,7 @@ export class LocationController {
   @Get('get-location-by-filter')
   public async getLocationByFilter(
     @Query() payload: GetLocationByFillterDto,
-  ): Promise<LocationListDto[]> {
+  ): Promise<PaginatedLocationListDto> {
     return this.locationService.GetLocationByFilter(payload);
   }
 }

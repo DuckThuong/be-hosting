@@ -22,6 +22,7 @@ import {
   LocationListDto,
   LocationResponseDto,
   LocationServiceDto,
+  PaginatedLocationListDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
@@ -803,7 +804,7 @@ export class LocationRepository {
 
   public async GetLocationByFilter(
     payload: GetLocationByFillterDto,
-  ): Promise<LocationListDto[]> {
+  ): Promise<PaginatedLocationListDto> {
     const qb = this.location
       .createQueryBuilder('TL')
       .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
@@ -923,7 +924,26 @@ export class LocationRepository {
         locationCodes,
       });
     }
-    return qb.getRawMany<LocationListDto>();
+
+    const page = Number(payload.page) || 1;
+    const limit = Number(payload.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const total = await qb.getCount();
+
+    const data = await qb
+      .orderBy('TL.locationCode', 'ASC')
+      .skip(offset)
+      .take(limit)
+      .getRawMany<LocationListDto>();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   private async getLocationCodesByAddress(

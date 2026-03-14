@@ -885,4 +885,26 @@ export class GetLocationByFillterDto {
     required: false,
   })
   addressType?: string;
+
+  @ApiProperty({
+    description: 'addressType',
+    example: '',
+    required: false,
+  })
+  page?: string;
+
+  @ApiProperty({
+    description: 'addressType',
+    example: '',
+    required: false,
+  })
+  limit?: string;
+}
+
+export class PaginatedLocationListDto {
+  data: LocationListDto[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
