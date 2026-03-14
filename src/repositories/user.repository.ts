@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
@@ -23,6 +23,7 @@ export class UserRepository {
     @InjectRepository(TbConversation)
     private readonly conversationRepository: Repository<TbConversation>,
 
+    @Inject(forwardRef(() => ChatRepository))
     private readonly chatRepo: ChatRepository,
   ) {}
 
@@ -72,7 +73,9 @@ export class UserRepository {
     });
 
     if (userMergeData.avatarUrl) {
-      const conversations = await this.chatRepo.getConversations(updatedData.id);
+      const conversations = await this.chatRepo.getConversations(
+        updatedData.id,
+      );
 
       if (conversations?.length) {
         conversations.forEach((c) => {

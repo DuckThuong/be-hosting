@@ -7,10 +7,18 @@ import { TbUserProfile } from '../entities/user/user_profile.entity';
 import { UserRepository } from '../repositories/user.repository';
 import { ChatRepository } from '../repositories/chat.repository';
 import { TbConversation } from '../entities/chat/converation.entity';
+import { TbConversationParticipant } from '../entities/chat/converation_paticipant.entity';
+import { TbMessage } from '../entities/chat/message.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TbUserDefault, TbUserProfile, TbConversation]),
+    TypeOrmModule.forFeature([
+      TbUserDefault,
+      TbUserProfile,
+      TbConversation,
+      TbConversationParticipant,
+      TbMessage,
+    ]),
   ],
   providers: [UserService, UserRepository, ChatRepository],
   controllers: [UserController],
