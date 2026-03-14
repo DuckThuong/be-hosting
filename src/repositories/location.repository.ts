@@ -929,12 +929,13 @@ export class LocationRepository {
     const limit = Number(payload.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const total = await qb.getCount();
+    // ✅ Clone trước khi getCount để tránh ảnh hưởng state của qb
+    const total = await qb.clone().getCount();
 
     const data = await qb
       .orderBy('TL.locationCode', 'ASC')
-      .skip(offset)
-      .take(limit)
+      .offset(offset) // ✅ thay skip()
+      .limit(limit) // ✅ thay take()
       .getRawMany<LocationListDto>();
 
     return {
