@@ -7,15 +7,18 @@ import { ServiceModule } from './modules/service.module';
 import { TbService } from './entities/service.entity';
 import { LocationModule } from './modules/location.module';
 import { TbLocation } from './entities/location/location.entity';
+import { TbLocationFavorite } from './entities/location/locationFavorite.entity';
 import { TbLocationService } from './entities/location/locationService.entity';
 import { TbLocationType } from './entities/location/locationType.entity';
 import { UserModule } from './modules/user.module';
 import { TbUserProfile } from './entities/user/user_profile.entity';
 import { CloudinaryModule } from './modules/cloudinary.module';
 import { ChatModule } from './modules/chat.module';
+import { CommonModule } from './modules/common.module';
 import { TbMessage } from './entities/chat/message.entity';
 import { TbConversationParticipant } from './entities/chat/converation_paticipant.entity';
 import { TbConversation } from './entities/chat/converation.entity';
+import { TbLocationMedia } from './entities/location/locationMedia.entity';
 
 @Module({
   imports: [
@@ -47,6 +50,8 @@ import { TbConversation } from './entities/chat/converation.entity';
           TbUserProfile,
           TbService,
           TbLocation,
+          TbLocationFavorite,
+          TbLocationMedia,
           TbLocationService,
           TbLocationType,
           TbConversation,
@@ -64,6 +69,7 @@ import { TbConversation } from './entities/chat/converation.entity';
     UserModule,
     CloudinaryModule,
     ChatModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],

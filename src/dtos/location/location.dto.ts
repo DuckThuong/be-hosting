@@ -517,6 +517,26 @@ export class LocationServiceDataDto {
   services?: LocationServiceDto[];
 }
 
+export class LocationMediaDto {
+  @ApiProperty({ description: 'Ma media', example: 'MEDIA_00000001' })
+  mediaCode: string;
+
+  @ApiProperty({
+    description: 'URL media',
+    example: 'https://cdn.example.com/location/media-1.jpg',
+  })
+  mediaUrl: string;
+
+  @ApiProperty({ description: 'Loai media', example: 'IMAGE' })
+  mediaType: string;
+
+  @ApiProperty({ description: 'Thu tu hien thi', example: 1 })
+  displayOrder: number;
+
+  @ApiProperty({ description: 'Co phai logo hay khong', example: true })
+  isLogo: boolean;
+}
+
 export class LocationListDto {
   @ApiProperty({
     description: 'Mã địa điểm',
@@ -726,6 +746,207 @@ export class LocationListDto {
     required: false,
   })
   address?: LocationAddressItemDto[];
+
+  @ApiProperty({
+    description: 'Trạng thái yêu thích của người dùng hiện tại',
+    example: true,
+    required: false,
+  })
+  isFavorite?: boolean;
+
+  @ApiProperty({
+    description: 'Danh sach media cua dia diem',
+    type: [LocationMediaDto],
+    required: false,
+  })
+  media?: LocationMediaDto[];
+}
+
+export class ToggleFavoriteRequestDto {
+  @ApiProperty({
+    description: 'Mã location cần toggle favorite',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  locationCode: string;
+}
+
+export class ToggleFavoriteResponseDto {
+  @ApiProperty({
+    description: 'Thông báo kết quả',
+    example: 'Cập nhật yêu thích thành công',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'Mã location',
+    example: 'UWUi9ZXl',
+  })
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Trạng thái favorite sau khi toggle',
+    example: true,
+  })
+  isFavorite: boolean;
+}
+
+export class FavoriteLocationSummaryDto {
+  @ApiProperty({
+    description: 'Mã location',
+    example: 'UWUi9ZXl',
+  })
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Tên phòng',
+    example: 'Kho A - Tang 1',
+  })
+  locationName: string;
+
+  @ApiProperty({
+    description: 'Ảnh đại diện phòng',
+    example: 'https://cdn.example.com/location/logo.png',
+  })
+  locationLogo: string;
+
+  @ApiProperty({
+    description: 'Địa chỉ đại diện để hiển thị trên danh sách',
+    example: '123 Nguyen Hue, Ben Nghe, Quan 1, Ho Chi Minh City',
+    required: false,
+  })
+  fullAddress?: string;
+
+  @ApiProperty({
+    description: 'Giá bắt đầu',
+    example: 3000000,
+    required: false,
+  })
+  locationPriceStart?: number;
+
+  @ApiProperty({
+    description: 'Giá kết thúc',
+    example: 5000000,
+    required: false,
+  })
+  locationPriceEnd?: number;
+
+  @ApiProperty({
+    description: 'Mã loại phòng',
+    example: 'TYPE001',
+    required: false,
+  })
+  typeCode?: string;
+
+  @ApiProperty({
+    description: 'Tên loại phòng',
+    example: 'Phòng trọ',
+    required: false,
+  })
+  typeName?: string;
+
+  @ApiProperty({
+    description: 'Trạng thái cho thuê (0: Không, 1: Có)',
+    example: 1,
+    required: false,
+  })
+  hasRent?: number;
+
+  @ApiProperty({
+    description: 'Trạng thái yêu thích của người dùng hiện tại',
+    example: true,
+  })
+  isFavorite: boolean;
+}
+
+export class FavoriteLocationListResponseDto {
+  @ApiProperty({
+    description: 'Thông báo kết quả',
+    example: 'Lấy danh sách yêu thích thành công',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'Danh sách location yêu thích',
+    type: [FavoriteLocationSummaryDto],
+  })
+  data: FavoriteLocationSummaryDto[];
+}
+
+export class GetShareLinkQueryDto {
+  @ApiProperty({
+    description: 'Mã location cần tạo link chia sẻ',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  locationCode: string;
+}
+
+export class GetShareLinkResponseDto {
+  @ApiProperty({
+    description: 'Thông báo kết quả',
+    example: 'Tạo link chia sẻ thành công',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'Mã location',
+    example: 'UWUi9ZXl',
+  })
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Link chia sẻ full frontend',
+    example: 'https://frontend.example.com/room-detail?locationCode=UWUi9ZXl',
+  })
+  shareUrl: string;
+}
+
+export class UpdateLocationLogoRequestDto {
+  @ApiProperty({
+    description: 'Ma location can cap nhat logo',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Ma media duoc chon lam logo',
+    example: 'MEDIA_00000001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  mediaCode: string;
+}
+
+export class UpdateLocationLogoResponseDto {
+  @ApiProperty({
+    description: 'Thong bao ket qua',
+    example: 'Cap nhat logo thanh cong.',
+  })
+  message: string;
+
+  @ApiProperty({ description: 'Ma location', example: 'UWUi9ZXl' })
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Ma media dang duoc dat lam logo',
+    example: 'MEDIA_00000001',
+  })
+  mediaCode: string;
+
+  @ApiProperty({
+    description: 'URL logo moi',
+    example: 'https://cdn.example.com/location/media-1.jpg',
+  })
+  locationLogo: string;
 }
 
 export class GetLocationAddressByLocationCodePayloadDto {

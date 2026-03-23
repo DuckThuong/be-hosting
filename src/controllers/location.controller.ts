@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Patch,
   Post,
   Put,
   Query,
@@ -10,16 +11,24 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
+import { Public } from '../common/jwt/public.decorator';
 import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  FavoriteLocationListResponseDto,
   GetLocationAddressByLocationCodePayloadDto,
   GetLocationByFillterDto,
+  GetShareLinkQueryDto,
+  GetShareLinkResponseDto,
   LocationListDto,
   LocationResponseDto,
   PaginatedLocationListDto,
+  ToggleFavoriteRequestDto,
+  ToggleFavoriteResponseDto,
   UpdatelocationPayloadDto,
+  UpdateLocationLogoRequestDto,
+  UpdateLocationLogoResponseDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
 } from '../dtos/location/location.dto';
@@ -34,14 +43,13 @@ import {
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
+import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
 import { User } from '../user.decorator';
-import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 
 @Controller('location')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth('JWT-auth')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
 
@@ -124,7 +132,7 @@ export class LocationController {
     return this.locationService.UpdateRentStatus(payload);
   }
 
-  @ApiOperation({ summary: 'Xóa địa điểm' })
+  @ApiOperation({ summary: 'Xóa địa chỉ địa điểm' })
   @Delete('delete-location-address')
   public async deleteLocationAdress(
     @Body() payload: DeleteLocationAddressesDto,
@@ -138,22 +146,20 @@ export class LocationController {
     return this.locationService.GetAllLocation();
   }
 
-  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm' })
+  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm của owner' })
   @Get('get-all-location-on-owner')
-  public async getAllLocationOnOwner(@User() user): Promise<LocationListDto[]> {
-    return this.locationService.GetAllLocationOnOwner(
-      user as UserDecoratorDtoResponse,
-    );
+  public async getAllLocationOnOwner(
+    @User() user: UserDecoratorDtoResponse,
+  ): Promise<LocationListDto[]> {
+    return this.locationService.GetAllLocationOnOwner(user);
   }
 
-  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm' })
-  @Get('get-all-location')
+  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm của renter' })
+  @Get('get-all-location-on-renter')
   public async getAllLocationOnRenter(
-    @User() user,
+    @User() user: UserDecoratorDtoResponse,
   ): Promise<LocationListDto[]> {
-    return this.locationService.GetAllLocationOnRenter(
-      user as UserDecoratorDtoResponse,
-    );
+    return this.locationService.GetAllLocationOnRenter(user);
   }
 
   @ApiOperation({ summary: 'Lấy địa điểm theo code' })
@@ -170,5 +176,43 @@ export class LocationController {
     @Query() payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     return this.locationService.GetLocationByFilter(payload);
+  }
+
+  @ApiOperation({ summary: 'Thêm hoặc bỏ yêu thích địa điểm' })
+  @ApiBearerAuth('JWT-auth')
+  @Post('toggle-favorite')
+  public async toggleFavorite(
+    @User() user: UserDecoratorDtoResponse,
+    @Body() payload: ToggleFavoriteRequestDto,
+  ): Promise<ToggleFavoriteResponseDto> {
+    return this.locationService.ToggleFavorite(user, payload);
+  }
+
+  @ApiOperation({ summary: 'Lấy danh sách địa điểm yêu thích của tôi' })
+  @ApiBearerAuth('JWT-auth')
+  @Get('get-my-favorite-location')
+  public async getMyFavoriteLocation(
+    @User() user: UserDecoratorDtoResponse,
+  ): Promise<FavoriteLocationListResponseDto> {
+    return this.locationService.GetMyFavoriteLocation(user);
+  }
+
+  @ApiOperation({ summary: 'Cập nhật logo địa điểm' })
+  @ApiBearerAuth('JWT-auth')
+  @Patch('update-logo')
+  public async updateLocationLogo(
+    @User() user: UserDecoratorDtoResponse,
+    @Body() payload: UpdateLocationLogoRequestDto,
+  ): Promise<UpdateLocationLogoResponseDto> {
+    return this.locationService.UpdateLocationLogo(user, payload);
+  }
+
+  @ApiOperation({ summary: 'Tạo link chia sẻ địa điểm' })
+  @Public()
+  @Get('get-share-link')
+  public async getShareLink(
+    @Query() payload: GetShareLinkQueryDto,
+  ): Promise<GetShareLinkResponseDto> {
+    return this.locationService.GetShareLink(payload);
   }
 }

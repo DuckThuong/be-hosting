@@ -1,17 +1,30 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
-import { ErrorLocationMessage } from '../assests/messages/location.message';
+import {
+  ErrorLocationMessage,
+  SuccessLocationMessage,
+} from '../assests/messages/location.message';
 import { ErrorServiceMessage } from '../assests/messages/service.message';
 import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  FavoriteLocationListResponseDto,
+  FavoriteLocationSummaryDto,
   GetLocationAddressByLocationCodePayloadDto,
   GetLocationByFillterDto,
+  GetShareLinkQueryDto,
+  GetShareLinkResponseDto,
+  LocationMediaDto,
   LocationListDto,
   LocationResponseDto,
   PaginatedLocationListDto,
+  ToggleFavoriteRequestDto,
+  ToggleFavoriteResponseDto,
   UpdatelocationPayloadDto,
+  UpdateLocationLogoRequestDto,
+  UpdateLocationLogoResponseDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
 } from '../dtos/location/location.dto';
@@ -35,10 +48,33 @@ import {
   UpdateLocationAddressPayloadDto,
 } from '../dtos/location/locationAddress.dto';
 import { validString } from '../common/helpers/common.helper';
+import { LocationMediaType } from '../entities/location/locationMedia.entity';
 
 @Injectable()
 export class LocationService {
-  constructor(private locationRepo: LocationRepository) {}
+  constructor(
+    private locationRepo: LocationRepository,
+    private configService: ConfigService,
+  ) {}
+
+  private async enrichLocationDetails(location: LocationListDto): Promise<void> {
+    if (!location.locationCode) {
+      return;
+    }
+
+    const service = await this.locationRepo.GetLocationServices(
+      location.locationCode,
+    );
+    location.services = service;
+
+    const address = await this.locationRepo.GetLocationAddressByLocationCode(
+      location.locationCode,
+    );
+    location.address = address.data;
+
+    const media = await this.locationRepo.GetLocationMedia(location.locationCode);
+    location.media = media as LocationMediaDto[];
+  }
 
   public async CreateLocationType(
     payload: CreateLocationTypePayloadDto,
@@ -944,19 +980,7 @@ export class LocationService {
         );
       }
 
-      if (location.locationCode) {
-        const service = await this.locationRepo.GetLocationServices(
-          location.locationCode,
-        );
-        location.services = service;
-
-        const address =
-          await this.locationRepo.GetLocationAddressByLocationCode(
-            location.locationCode,
-          );
-
-        location.address = address.data;
-      }
+      await this.enrichLocationDetails(location);
       return location;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -1122,7 +1146,6 @@ export class LocationService {
 
     try {
       const result = await this.locationRepo.GetLocationByFilter(payload);
-      console.log('result', result);
       for (const item of result.data) {
         if (item.locationCode) {
           const service = await this.locationRepo.GetLocationServices(
@@ -1150,5 +1173,205 @@ export class LocationService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  public async ToggleFavorite(
+    user: UserDecoratorDtoResponse,
+    payload: ToggleFavoriteRequestDto,
+  ): Promise<ToggleFavoriteResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.locationRepo.FindLocationByCode(
+      payload.locationCode,
+    );
+
+    if (!location) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    try {
+      return await this.locationRepo.ToggleFavorite(user.userCode, location);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during toggle favorite location:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async GetMyFavoriteLocation(
+    user: UserDecoratorDtoResponse,
+  ): Promise<FavoriteLocationListResponseDto> {
+    try {
+      const locations: FavoriteLocationSummaryDto[] =
+        await this.locationRepo.GetMyFavoriteLocation(
+          user.userCode,
+        );
+
+      return {
+        message: SuccessLocationMessage.GET_FAVORITE_LIST_SUCCESS,
+        data: locations,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get my favorite location:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async UpdateLocationLogo(
+    user: UserDecoratorDtoResponse,
+    payload: UpdateLocationLogoRequestDto,
+  ): Promise<UpdateLocationLogoResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!payload.mediaCode || payload.mediaCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.mediaCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.locationRepo.FindLocationByCode(
+      payload.locationCode,
+    );
+
+    if (!location) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (location.ownerCode !== user.userCode) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_PERMISSION_DENIED.toString(),
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const selectedMedia = await this.locationRepo.FindLocationMediaByCode(
+      payload.mediaCode,
+    );
+
+    if (!selectedMedia) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (selectedMedia.locationCode !== payload.locationCode) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_BELONG_TO_LOCATION.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (selectedMedia.mediaType !== LocationMediaType.IMAGE) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_LOGO_MUST_BE_IMAGE.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const result = await this.locationRepo.UpdateLocationLogo(
+      location,
+      selectedMedia,
+    );
+
+    return {
+      message: SuccessLocationMessage.UPDATE_LOGO_SUCCESS,
+      locationCode: result.locationCode,
+      mediaCode: result.mediaCode,
+      locationLogo: result.locationLogo,
+    };
+  }
+
+  public async GetShareLink(
+    payload: GetShareLinkQueryDto,
+  ): Promise<GetShareLinkResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.locationRepo.FindLocationByCode(
+      payload.locationCode,
+    );
+
+    if (!location) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const rawBaseUrl =
+      this.configService.get<string>('FRONTEND_BASE_URL') ||
+      this.configService.get<string>('LOCAL_DOMAIN') ||
+      'http://localhost:3001';
+    const baseUrl = rawBaseUrl.trim().replace(/^["']|["']$/g, '').replace(
+      /\/+$/,
+      '',
+    );
+
+    return {
+      message: SuccessLocationMessage.GET_SHARE_LINK_SUCCESS,
+      locationCode: payload.locationCode,
+      shareUrl: `${baseUrl}/room-detail?locationCode=${encodeURIComponent(payload.locationCode)}`,
+    };
   }
 }

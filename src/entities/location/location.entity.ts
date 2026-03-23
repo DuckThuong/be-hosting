@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { TbLocationMedia } from './locationMedia.entity';
 
 @Entity('tb_location')
 export class TbLocation {
@@ -54,4 +55,7 @@ export class TbLocation {
 
   @Column({ type: 'int', unique: false, nullable: true })
   locationRate: number;
+
+  @OneToMany(() => TbLocationMedia, (media) => media.location)
+  media?: TbLocationMedia[];
 }

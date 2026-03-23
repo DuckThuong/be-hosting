@@ -16,6 +16,7 @@ import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  FavoriteLocationSummaryDto,
   GetLocationAddressByLocationCodeResponseDto,
   GetLocationByFillterDto,
   LocationAddressItemDto,
@@ -23,6 +24,7 @@ import {
   LocationResponseDto,
   LocationServiceDto,
   PaginatedLocationListDto,
+  ToggleFavoriteResponseDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
@@ -52,6 +54,8 @@ import {
 import { UserDecoratorDtoResponse, UserRole } from '../dtos/user/user.dto';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
+import { TbLocationFavorite } from '../entities/location/locationFavorite.entity';
+import { TbLocationMedia } from '../entities/location/locationMedia.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { TbUserDefault } from '../entities/user/user_default.entity';
@@ -64,6 +68,12 @@ export class LocationRepository {
 
     @InjectRepository(TbLocationService)
     private readonly locationService: Repository<TbLocationService>,
+
+    @InjectRepository(TbLocationFavorite)
+    private readonly locationFavorite: Repository<TbLocationFavorite>,
+
+    @InjectRepository(TbLocationMedia)
+    private readonly locationMedia: Repository<TbLocationMedia>,
 
     @InjectRepository(TbLocationType)
     private readonly locationType: Repository<TbLocationType>,
@@ -566,6 +576,9 @@ export class LocationRepository {
           locationCode: existingLocation.locationCode,
         });
 
+        await this.locationMedia.delete({
+          locationCode: existingLocation.locationCode,
+        });
         await this.locationService.delete({
           locationCode: existingLocation.locationCode,
         });
@@ -800,6 +813,73 @@ export class LocationRepository {
       .getRawOne<LocationListDto>();
 
     return location as LocationListDto;
+  }
+
+  public async ToggleFavorite(
+    userCode: string,
+    location: TbLocation,
+  ): Promise<ToggleFavoriteResponseDto> {
+    const existingFavorite = await this.locationFavorite.findOneBy({
+      locationCode: location.locationCode,
+      userCode,
+    });
+
+    if (existingFavorite) {
+      await this.locationFavorite.delete({
+        locationCode: location.locationCode,
+        userCode,
+      });
+
+      return {
+        message: SuccessLocationMessage.FAVORITE_REMOVED_SUCCESS,
+        locationCode: location.locationCode,
+        isFavorite: false,
+      };
+    }
+
+    const favorite = this.locationFavorite.create({
+      locationCode: location.locationCode,
+      userCode,
+    });
+
+    await this.locationFavorite.save(favorite);
+
+    return {
+      message: SuccessLocationMessage.FAVORITE_ADDED_SUCCESS,
+      locationCode: location.locationCode,
+      isFavorite: true,
+    };
+  }
+
+  public async GetMyFavoriteLocation(
+    userCode: string,
+  ): Promise<FavoriteLocationSummaryDto[]> {
+    const locations = await this.location
+      .createQueryBuilder('TL')
+      .innerJoin(
+        'tb_location-favorite',
+        'TLF',
+        'TLF.locationCode = TL.locationCode AND TLF.userCode = :userCode',
+        { userCode },
+      )
+      .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .select('TL.locationCode', 'locationCode')
+      .addSelect('TL.locationName', 'locationName')
+      .addSelect('TL.locationLogo', 'locationLogo')
+      .addSelect('TL.locationPriceStart', 'locationPriceStart')
+      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.hasRent', 'hasRent')
+      .addSelect('TL.typeCode', 'typeCode')
+      .addSelect('TLT.typeName', 'typeName')
+      .addSelect(
+        `(SELECT tla.fullAddress FROM \`tb_location-address\` tla WHERE tla.locationCode = TL.locationCode ORDER BY tla.id ASC LIMIT 1)`,
+        'fullAddress',
+      )
+      .addSelect('1', 'isFavorite')
+      .orderBy('TL.id', 'DESC')
+      .getRawMany<FavoriteLocationSummaryDto>();
+
+    return locations;
   }
 
   public async GetLocationByFilter(
@@ -1055,6 +1135,66 @@ export class LocationRepository {
       .getRawMany<LocationServiceDto>();
 
     return result;
+  }
+
+  public async GetLocationMedia(
+    locationCode: string,
+  ): Promise<
+    Array<{
+      mediaCode: string;
+      mediaUrl: string;
+      mediaType: string;
+      displayOrder: number;
+      isLogo: boolean;
+    }>
+  > {
+    return this.locationMedia
+      .createQueryBuilder('tlm')
+      .select('tlm.mediaCode', 'mediaCode')
+      .addSelect('tlm.mediaUrl', 'mediaUrl')
+      .addSelect('tlm.mediaType', 'mediaType')
+      .addSelect('tlm.displayOrder', 'displayOrder')
+      .addSelect('tlm.isLogo', 'isLogo')
+      .where('tlm.locationCode = :locationCode', { locationCode })
+      .orderBy('tlm.displayOrder', 'ASC')
+      .addOrderBy('tlm.id', 'ASC')
+      .getRawMany();
+  }
+
+  public async FindLocationMediaByCode(
+    mediaCode: string,
+  ): Promise<TbLocationMedia | null> {
+    return this.locationMedia.findOneBy({ mediaCode });
+  }
+
+  public async UpdateLocationLogo(
+    location: TbLocation,
+    selectedMedia: TbLocationMedia,
+  ): Promise<{
+    locationCode: string;
+    mediaCode: string;
+    locationLogo: string;
+  }> {
+    await this.locationMedia.update(
+      { locationCode: location.locationCode },
+      { isLogo: 0 },
+    );
+
+    await this.locationMedia.update(
+      { mediaCode: selectedMedia.mediaCode },
+      { isLogo: 1 },
+    );
+
+    await this.location.update(
+      { locationCode: location.locationCode },
+      { locationLogo: selectedMedia.mediaUrl },
+    );
+
+    return {
+      locationCode: location.locationCode,
+      mediaCode: selectedMedia.mediaCode,
+      locationLogo: selectedMedia.mediaUrl,
+    };
   }
 
   public async GetLocationAddressByLocationCode(
