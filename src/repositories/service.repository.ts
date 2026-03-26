@@ -10,7 +10,7 @@ import {
   UpdateServiceDto,
   UpdateServiceResponseDto,
 } from '../dtos/service.dto';
-import { TbService } from '../entities/service.entity';
+import { TbService } from '../entities/service/service.entity';
 import { randomString } from '../common/helpers/common.helper';
 
 @Injectable()

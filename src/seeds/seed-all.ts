@@ -1,16 +1,17 @@
 import 'dotenv/config';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import dataSource from '../data-source';
-import { ROUND, LOCATION_RENT_STATUS } from '../assests/constants/constants';
-import { UserRole, UserStatus } from '../dtos/user/user.dto';
+import { ROUND } from '../assests/constants/constants';
 
 type SeedUser = {
   userCode: string;
   username: string;
   email: string;
   fullName: string;
-  role: UserRole;
-  status: UserStatus;
+  role: number;
+  status: number;
   isEmailVerified: boolean;
 };
 
@@ -34,21 +35,39 @@ type SeedProfile = {
   userNote: string;
 };
 
+type SeedLocationType = {
+  typeCode: string;
+  typeName: string;
+  typeDescription: string | null;
+  typeLogo: string | null;
+  typeBackGround: string | null;
+};
+
+type SeedService = {
+  serviceCode: string;
+  serviceName: string;
+  serviceDescription: string;
+  serviceLogo: string | null;
+  serviceBackGround: string | null;
+  servicePrice: number;
+  serviceDiscount: number;
+};
+
 type SeedLocation = {
   locationCode: string;
   typeCode: string;
   locationName: string;
   locationLogo: string;
   ownerCode: string;
-  minTimeLimit: string;
-  maxTimeLimit: string;
+  minTimeLimit: string | null;
+  maxTimeLimit: string | null;
   locationPriceStart: number;
   locationPriceEnd: number;
   locationPriceAfterDeal: number;
   hasRent: number;
   userRentCd: string | null;
-  locationDescription: string;
-  locationNote: string;
+  locationDescription: string | null;
+  locationNote: string | null;
   locationStatus: number;
   locationRate: number;
 };
@@ -75,9 +94,7 @@ type SeedAddress = {
 
 type SeedLocationService = {
   locationCode: string;
-  serviceCode: string;
-  serviceNote: string;
-  isActive: number;
+  serviceCodes: string[];
 };
 
 type SeedLocationMedia = {
@@ -94,6 +111,20 @@ type SeedFavorite = {
   userCode: string;
 };
 
+type SeedDataset = {
+  locationTypes: SeedLocationType[];
+  services: SeedService[];
+  users: SeedUser[];
+  profiles: SeedProfile[];
+  locations: SeedLocation[];
+  addresses: SeedAddress[];
+  locationServices: SeedLocationService[];
+  locationMedia: SeedLocationMedia[];
+  favorites: SeedFavorite[];
+};
+
+const FIXTURE_ROOT = path.join(__dirname, 'data');
+
 function getSeedPassword(): string {
   const seedPassword = process.env.SEEDPASSWORD;
 
@@ -104,492 +135,470 @@ function getSeedPassword(): string {
   return seedPassword;
 }
 
-const locationTypes = [
-  {
-    typeCode: 'ROOM',
-    typeName: 'Phong tro',
-    typeDescription:
-      'Phong tro cho thue gia re, phu hop sinh vien va nguoi di lam.',
-    typeLogo:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531521/file/bxab1now0w3nglnsuynp.png',
-    typeBackGround:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531594/phongtroback_x8on4b.jpg',
-  },
-  {
-    typeCode: 'APARTMENT',
-    typeName: 'Can ho',
-    typeDescription: 'Can ho day du tien nghi, phu hop gia dinh hoac ca nhan.',
-    typeLogo:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531585/canho_wovqil.jpg',
-    typeBackGround:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531586/canhoback_w26gna.jpg',
-  },
-  {
-    typeCode: 'HOUSE',
-    typeName: 'Nha nguyen can',
-    typeDescription: 'Nha nguyen can cho thue dai han.',
-    typeLogo:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531585/nhachothue_uo1nsk.png',
-    typeBackGround:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531585/nhachothueback_lsoxw7.jpg',
-  },
-  {
-    typeCode: 'DORM',
-    typeName: 'Ky tuc xa',
-    typeDescription: 'Ky tuc xa danh cho sinh vien hoac nguoi lao dong.',
-    typeLogo:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531585/kytucxalogo_ek5ysd.png',
-    typeBackGround:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531585/kytucxaback_chrefe.jpg',
-  },
-  {
-    typeCode: 'OFFICE',
-    typeName: 'Van phong',
-    typeDescription: 'Van phong cho thue phuc vu kinh doanh.',
-    typeLogo:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531585/background_van_phong_wu9djd.jpg',
-    typeBackGround:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531585/background_van_phong_wu9djd.jpg',
-  },
-  {
-    typeCode: 'SHOP',
-    typeName: 'Mat bang kinh doanh',
-    typeDescription: 'Mat bang cho thue de mo cua hang hoac kinh doanh.',
-    typeLogo:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531584/matbanglogo_n3uc08.jpg',
-    typeBackGround:
-      'https://res.cloudinary.com/devclound/image/upload/v1770531585/mat_bang_back_wxeahw.avif',
-  },
-];
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
 
-const services = [
-  ['SRV_FREE_WIFI', 'Wifi mien phi', 'Cung cap wifi toc do cao mien phi', 0, 0],
-  ['SRV_FREE_PARKING', 'Giu xe mien phi', 'Dich vu giu xe mien phi cho khach', 0, 0],
-  ['SRV_FREE_WATER', 'Nuoc uong mien phi', 'Nuoc uong phuc vu mien phi', 0, 0],
-  ['SRV_FREE_TV', 'TV giai tri', 'Xem TV mien phi', 0, 0],
-  ['SRV_FREE_AC', 'May lanh', 'Su dung may lanh mien phi', 0, 0],
-  ['SRV_FREE_RECEPTION', 'Le tan 24/7', 'Dich vu le tan mien phi', 0, 0],
-  ['SRV_FREE_SECURITY', 'Bao ve', 'An ninh mien phi', 0, 0],
-  ['SRV_FREE_CLEANING', 'Don phong', 'Dich vu don phong mien phi', 0, 0],
-  ['SRV_FREE_ELEVATOR', 'Thang may', 'Su dung thang may mien phi', 0, 0],
-  ['SRV_FREE_BIKE', 'Cho muon xe dap', 'Cho muon xe dap mien phi', 0, 0],
-  ['SRV_LAUNDRY', 'Giat ui', 'Dich vu giat ui', 50000, 10],
-  ['SRV_BREAKFAST', 'Bua sang', 'Cung cap bua sang', 80000, 5],
-  ['SRV_AIRPORT', 'Dua don san bay', 'Dich vu dua don san bay', 250000, 15],
-  ['SRV_SPA', 'Spa', 'Dich vu spa thu gian', 300000, 20],
-  ['SRV_GYM', 'Phong gym', 'Su dung phong gym', 120000, 10],
-  ['SRV_POOL', 'Ho boi', 'Su dung ho boi', 100000, 5],
-  ['SRV_MASSAGE', 'Massage', 'Dich vu massage', 350000, 25],
-  ['SRV_PROJECTOR', 'Thue may chieu', 'Dich vu thue may chieu', 150000, 10],
-  ['SRV_MEETING', 'Phong hop', 'Thue phong hop', 400000, 15],
-  ['SRV_EXTRA_BED', 'Giuong phu', 'Thue giuong phu', 200000, 10],
-];
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
 
-const users: SeedUser[] = [
-  {
-    userCode: 'admin-01',
-    username: 'Admin',
-    email: 'admin@example.com',
-    fullName: 'Admin Demo',
-    role: UserRole.ADMIN,
-    status: UserStatus.ACTIVE,
-    isEmailVerified: true,
-  },
-  {
-    userCode: 'owner-01',
-    username: 'Owner 1',
-    email: 'owner1@example.com',
-    fullName: 'Owner Alpha',
-    role: UserRole.OWNER,
-    status: UserStatus.ACTIVE,
-    isEmailVerified: true,
-  },
-  {
-    userCode: 'owner-02',
-    username: 'Owner 2',
-    email: 'owner2@example.com',
-    fullName: 'Owner Beta',
-    role: UserRole.OWNER,
-    status: UserStatus.ACTIVE,
-    isEmailVerified: true,
-  },
-  {
-    userCode: 'renter-01',
-    username: 'Renter 1',
-    email: 'renter1@example.com',
-    fullName: 'Renter Gamma',
-    role: UserRole.USER,
-    status: UserStatus.ACTIVE,
-    isEmailVerified: true,
-  },
-  {
-    userCode: 'renter-02',
-    username: 'Renter 2',
-    email: 'renter2@example.com',
-    fullName: 'Renter Delta',
-    role: UserRole.USER,
-    status: UserStatus.ACTIVE,
-    isEmailVerified: true,
-  },
-];
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
+}
 
-const profiles: SeedProfile[] = [
-  {
-    userCode: 'admin-01',
-    avatarUrl: 'https://picsum.photos/seed/admin-avatar/400/400',
-    coverUrl: 'https://picsum.photos/seed/admin-cover/1200/400',
-    bio: 'Quan tri vien du lieu demo.',
-    dateOfBirth: '1992-01-15',
-    phone: '0901000001',
-    fullAddress: '1 Nguyen Hue, Ben Nghe, Quan 1, Ho Chi Minh City',
-    userWard: 'Ben Nghe',
-    userDistrict: 'Quan 1',
-    userCity: 'Ho Chi Minh City',
-    userProvince: 'Ho Chi Minh',
-    userCountry: 'Vietnam',
-    userPortal: '700000',
-    userLat: '10.776530',
-    userLong: '106.700981',
-    userDescription: 'Tai khoan quan tri test.',
-    userNote: 'Dung de kiem tra he thong.',
-  },
-  {
-    userCode: 'owner-01',
-    avatarUrl: 'https://picsum.photos/seed/owner-alpha-avatar/400/400',
-    coverUrl: 'https://picsum.photos/seed/owner-alpha-cover/1200/400',
-    bio: 'Chu tro khu vuc trung tam.',
-    dateOfBirth: '1989-04-22',
-    phone: '0901000002',
-    fullAddress: '25 Le Loi, Ben Thanh, Quan 1, Ho Chi Minh City',
-    userWard: 'Ben Thanh',
-    userDistrict: 'Quan 1',
-    userCity: 'Ho Chi Minh City',
-    userProvince: 'Ho Chi Minh',
-    userCountry: 'Vietnam',
-    userPortal: '700000',
-    userLat: '10.772500',
-    userLong: '106.698000',
-    userDescription: 'So huu nhieu phong tro va can ho.',
-    userNote: 'Owner chinh de test location.',
-  },
-  {
-    userCode: 'owner-02',
-    avatarUrl: 'https://picsum.photos/seed/owner-beta-avatar/400/400',
-    coverUrl: 'https://picsum.photos/seed/owner-beta-cover/1200/400',
-    bio: 'Chu mat bang va van phong cho thue.',
-    dateOfBirth: '1990-09-12',
-    phone: '0901000003',
-    fullAddress: '88 Dien Bien Phu, Da Kao, Quan 1, Ho Chi Minh City',
-    userWard: 'Da Kao',
-    userDistrict: 'Quan 1',
-    userCity: 'Ho Chi Minh City',
-    userProvince: 'Ho Chi Minh',
-    userCountry: 'Vietnam',
-    userPortal: '700000',
-    userLat: '10.786100',
-    userLong: '106.699200',
-    userDescription: 'Cho thue van phong va mat bang.',
-    userNote: 'Owner phu de test ownership.',
-  },
-  {
-    userCode: 'renter-01',
-    avatarUrl: 'https://picsum.photos/seed/renter-gamma-avatar/400/400',
-    coverUrl: 'https://picsum.photos/seed/renter-gamma-cover/1200/400',
-    bio: 'Nguoi dung dang tim phong khu vuc trung tam.',
-    dateOfBirth: '1998-07-01',
-    phone: '0901000004',
-    fullAddress: '12 Cach Mang Thang 8, Ben Thanh, Quan 1, Ho Chi Minh City',
-    userWard: 'Ben Thanh',
-    userDistrict: 'Quan 1',
-    userCity: 'Ho Chi Minh City',
-    userProvince: 'Ho Chi Minh',
-    userCountry: 'Vietnam',
-    userPortal: '700000',
-    userLat: '10.771300',
-    userLong: '106.692700',
-    userDescription: 'Tai khoan test favorite va share.',
-    userNote: 'Renter thu nhat.',
-  },
-  {
-    userCode: 'renter-02',
-    avatarUrl: 'https://picsum.photos/seed/renter-delta-avatar/400/400',
-    coverUrl: 'https://picsum.photos/seed/renter-delta-cover/1200/400',
-    bio: 'Nguoi dung tim can ho va van phong nho.',
-    dateOfBirth: '1996-11-19',
-    phone: '0901000005',
-    fullAddress: '45 Phan Xich Long, Ward 2, Phu Nhuan, Ho Chi Minh City',
-    userWard: 'Ward 2',
-    userDistrict: 'Phu Nhuan',
-    userCity: 'Ho Chi Minh City',
-    userProvince: 'Ho Chi Minh',
-    userCountry: 'Vietnam',
-    userPortal: '700000',
-    userLat: '10.799400',
-    userLong: '106.684200',
-    userDescription: 'Tai khoan test list va room detail.',
-    userNote: 'Renter thu hai.',
-  },
-];
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
 
-const locations: SeedLocation[] = [
-  {
-    locationCode: 'LOC_ROOM_01',
-    typeCode: 'ROOM',
-    locationName: 'Phong tro gan cho Ben Thanh',
-    locationLogo: 'https://picsum.photos/seed/loc-room-01/800/600',
-    ownerCode: 'owner-01',
-    minTimeLimit: '1',
-    maxTimeLimit: '12',
-    locationPriceStart: 3500000,
-    locationPriceEnd: 4200000,
-    locationPriceAfterDeal: 3300000,
-    hasRent: LOCATION_RENT_STATUS.READY,
-    userRentCd: null,
-    locationDescription: 'Phong tro co gac, gan trung tam, day du noi that co ban.',
-    locationNote: 'Phu hop sinh vien va nhan vien van phong.',
-    locationStatus: 1,
-    locationRate: 4,
-  },
-  {
-    locationCode: 'LOC_APT_01',
-    typeCode: 'APARTMENT',
-    locationName: 'Can ho studio Quan 1',
-    locationLogo: 'https://picsum.photos/seed/loc-apt-01/800/600',
-    ownerCode: 'owner-01',
-    minTimeLimit: '3',
-    maxTimeLimit: '24',
-    locationPriceStart: 8500000,
-    locationPriceEnd: 10500000,
-    locationPriceAfterDeal: 8200000,
-    hasRent: LOCATION_RENT_STATUS.READY,
-    userRentCd: null,
-    locationDescription: 'Can ho studio day du noi that, an ninh, co ham xe.',
-    locationNote: 'Uu tien hop dong dai han.',
-    locationStatus: 1,
-    locationRate: 5,
-  },
-  {
-    locationCode: 'LOC_HOUSE_01',
-    typeCode: 'HOUSE',
-    locationName: 'Nha nguyen can Phu Nhuan',
-    locationLogo: 'https://picsum.photos/seed/loc-house-01/800/600',
-    ownerCode: 'owner-02',
-    minTimeLimit: '6',
-    maxTimeLimit: '36',
-    locationPriceStart: 18000000,
-    locationPriceEnd: 22000000,
-    locationPriceAfterDeal: 17500000,
-    hasRent: LOCATION_RENT_STATUS.READY,
-    userRentCd: null,
-    locationDescription: 'Nha nguyen can rong rai, thich hop gia dinh hoac van phong.',
-    locationNote: 'Co san 3 phong ngu va san thuong.',
-    locationStatus: 1,
-    locationRate: 4,
-  },
-  {
-    locationCode: 'LOC_OFFICE_01',
-    typeCode: 'OFFICE',
-    locationName: 'Van phong mini Da Kao',
-    locationLogo: 'https://picsum.photos/seed/loc-office-01/800/600',
-    ownerCode: 'owner-02',
-    minTimeLimit: '3',
-    maxTimeLimit: '24',
-    locationPriceStart: 12000000,
-    locationPriceEnd: 15000000,
-    locationPriceAfterDeal: 11800000,
-    hasRent: LOCATION_RENT_STATUS.READY,
-    userRentCd: null,
-    locationDescription: 'Van phong mini gan trung tam, thich hop startup nho.',
-    locationNote: 'Da bao gom phi quan ly co ban.',
-    locationStatus: 1,
-    locationRate: 5,
-  },
-];
+function readJsonArrayFile(filePath: string): unknown[] {
+  let parsed: unknown;
 
-const addresses: SeedAddress[] = [
-  {
-    locationCode: 'LOC_ROOM_01',
-    addressCode: 'ADDR_ROOM_01',
-    addressName: 'Dia chi chinh phong tro',
-    fullAddress: '120 Le Thanh Ton, Ben Nghe, Quan 1, Ho Chi Minh City',
-    addressWard: 'Ben Nghe',
-    addressDistrict: 'Quan 1',
-    addressCity: 'Ho Chi Minh City',
-    addressProvince: 'Ho Chi Minh',
-    addressCountry: 'Vietnam',
-    addressPortal: '700000',
-    addressLat: '10.775900',
-    addressLong: '106.700200',
-    addressRegion: 'Noi thanh',
-    addressStatus: '0',
-    addressDescription: 'Dia chi dai dien cua phong tro',
-    addressNote: 'Ngo vao rong 3m',
-    addressType: '1',
-  },
-  {
-    locationCode: 'LOC_APT_01',
-    addressCode: 'ADDR_APT_01',
-    addressName: 'Dia chi chinh can ho',
-    fullAddress: '18 Nguyen Du, Ben Nghe, Quan 1, Ho Chi Minh City',
-    addressWard: 'Ben Nghe',
-    addressDistrict: 'Quan 1',
-    addressCity: 'Ho Chi Minh City',
-    addressProvince: 'Ho Chi Minh',
-    addressCountry: 'Vietnam',
-    addressPortal: '700000',
-    addressLat: '10.779100',
-    addressLong: '106.703000',
-    addressRegion: 'Noi thanh',
-    addressStatus: '0',
-    addressDescription: 'Dia chi dai dien cua can ho',
-    addressNote: 'Tang 5, co thang may',
-    addressType: '1',
-  },
-  {
-    locationCode: 'LOC_HOUSE_01',
-    addressCode: 'ADDR_HOUSE_01',
-    addressName: 'Dia chi chinh nha',
-    fullAddress: '92 Phan Xich Long, Ward 2, Phu Nhuan, Ho Chi Minh City',
-    addressWard: 'Ward 2',
-    addressDistrict: 'Phu Nhuan',
-    addressCity: 'Ho Chi Minh City',
-    addressProvince: 'Ho Chi Minh',
-    addressCountry: 'Vietnam',
-    addressPortal: '700000',
-    addressLat: '10.800300',
-    addressLong: '106.683800',
-    addressRegion: 'Noi thanh',
-    addressStatus: '0',
-    addressDescription: 'Dia chi dai dien cua nha nguyen can',
-    addressNote: 'Hem xe hoi',
-    addressType: '1',
-  },
-  {
-    locationCode: 'LOC_OFFICE_01',
-    addressCode: 'ADDR_OFFICE_01',
-    addressName: 'Dia chi chinh van phong',
-    fullAddress: '55 Nguyen Dinh Chieu, Da Kao, Quan 1, Ho Chi Minh City',
-    addressWard: 'Da Kao',
-    addressDistrict: 'Quan 1',
-    addressCity: 'Ho Chi Minh City',
-    addressProvince: 'Ho Chi Minh',
-    addressCountry: 'Vietnam',
-    addressPortal: '700000',
-    addressLat: '10.787000',
-    addressLong: '106.698700',
-    addressRegion: 'Noi thanh',
-    addressStatus: '0',
-    addressDescription: 'Dia chi dai dien cua van phong',
-    addressNote: 'Toa nha co le tan',
-    addressType: '1',
-  },
-];
+  try {
+    parsed = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
+  } catch (error) {
+    throw new Error(`Unable to read fixture file: ${filePath}`, {
+      cause: error,
+    });
+  }
 
-const locationServices: SeedLocationService[] = [
-  {
-    locationCode: 'LOC_ROOM_01',
-    serviceCode: 'SRV_FREE_WIFI',
-    serviceNote: 'Wifi toc do cao',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_ROOM_01',
-    serviceCode: 'SRV_FREE_PARKING',
-    serviceNote: 'Cho gui xe may',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_APT_01',
-    serviceCode: 'SRV_FREE_WIFI',
-    serviceNote: 'Wifi da bao gom',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_APT_01',
-    serviceCode: 'SRV_FREE_AC',
-    serviceNote: 'May lanh phong khach va phong ngu',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_APT_01',
-    serviceCode: 'SRV_POOL',
-    serviceNote: 'Ho boi chung cu',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_HOUSE_01',
-    serviceCode: 'SRV_FREE_PARKING',
-    serviceNote: 'San de xe hoi',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_HOUSE_01',
-    serviceCode: 'SRV_FREE_SECURITY',
-    serviceNote: 'Khu pho an ninh',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_OFFICE_01',
-    serviceCode: 'SRV_FREE_RECEPTION',
-    serviceNote: 'Le tan toa nha',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_OFFICE_01',
-    serviceCode: 'SRV_MEETING',
-    serviceNote: 'Dat phong hop theo gio',
-    isActive: 1,
-  },
-  {
-    locationCode: 'LOC_OFFICE_01',
-    serviceCode: 'SRV_PROJECTOR',
-    serviceNote: 'Co may chieu su kien',
-    isActive: 1,
-  },
-];
+  if (!Array.isArray(parsed)) {
+    throw new Error(`Fixture "${filePath}" must contain an array.`);
+  }
 
-const favorites: SeedFavorite[] = [
-  { locationCode: 'LOC_ROOM_01', userCode: 'renter-01' },
-  { locationCode: 'LOC_APT_01', userCode: 'renter-02' },
-  { locationCode: 'LOC_OFFICE_01', userCode: 'renter-02' },
-  { locationCode: 'LOC_APT_01', userCode: 'renter-01' },
-  { locationCode: 'LOC_HOUSE_01', userCode: 'renter-02' },
-];
+  return parsed;
+}
 
-const locationMedia: SeedLocationMedia[] = [
-  {
-    mediaCode: 'MEDIA_ROOM_01_01',
-    locationCode: 'LOC_ROOM_01',
-    mediaUrl: 'https://picsum.photos/seed/loc-room-01/800/600',
-    mediaType: 'IMAGE',
-    displayOrder: 1,
-    isLogo: 1,
-  },
-  {
-    mediaCode: 'MEDIA_APT_01_01',
-    locationCode: 'LOC_APT_01',
-    mediaUrl: 'https://picsum.photos/seed/loc-apt-01/800/600',
-    mediaType: 'IMAGE',
-    displayOrder: 1,
-    isLogo: 1,
-  },
-  {
-    mediaCode: 'MEDIA_HOUSE_01_01',
-    locationCode: 'LOC_HOUSE_01',
-    mediaUrl: 'https://picsum.photos/seed/loc-house-01/800/600',
-    mediaType: 'IMAGE',
-    displayOrder: 1,
-    isLogo: 1,
-  },
-  {
-    mediaCode: 'MEDIA_OFFICE_01_01',
-    locationCode: 'LOC_OFFICE_01',
-    mediaUrl: 'https://picsum.photos/seed/loc-office-01/800/600',
-    mediaType: 'IMAGE',
-    displayOrder: 1,
-    isLogo: 1,
-  },
-];
+function loadTableRows<T>(
+  tableName: string,
+  validate: (value: unknown, index: number) => T,
+): T[] {
+  const tableFile = path.join(FIXTURE_ROOT, `${tableName}.json`);
+  const rows = readJsonArrayFile(tableFile);
+  return rows.map((row, index) => validate(row, index));
+}
+
+function validateSeedUser(value: unknown, index: number): SeedUser {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_user_default row at index ${index}: expected object.`);
+  }
+
+  const requiredStringFields = [
+    'userCode',
+    'username',
+    'email',
+    'fullName',
+  ] as const;
+
+  for (const field of requiredStringFields) {
+    if (!isNonEmptyString(value[field])) {
+      throw new Error(
+        `Invalid tb_user_default row at index ${index}: field "${field}" is required.`,
+      );
+    }
+  }
+
+  if (!isFiniteNumber(value.role) || !isFiniteNumber(value.status)) {
+    throw new Error(
+      `Invalid tb_user_default row at index ${index}: "role" and "status" must be numbers.`,
+    );
+  }
+
+  if (typeof value.isEmailVerified !== 'boolean') {
+    throw new Error(
+      `Invalid tb_user_default row at index ${index}: "isEmailVerified" must be boolean.`,
+    );
+  }
+
+  return value as unknown as SeedUser;
+}
+
+function validateSeedProfile(value: unknown, index: number): SeedProfile {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_user_profile row at index ${index}: expected object.`);
+  }
+
+  const requiredStringFields = [
+    'userCode',
+    'avatarUrl',
+    'coverUrl',
+    'bio',
+    'dateOfBirth',
+    'phone',
+    'fullAddress',
+    'userWard',
+    'userDistrict',
+    'userCity',
+    'userProvince',
+    'userCountry',
+    'userPortal',
+    'userLat',
+    'userLong',
+    'userDescription',
+    'userNote',
+  ] as const;
+
+  for (const field of requiredStringFields) {
+    if (!isNonEmptyString(value[field])) {
+      throw new Error(
+        `Invalid tb_user_profile row at index ${index}: field "${field}" is required.`,
+      );
+    }
+  }
+
+  return value as unknown as SeedProfile;
+}
+
+function validateLocationType(value: unknown, index: number): SeedLocationType {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_location-type row at index ${index}: expected object.`);
+  }
+
+  if (!isNonEmptyString(value.typeCode) || !isNonEmptyString(value.typeName)) {
+    throw new Error(
+      `Invalid tb_location-type row at index ${index}: "typeCode" and "typeName" are required.`,
+    );
+  }
+
+  if (
+    !isNullableString(value.typeDescription) ||
+    !isNullableString(value.typeLogo) ||
+    !isNullableString(value.typeBackGround)
+  ) {
+    throw new Error(
+      `Invalid tb_location-type row at index ${index}: description/logo/background must be string or null.`,
+    );
+  }
+
+  return value as unknown as SeedLocationType;
+}
+
+function validateService(value: unknown, index: number): SeedService {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_service row at index ${index}: expected object.`);
+  }
+
+  if (
+    !isNonEmptyString(value.serviceCode) ||
+    !isNonEmptyString(value.serviceName) ||
+    !isNonEmptyString(value.serviceDescription)
+  ) {
+    throw new Error(
+      `Invalid tb_service row at index ${index}: code/name/description are required.`,
+    );
+  }
+
+  if (
+    !isNullableString(value.serviceLogo) ||
+    !isNullableString(value.serviceBackGround) ||
+    !isFiniteNumber(value.servicePrice) ||
+    !isFiniteNumber(value.serviceDiscount)
+  ) {
+    throw new Error(
+      `Invalid tb_service row at index ${index}: invalid logo/background/price/discount.`,
+    );
+  }
+
+  return value as unknown as SeedService;
+}
+
+function validateLocation(value: unknown, index: number): SeedLocation {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_location row at index ${index}: expected object.`);
+  }
+
+  const requiredStringFields = [
+    'locationCode',
+    'typeCode',
+    'locationName',
+    'locationLogo',
+    'ownerCode',
+  ] as const;
+
+  for (const field of requiredStringFields) {
+    if (!isNonEmptyString(value[field])) {
+      throw new Error(
+        `Invalid tb_location row at index ${index}: field "${field}" is required.`,
+      );
+    }
+  }
+
+  const numericFields = [
+    'locationPriceStart',
+    'locationPriceEnd',
+    'locationPriceAfterDeal',
+    'hasRent',
+    'locationStatus',
+    'locationRate',
+  ] as const;
+
+  for (const field of numericFields) {
+    if (!isFiniteNumber(value[field])) {
+      throw new Error(
+        `Invalid tb_location row at index ${index}: field "${field}" must be a number.`,
+      );
+    }
+  }
+
+  if (
+    !isNullableString(value.minTimeLimit) ||
+    !isNullableString(value.maxTimeLimit) ||
+    !isNullableString(value.userRentCd) ||
+    !isNullableString(value.locationDescription) ||
+    !isNullableString(value.locationNote)
+  ) {
+    throw new Error(
+      `Invalid tb_location row at index ${index}: invalid nullable string field.`,
+    );
+  }
+
+  return value as unknown as SeedLocation;
+}
+
+function validateAddress(value: unknown, index: number): SeedAddress {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_location-address row at index ${index}: expected object.`);
+  }
+
+  const requiredStringFields = [
+    'locationCode',
+    'addressCode',
+    'addressName',
+    'fullAddress',
+    'addressWard',
+    'addressDistrict',
+    'addressCity',
+    'addressProvince',
+    'addressCountry',
+    'addressPortal',
+    'addressLat',
+    'addressLong',
+    'addressRegion',
+    'addressStatus',
+    'addressDescription',
+    'addressNote',
+    'addressType',
+  ] as const;
+
+  for (const field of requiredStringFields) {
+    if (!isNonEmptyString(value[field])) {
+      throw new Error(
+        `Invalid tb_location-address row at index ${index}: field "${field}" is required.`,
+      );
+    }
+  }
+
+  return value as unknown as SeedAddress;
+}
+
+function validateLocationService(
+  value: unknown,
+  index: number,
+): SeedLocationService {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_location-service row at index ${index}: expected object.`);
+  }
+
+  if (!isNonEmptyString(value.locationCode)) {
+    throw new Error(
+      `Invalid tb_location-service row at index ${index}: locationCode is required.`,
+    );
+  }
+
+  if (
+    !Array.isArray(value.serviceCodes) ||
+    value.serviceCodes.length === 0 ||
+    value.serviceCodes.some((serviceCode) => !isNonEmptyString(serviceCode))
+  ) {
+    throw new Error(
+      `Invalid tb_location-service row at index ${index}: serviceCodes must be a non-empty array of strings.`,
+    );
+  }
+
+  const uniqueServiceCodes = new Set(value.serviceCodes);
+  if (uniqueServiceCodes.size !== value.serviceCodes.length) {
+    throw new Error(
+      `Invalid tb_location-service row at index ${index}: serviceCodes contains duplicates.`,
+    );
+  }
+
+  return value as unknown as SeedLocationService;
+}
+
+function validateLocationMedia(value: unknown, index: number): SeedLocationMedia {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_location-media row at index ${index}: expected object.`);
+  }
+
+  if (
+    !isNonEmptyString(value.mediaCode) ||
+    !isNonEmptyString(value.locationCode) ||
+    !isNonEmptyString(value.mediaUrl) ||
+    !isNonEmptyString(value.mediaType)
+  ) {
+    throw new Error(
+      `Invalid tb_location-media row at index ${index}: missing required string field.`,
+    );
+  }
+
+  if (!isFiniteNumber(value.displayOrder) || !isFiniteNumber(value.isLogo)) {
+    throw new Error(
+      `Invalid tb_location-media row at index ${index}: displayOrder/isLogo must be numbers.`,
+    );
+  }
+
+  return value as unknown as SeedLocationMedia;
+}
+
+function validateFavorite(value: unknown, index: number): SeedFavorite {
+  if (!isObject(value)) {
+    throw new Error(`Invalid tb_location-favorite row at index ${index}: expected object.`);
+  }
+
+  if (!isNonEmptyString(value.locationCode) || !isNonEmptyString(value.userCode)) {
+    throw new Error(
+      `Invalid tb_location-favorite row at index ${index}: locationCode and userCode are required.`,
+    );
+  }
+
+  return value as unknown as SeedFavorite;
+}
+
+function ensureUnique(
+  values: string[],
+  context: string,
+  formatter?: (value: string) => string,
+): void {
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    if (seen.has(value)) {
+      throw new Error(
+        `Duplicate ${context}: ${formatter ? formatter(value) : value}`,
+      );
+    }
+
+    seen.add(value);
+  }
+}
+
+function loadSeedDataset(): SeedDataset {
+  const dataset: SeedDataset = {
+    locationTypes: loadTableRows('tb_location-type', validateLocationType),
+    services: loadTableRows('tb_service', validateService),
+    users: loadTableRows('tb_user_default', validateSeedUser),
+    profiles: loadTableRows('tb_user_profile', validateSeedProfile),
+    locations: loadTableRows('tb_location', validateLocation),
+    addresses: loadTableRows('tb_location-address', validateAddress),
+    locationServices: loadTableRows(
+      'tb_location-service',
+      validateLocationService,
+    ),
+    locationMedia: loadTableRows('tb_location-media', validateLocationMedia),
+    favorites: loadTableRows('tb_location-favorite', validateFavorite),
+  };
+
+  validateDataset(dataset);
+  return dataset;
+}
+
+function validateDataset(dataset: SeedDataset): void {
+  ensureUnique(dataset.locationTypes.map((item) => item.typeCode), 'typeCode');
+  ensureUnique(dataset.services.map((item) => item.serviceCode), 'serviceCode');
+  ensureUnique(dataset.users.map((item) => item.userCode), 'userCode');
+  ensureUnique(dataset.locations.map((item) => item.locationCode), 'locationCode');
+  ensureUnique(dataset.addresses.map((item) => item.addressCode), 'addressCode');
+  ensureUnique(dataset.locationMedia.map((item) => item.mediaCode), 'mediaCode');
+  ensureUnique(
+    dataset.locationServices.flatMap((item) =>
+      item.serviceCodes.map((serviceCode) => `${item.locationCode}:${serviceCode}`),
+    ),
+    'location-service pair',
+  );
+  ensureUnique(
+    dataset.favorites.map((item) => `${item.locationCode}:${item.userCode}`),
+    'location-favorite pair',
+  );
+
+  const userCodes = new Set(dataset.users.map((item) => item.userCode));
+  const locationCodes = new Set(dataset.locations.map((item) => item.locationCode));
+  const serviceCodes = new Set(dataset.services.map((item) => item.serviceCode));
+  const typeCodes = new Set(dataset.locationTypes.map((item) => item.typeCode));
+
+  for (const profile of dataset.profiles) {
+    if (!userCodes.has(profile.userCode)) {
+      throw new Error(
+        `tb_user_profile references missing userCode: ${profile.userCode}`,
+      );
+    }
+  }
+
+  for (const location of dataset.locations) {
+    if (!typeCodes.has(location.typeCode)) {
+      throw new Error(
+        `tb_location ${location.locationCode} references missing typeCode: ${location.typeCode}`,
+      );
+    }
+
+    if (!userCodes.has(location.ownerCode)) {
+      throw new Error(
+        `tb_location ${location.locationCode} references missing ownerCode: ${location.ownerCode}`,
+      );
+    }
+
+    if (location.userRentCd && !userCodes.has(location.userRentCd)) {
+      throw new Error(
+        `tb_location ${location.locationCode} references missing userRentCd: ${location.userRentCd}`,
+      );
+    }
+  }
+
+  for (const address of dataset.addresses) {
+    if (!locationCodes.has(address.locationCode)) {
+      throw new Error(
+        `tb_location-address ${address.addressCode} references missing locationCode: ${address.locationCode}`,
+      );
+    }
+  }
+
+  for (const locationService of dataset.locationServices) {
+    if (!locationCodes.has(locationService.locationCode)) {
+      throw new Error(
+        `tb_location-service references missing locationCode: ${locationService.locationCode}`,
+      );
+    }
+
+    for (const serviceCode of locationService.serviceCodes) {
+      if (!serviceCodes.has(serviceCode)) {
+        throw new Error(
+          `tb_location-service references missing serviceCode: ${serviceCode}`,
+        );
+      }
+    }
+  }
+
+  for (const media of dataset.locationMedia) {
+    if (!locationCodes.has(media.locationCode)) {
+      throw new Error(
+        `tb_location-media ${media.mediaCode} references missing locationCode: ${media.locationCode}`,
+      );
+    }
+  }
+
+  for (const favorite of dataset.favorites) {
+    if (!locationCodes.has(favorite.locationCode)) {
+      throw new Error(
+        `tb_location-favorite references missing locationCode: ${favorite.locationCode}`,
+      );
+    }
+
+    if (!userCodes.has(favorite.userCode)) {
+      throw new Error(
+        `tb_location-favorite references missing userCode: ${favorite.userCode}`,
+      );
+    }
+  }
+}
 
 async function ensureSchema(): Promise<void> {
   const requiredTables = [
@@ -622,8 +631,27 @@ async function ensureSchema(): Promise<void> {
   }
 }
 
-async function seedLocationTypes(): Promise<void> {
-  for (const item of locationTypes) {
+async function hasColumn(
+  tableName: string,
+  columnName: string,
+): Promise<boolean> {
+  const rows = await dataSource.query(
+    `
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = DATABASE()
+        AND table_name = ?
+        AND column_name = ?
+      LIMIT 1
+    `,
+    [tableName, columnName],
+  );
+
+  return rows.length > 0;
+}
+
+async function seedLocationTypes(items: SeedLocationType[]): Promise<void> {
+  for (const item of items) {
     await dataSource.query(
       `
         INSERT INTO \`tb_location-type\`
@@ -643,32 +671,37 @@ async function seedLocationTypes(): Promise<void> {
       ],
     );
   }
-
-  console.log(`Seeded location types: ${locationTypes.length}`);
 }
 
-async function seedServices(): Promise<void> {
-  for (const item of services) {
+async function seedServices(items: SeedService[]): Promise<void> {
+  for (const item of items) {
     await dataSource.query(
       `
         INSERT INTO \`tb_service\`
           (\`serviceCode\`, \`serviceName\`, \`serviceDescription\`, \`serviceLogo\`, \`serviceBackGround\`, \`servicePrice\`, \`serviceDiscount\`)
-        SELECT ?, ?, ?, NULL, NULL, ?, ?
+        SELECT ?, ?, ?, ?, ?, ?, ?
         WHERE NOT EXISTS (
           SELECT 1 FROM \`tb_service\` WHERE \`serviceCode\` = ?
         )
       `,
-      [item[0], item[1], item[2], item[3], item[4], item[0]],
+      [
+        item.serviceCode,
+        item.serviceName,
+        item.serviceDescription,
+        item.serviceLogo,
+        item.serviceBackGround,
+        item.servicePrice,
+        item.serviceDiscount,
+        item.serviceCode,
+      ],
     );
   }
-
-  console.log(`Seeded services: ${services.length}`);
 }
 
-async function seedUsers(): Promise<void> {
+async function seedUsers(items: SeedUser[]): Promise<void> {
   const hashedPassword = await bcrypt.hash(getSeedPassword(), ROUND);
 
-  for (const user of users) {
+  for (const user of items) {
     await dataSource.query(
       `
         INSERT INTO \`tb_user_default\`
@@ -691,24 +724,25 @@ async function seedUsers(): Promise<void> {
       ],
     );
   }
-
-  console.log(
-    `Seeded users: ${users.length} (${users.map((u) => `${u.userCode}:${u.email}`).join(', ')})`,
-  );
 }
 
-async function seedProfiles(): Promise<void> {
-  for (const profile of profiles) {
-    const userRows = await dataSource.query(
-      `SELECT \`id\` FROM \`tb_user_default\` WHERE \`userCode\` = ? LIMIT 1`,
-      [profile.userCode],
-    );
+async function loadUserIdMap(): Promise<Map<string, number>> {
+  const rows = (await dataSource.query(
+    'SELECT `id`, `userCode` FROM `tb_user_default`',
+  )) as Array<{ id: number; userCode: string }>;
 
-    if (!userRows.length) {
+  return new Map(rows.map((row) => [row.userCode, Number(row.id)]));
+}
+
+async function seedProfiles(items: SeedProfile[]): Promise<void> {
+  const userIdMap = await loadUserIdMap();
+
+  for (const profile of items) {
+    const userId = userIdMap.get(profile.userCode);
+
+    if (!userId) {
       throw new Error(`Cannot seed profile. Missing user: ${profile.userCode}`);
     }
-
-    const userId = userRows[0].id as number;
 
     await dataSource.query(
       `
@@ -741,12 +775,10 @@ async function seedProfiles(): Promise<void> {
       ],
     );
   }
-
-  console.log(`Seeded user profiles: ${profiles.length}`);
 }
 
-async function seedLocations(): Promise<void> {
-  for (const item of locations) {
+async function seedLocations(items: SeedLocation[]): Promise<void> {
+  for (const item of items) {
     await dataSource.query(
       `
         INSERT INTO \`tb_location\`
@@ -777,12 +809,10 @@ async function seedLocations(): Promise<void> {
       ],
     );
   }
-
-  console.log(`Seeded locations: ${locations.length}`);
 }
 
-async function seedAddresses(): Promise<void> {
-  for (const item of addresses) {
+async function seedAddresses(items: SeedAddress[]): Promise<void> {
+  for (const item of items) {
     await dataSource.query(
       `
         INSERT INTO \`tb_location-address\`
@@ -814,40 +844,116 @@ async function seedAddresses(): Promise<void> {
       ],
     );
   }
-
-  console.log(`Seeded location addresses: ${addresses.length}`);
 }
 
-async function seedLocationServices(): Promise<void> {
-  for (const item of locationServices) {
-    await dataSource.query(
-      `
-        INSERT INTO \`tb_location-service\`
-          (\`locationCode\`, \`serviceCode\`, \`serviceNote\`, \`isActive\`)
-        SELECT ?, ?, ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1
-          FROM \`tb_location-service\`
-          WHERE \`locationCode\` = ?
-            AND \`serviceCode\` = ?
-        )
-      `,
-      [
-        item.locationCode,
-        item.serviceCode,
-        item.serviceNote,
-        item.isActive,
-        item.locationCode,
-        item.serviceCode,
-      ],
-    );
+async function seedLocationServices(
+  items: SeedLocationService[],
+  services: SeedService[],
+): Promise<void> {
+  const serviceDescriptionByCode = new Map(
+    services.map((service) => [service.serviceCode, service.serviceDescription]),
+  );
+  const hasServiceNoteColumn = await hasColumn(
+    'tb_location-service',
+    'serviceNote',
+  );
+  const hasIsActiveColumn = await hasColumn('tb_location-service', 'isActive');
+
+  for (const item of items) {
+    for (const serviceCode of item.serviceCodes) {
+      if (hasServiceNoteColumn && hasIsActiveColumn) {
+        await dataSource.query(
+          `
+            INSERT INTO \`tb_location-service\`
+              (\`locationCode\`, \`serviceCode\`, \`serviceNote\`, \`isActive\`)
+            SELECT ?, ?, ?, ?
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM \`tb_location-service\`
+              WHERE \`locationCode\` = ?
+                AND \`serviceCode\` = ?
+            )
+          `,
+          [
+            item.locationCode,
+            serviceCode,
+            serviceDescriptionByCode.get(serviceCode) ?? '',
+            1,
+            item.locationCode,
+            serviceCode,
+          ],
+        );
+        continue;
+      }
+
+      if (hasServiceNoteColumn) {
+        await dataSource.query(
+          `
+            INSERT INTO \`tb_location-service\`
+              (\`locationCode\`, \`serviceCode\`, \`serviceNote\`)
+            SELECT ?, ?, ?
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM \`tb_location-service\`
+              WHERE \`locationCode\` = ?
+                AND \`serviceCode\` = ?
+            )
+          `,
+          [
+            item.locationCode,
+            serviceCode,
+            serviceDescriptionByCode.get(serviceCode) ?? '',
+            item.locationCode,
+            serviceCode,
+          ],
+        );
+        continue;
+      }
+
+      if (hasIsActiveColumn) {
+        await dataSource.query(
+          `
+            INSERT INTO \`tb_location-service\`
+              (\`locationCode\`, \`serviceCode\`, \`isActive\`)
+            SELECT ?, ?, ?
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM \`tb_location-service\`
+              WHERE \`locationCode\` = ?
+                AND \`serviceCode\` = ?
+            )
+          `,
+          [
+            item.locationCode,
+            serviceCode,
+            1,
+            item.locationCode,
+            serviceCode,
+          ],
+        );
+        continue;
+      }
+
+      await dataSource.query(
+        `
+          INSERT INTO \`tb_location-service\`
+            (\`locationCode\`, \`serviceCode\`)
+          SELECT ?, ?
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM \`tb_location-service\`
+            WHERE \`locationCode\` = ?
+              AND \`serviceCode\` = ?
+          )
+        `,
+        [item.locationCode, serviceCode, item.locationCode, serviceCode],
+      );
+    }
   }
-
-  console.log(`Seeded location services: ${locationServices.length}`);
 }
 
-async function seedLocationMedia(): Promise<void> {
-  for (const item of locationMedia) {
+async function seedLocationMedia(items: SeedLocationMedia[]): Promise<void> {
+  for (const item of items) {
     await dataSource.query(
       `
         INSERT INTO \`tb_location-media\`
@@ -868,22 +974,20 @@ async function seedLocationMedia(): Promise<void> {
       ],
     );
   }
-
-  console.log(`Seeded location media: ${locationMedia.length}`);
 }
 
-async function seedFavorites(): Promise<void> {
-  for (const item of favorites) {
-    const ownerRows = await dataSource.query(
-      `SELECT \`ownerCode\` FROM \`tb_location\` WHERE \`locationCode\` = ? LIMIT 1`,
+async function seedFavorites(items: SeedFavorite[]): Promise<void> {
+  for (const item of items) {
+    const ownerRows = (await dataSource.query(
+      'SELECT `ownerCode` FROM `tb_location` WHERE `locationCode` = ? LIMIT 1',
       [item.locationCode],
-    );
+    )) as Array<{ ownerCode: string }>;
 
     if (!ownerRows.length) {
       throw new Error(`Cannot seed favorite. Missing location: ${item.locationCode}`);
     }
 
-    if ((ownerRows[0].ownerCode as string) === item.userCode) {
+    if (ownerRows[0].ownerCode === item.userCode) {
       continue;
     }
 
@@ -901,8 +1005,6 @@ async function seedFavorites(): Promise<void> {
       [item.locationCode, item.userCode, item.locationCode, item.userCode],
     );
   }
-
-  console.log(`Seeded location favorites: ${favorites.length}`);
 }
 
 async function showSummary(): Promise<void> {
@@ -921,7 +1023,9 @@ async function showSummary(): Promise<void> {
   const summary: Array<{ table: string; total: number }> = [];
 
   for (const tableName of tables) {
-    const rows = await dataSource.query(`SELECT COUNT(*) AS total FROM \`${tableName}\``);
+    const rows = await dataSource.query(
+      `SELECT COUNT(*) AS total FROM \`${tableName}\``,
+    );
     summary.push({ table: tableName, total: Number(rows[0].total) });
   }
 
@@ -929,19 +1033,20 @@ async function showSummary(): Promise<void> {
 }
 
 async function seedAll(): Promise<void> {
+  const dataset = loadSeedDataset();
   await dataSource.initialize();
 
   try {
     await ensureSchema();
-    await seedLocationTypes();
-    await seedServices();
-    await seedUsers();
-    await seedProfiles();
-    await seedLocations();
-    await seedAddresses();
-    await seedLocationServices();
-    await seedLocationMedia();
-    await seedFavorites();
+    await seedLocationTypes(dataset.locationTypes);
+    await seedServices(dataset.services);
+    await seedUsers(dataset.users);
+    await seedProfiles(dataset.profiles);
+    await seedLocations(dataset.locations);
+    await seedAddresses(dataset.addresses);
+    await seedLocationServices(dataset.locationServices, dataset.services);
+    await seedLocationMedia(dataset.locationMedia);
+    await seedFavorites(dataset.favorites);
     await showSummary();
     console.log('Seed all completed.');
   } finally {

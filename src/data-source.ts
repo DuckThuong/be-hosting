@@ -8,6 +8,7 @@ const dataSource = new DataSource({
   username: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
+  charset: 'utf8mb4',
   entities: ['src/**/*.entity.ts'],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,

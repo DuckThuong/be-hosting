@@ -1,0 +1,250 @@
+[
+  {
+    "mediaCode": "MEDIA_ROOM_01_01",
+    "locationCode": "LOC_ROOM_01",
+    "mediaUrl": "https://picsum.photos/seed/loc-room-01/800/600",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_APT_01_01",
+    "locationCode": "LOC_APT_01",
+    "mediaUrl": "https://picsum.photos/seed/loc-apt-01/800/600",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_HOUSE_01_01",
+    "locationCode": "LOC_HOUSE_01",
+    "mediaUrl": "https://picsum.photos/seed/loc-house-01/800/600",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_OFFICE_01_01",
+    "locationCode": "LOC_OFFICE_01",
+    "mediaUrl": "https://picsum.photos/seed/loc-office-01/800/600",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1001_01",
+    "locationCode": "MOCK_LOC_1001",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1001-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1001_02",
+    "locationCode": "MOCK_LOC_1001",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1001-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1002_01",
+    "locationCode": "MOCK_LOC_1002",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1002-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1002_02",
+    "locationCode": "MOCK_LOC_1002",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1002-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1002_03",
+    "locationCode": "MOCK_LOC_1002",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1002-3/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 3,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1003_01",
+    "locationCode": "MOCK_LOC_1003",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1003-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1003_02",
+    "locationCode": "MOCK_LOC_1003",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1003-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1004_01",
+    "locationCode": "MOCK_LOC_1004",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1004-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1004_02",
+    "locationCode": "MOCK_LOC_1004",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1004-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1004_03",
+    "locationCode": "MOCK_LOC_1004",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1004-3/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 3,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1005_01",
+    "locationCode": "MOCK_LOC_1005",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1005-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1005_02",
+    "locationCode": "MOCK_LOC_1005",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1005-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1006_01",
+    "locationCode": "MOCK_LOC_1006",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1006-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1006_02",
+    "locationCode": "MOCK_LOC_1006",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1006-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1007_01",
+    "locationCode": "MOCK_LOC_1007",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1007-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1007_02",
+    "locationCode": "MOCK_LOC_1007",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1007-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1008_01",
+    "locationCode": "MOCK_LOC_1008",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1008-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1008_02",
+    "locationCode": "MOCK_LOC_1008",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1008-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1008_03",
+    "locationCode": "MOCK_LOC_1008",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1008-3/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 3,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1009_01",
+    "locationCode": "MOCK_LOC_1009",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1009-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1009_02",
+    "locationCode": "MOCK_LOC_1009",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1009-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1010_01",
+    "locationCode": "MOCK_LOC_1010",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1010-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1010_02",
+    "locationCode": "MOCK_LOC_1010",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1010-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1011_01",
+    "locationCode": "MOCK_LOC_1011",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1011-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1011_02",
+    "locationCode": "MOCK_LOC_1011",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1011-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1012_01",
+    "locationCode": "MOCK_LOC_1012",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1012-1/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 1,
+    "isLogo": 1
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1012_02",
+    "locationCode": "MOCK_LOC_1012",
+    "mediaUrl": "https://picsum.photos/seed/mock_loc_1012-2/1200/800",
+    "mediaType": "IMAGE",
+    "displayOrder": 2,
+    "isLogo": 0
+  }
+]

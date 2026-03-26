@@ -475,12 +475,6 @@ export class LocationServiceDto {
     required: false,
   })
   serviceNote?: string;
-
-  @ApiProperty({
-    description: 'Trạng thái kích hoạt',
-    example: true,
-  })
-  isActive: boolean;
 }
 
 export class LocationAddressItemDto {
@@ -518,7 +512,7 @@ export class LocationServiceDataDto {
 }
 
 export class LocationMediaDto {
-  @ApiProperty({ description: 'Ma media', example: 'MEDIA_00000001' })
+  @ApiProperty({ description: 'Mã media', example: 'MEDIA_00000001' })
   mediaCode: string;
 
   @ApiProperty({
@@ -527,13 +521,13 @@ export class LocationMediaDto {
   })
   mediaUrl: string;
 
-  @ApiProperty({ description: 'Loai media', example: 'IMAGE' })
+  @ApiProperty({ description: 'Loại media', example: 'IMAGE' })
   mediaType: string;
 
-  @ApiProperty({ description: 'Thu tu hien thi', example: 1 })
+  @ApiProperty({ description: 'Thứ tự hiển thị', example: 1 })
   displayOrder: number;
 
-  @ApiProperty({ description: 'Co phai logo hay khong', example: true })
+  @ApiProperty({ description: 'Có phải logo hay không', example: true })
   isLogo: boolean;
 }
 
@@ -755,7 +749,7 @@ export class LocationListDto {
   isFavorite?: boolean;
 
   @ApiProperty({
-    description: 'Danh sach media cua dia diem',
+    description: 'Danh sách media của địa điểm',
     type: [LocationMediaDto],
     required: false,
   })
@@ -908,7 +902,7 @@ export class GetShareLinkResponseDto {
 
 export class UpdateLocationLogoRequestDto {
   @ApiProperty({
-    description: 'Ma location can cap nhat logo',
+    description: 'Mã location cần cập nhật logo',
     example: 'UWUi9ZXl',
   })
   @IsString()
@@ -917,7 +911,7 @@ export class UpdateLocationLogoRequestDto {
   locationCode: string;
 
   @ApiProperty({
-    description: 'Ma media duoc chon lam logo',
+    description: 'Mã media được chọn làm logo',
     example: 'MEDIA_00000001',
   })
   @IsString()
@@ -928,22 +922,22 @@ export class UpdateLocationLogoRequestDto {
 
 export class UpdateLocationLogoResponseDto {
   @ApiProperty({
-    description: 'Thong bao ket qua',
-    example: 'Cap nhat logo thanh cong.',
+    description: 'Thông báo kết quả',
+    example: 'Cập nhật logo thành công.',
   })
   message: string;
 
-  @ApiProperty({ description: 'Ma location', example: 'UWUi9ZXl' })
+  @ApiProperty({ description: 'Mã location', example: 'UWUi9ZXl' })
   locationCode: string;
 
   @ApiProperty({
-    description: 'Ma media dang duoc dat lam logo',
+    description: 'Mã media đang được đặt làm logo',
     example: 'MEDIA_00000001',
   })
   mediaCode: string;
 
   @ApiProperty({
-    description: 'URL logo moi',
+    description: 'URL logo mới của location sau khi cập nhật',
     example: 'https://cdn.example.com/location/media-1.jpg',
   })
   locationLogo: string;

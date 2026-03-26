@@ -153,8 +153,6 @@ export class LocationRepository {
         const newService = this.locationService.create({
           locationCode: location.locationCode,
           serviceCode: data.serviceCode,
-          isActive: data.isActive,
-          serviceNote: data.note ?? '',
         });
 
         await this.locationService.save(newService);
@@ -170,18 +168,10 @@ export class LocationRepository {
     payload: AddLocationServicePayload,
   ): Promise<LocationServiceResponse> {
     for (const item of payload.data) {
-      if (item.isActive !== false) continue;
-
-      await this.locationService.update(
-        {
-          locationCode: location.locationCode,
-          serviceCode: item.serviceCode,
-        },
-        {
-          isActive: false,
-          serviceNote: item.note ?? '',
-        },
-      );
+      await this.locationService.delete({
+        locationCode: location.locationCode,
+        serviceCode: item.serviceCode,
+      });
     }
 
     return {
@@ -490,7 +480,7 @@ export class LocationRepository {
     const savedLocation = await this.location.save(location);
 
     return {
-      message: 'Tạo địa điểm cho thuê thành công',
+      message: 'Táº¡o Ä‘á»‹a Ä‘iá»ƒm cho thuÃª thÃ nh cÃ´ng',
       data: savedLocation,
     };
   }
@@ -1009,13 +999,13 @@ export class LocationRepository {
     const limit = Number(payload.limit) || 10;
     const offset = (page - 1) * limit;
 
-    // ✅ Clone trước khi getCount để tránh ảnh hưởng state của qb
+    // âœ… Clone trÆ°á»›c khi getCount Ä‘á»ƒ trÃ¡nh áº£nh hÆ°á»Ÿng state cá»§a qb
     const total = await qb.clone().getCount();
 
     const data = await qb
       .orderBy('TL.locationCode', 'ASC')
-      .offset(offset) // ✅ thay skip()
-      .limit(limit) // ✅ thay take()
+      .offset(offset) // âœ… thay skip()
+      .limit(limit) // âœ… thay take()
       .getRawMany<LocationListDto>();
 
     return {
@@ -1129,8 +1119,7 @@ export class LocationRepository {
       .addSelect('ts.serviceName', 'serviceName')
       .addSelect('ts.servicePrice', 'servicePrice')
       .addSelect('ts.serviceDescription', 'serviceDescription')
-      .addSelect('tls.serviceNote', 'serviceNote')
-      .addSelect('tls.isActive', 'isActive')
+      .addSelect('ts.serviceDescription', 'serviceNote')
       .where('tls.locationCode = :locationCode', { locationCode })
       .getRawMany<LocationServiceDto>();
 

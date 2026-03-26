@@ -30,7 +30,6 @@ import {
 } from '../dtos/location/location.dto';
 import {
   AddLocationServicePayload,
-  LocationServiceData,
   LocationServiceResponse,
 } from '../dtos/location/locationService.dto';
 import {
@@ -492,12 +491,10 @@ export class LocationService {
       };
       const location = await this.locationRepo.CreateLocation(dataPayload);
       if (payload.serviceCode.length > 0 && location.data) {
-        const serviceData: LocationServiceData[] = [];
+        const serviceData: Array<{ serviceCode: string }> = [];
         for (const item of payload.serviceCode) {
           serviceData.push({
             serviceCode: item.serviceCode,
-            isActive: true,
-            note: '',
           });
         }
         const servicePayload: AddLocationServicePayload = {
@@ -674,12 +671,10 @@ export class LocationService {
       const location = await this.locationRepo.UpdateLocation(payload);
 
       if (payload.data.serviceCode?.length > 0 && location.data) {
-        const serviceData: LocationServiceData[] = [];
+        const serviceData: Array<{ serviceCode: string }> = [];
         for (const item of payload.data.serviceCode) {
           serviceData.push({
             serviceCode: item.serviceCode,
-            isActive: true,
-            note: '',
           });
         }
         const servicePayload: AddLocationServicePayload = {

@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TbUserDefault } from './entities/user/user_default.entity';
 import { AuthModule } from './modules/auth.module';
 import { ServiceModule } from './modules/service.module';
-import { TbService } from './entities/service.entity';
+import { TbService } from './entities/service/service.entity';
 import { LocationModule } from './modules/location.module';
 import { TbLocation } from './entities/location/location.entity';
 import { TbLocationFavorite } from './entities/location/locationFavorite.entity';
@@ -36,6 +36,7 @@ import { TbLocationMedia } from './entities/location/locationMedia.entity';
         username: configService.get('MYSQLUSER'),
         password: configService.get('MYSQLPASSWORD'),
         database: configService.get('MYSQLDATABASE'),
+        charset: 'utf8mb4',
         autoLoadEntities: true,
         synchronize: configService.get('TYPEORM_SYNC') === 'true',
         logging: configService.get('TYPEORM_LOGGING') === 'true',

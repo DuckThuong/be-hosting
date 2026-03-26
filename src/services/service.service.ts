@@ -5,7 +5,7 @@ import {
   UpdateServiceDto,
   UpdateServiceResponseDto,
 } from '../dtos/service.dto';
-import { TbService } from '../entities/service.entity';
+import { TbService } from '../entities/service/service.entity';
 import { ServiceRepository } from '../repositories/service.repository';
 import { ErrorServiceMessage } from '../assests/messages/service.message';
 

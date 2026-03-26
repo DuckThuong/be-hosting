@@ -1,24 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('tb_location-service')
 export class TbLocationService {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
-  @Column({ type: 'varchar', length: 50, unique: false, nullable: false })
+  @PrimaryColumn({ type: 'varchar', length: 50, unique: false, nullable: false })
   locationCode: string;
 
-  @Column({ type: 'varchar', length: 50, unique: false, nullable: false })
+  @PrimaryColumn({ type: 'varchar', length: 50, unique: false, nullable: false })
   serviceCode: string;
-
-  @Column({ type: 'varchar', length: 2000, nullable: false })
-  serviceNote: string;
-
-  @Column({
-    type: 'boolean',
-    default: false,
-  })
-  isActive: boolean;
 }
