@@ -852,17 +852,7 @@ export class LocationService {
 
       for (const item of location) {
         if (item.locationCode) {
-          const service = await this.locationRepo.GetLocationServices(
-            item.locationCode,
-          );
-          item.services = service;
-
-          const address =
-            await this.locationRepo.GetLocationAddressByLocationCode(
-              item.locationCode,
-            );
-
-          item.address = address.data;
+          await this.enrichLocationDetails(item);
         }
       }
       return location;
@@ -886,17 +876,7 @@ export class LocationService {
 
       for (const item of location) {
         if (item.locationCode) {
-          const service = await this.locationRepo.GetLocationServices(
-            item.locationCode,
-          );
-          item.services = service;
-
-          const address =
-            await this.locationRepo.GetLocationAddressByLocationCode(
-              item.locationCode,
-            );
-
-          item.address = address.data;
+          await this.enrichLocationDetails(item);
         }
       }
       return location;
@@ -920,17 +900,7 @@ export class LocationService {
 
       for (const item of location) {
         if (item.locationCode) {
-          const service = await this.locationRepo.GetLocationServices(
-            item.locationCode,
-          );
-          item.services = service;
-
-          const address =
-            await this.locationRepo.GetLocationAddressByLocationCode(
-              item.locationCode,
-            );
-
-          item.address = address.data;
+          await this.enrichLocationDetails(item);
         }
       }
       return location;
@@ -1143,17 +1113,7 @@ export class LocationService {
       const result = await this.locationRepo.GetLocationByFilter(payload);
       for (const item of result.data) {
         if (item.locationCode) {
-          const service = await this.locationRepo.GetLocationServices(
-            item.locationCode,
-          );
-          item.services = service;
-
-          const address =
-            await this.locationRepo.GetLocationAddressByLocationCode(
-              item.locationCode,
-            );
-
-          item.address = address.data;
+          await this.enrichLocationDetails(item);
         }
       }
 
