@@ -18,6 +18,10 @@ export class SuccessLocationMessage {
     'Lay danh sach yeu thich thanh cong.';
   static readonly GET_SHARE_LINK_SUCCESS = 'Tao link chia se thanh cong.';
   static readonly UPDATE_LOGO_SUCCESS = 'Cap nhat logo thanh cong.';
+  static readonly ADD_MEDIA_SUCCESS = 'Them media thanh cong.';
+  static readonly UPDATE_MEDIA_SUCCESS = 'Cap nhat media thanh cong.';
+  static readonly DELETE_MEDIA_SUCCESS = 'Xoa media thanh cong.';
+  static readonly REORDER_MEDIA_SUCCESS = 'Cap nhat thu tu media thanh cong.';
 }
 
 export class ErrorLocationMessage {
@@ -105,6 +109,17 @@ export class ErrorLocationMessage {
     'Chi anh moi duoc chon lam logo.';
   static readonly LOCATION_PERMISSION_DENIED =
     'Ban khong co quyen cap nhat khu vuc nay.';
+  static readonly LOCATION_MEDIA_TYPE_INVALID = 'Loai media khong hop le.';
+  static readonly LOCATION_MEDIA_FILE_REQUIRED =
+    'File media la bat buoc.';
+  static readonly LOCATION_MEDIA_DISPLAY_ORDER_INVALID =
+    'Thu tu hien thi media khong hop le.';
+  static readonly LOCATION_MEDIA_DELETE_LOGO_FORBIDDEN =
+    'Khong the xoa media dang duoc dat lam logo.';
+  static readonly LOCATION_MEDIA_REORDER_INVALID =
+    'Du lieu sap xep media khong hop le.';
+  static readonly LOCATION_MEDIA_UPDATE_INVALID =
+    'Du lieu cap nhat media khong hop le.';
 }
 
 export class ErrorServiceMessage {

@@ -1,12 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsArray,
   IsString,
   IsInt,
   IsOptional,
   IsNotEmpty,
   MaxLength,
   IsNumber,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TbLocation } from '../../entities/location/location.entity';
 import { LocationMediaType } from '../../entities/location/locationMedia.entity';
 import { LocationAddressUpdateDto } from './locationAddress.dto';
@@ -962,6 +965,174 @@ export class UpdateLocationLogoResponseDto {
     example: 'https://cdn.example.com/location/media-1.jpg',
   })
   locationLogo: string;
+}
+
+export class AddLocationMediaRequestDto {
+  @ApiProperty({
+    description: 'Mã location cần thêm media',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Loại media',
+    enum: LocationMediaType,
+    example: LocationMediaType.IMAGE,
+  })
+  @IsString()
+  @IsNotEmpty()
+  mediaType: LocationMediaType;
+
+  @ApiProperty({
+    description: 'Thứ tự hiển thị',
+    example: 1,
+    required: false,
+  })
+  @IsOptional()
+  displayOrder?: string | number;
+
+  @ApiProperty({
+    description: 'Có đặt làm logo hay không',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  isLogo?: string | boolean | number;
+}
+
+export class UpdateLocationMediaRequestDto {
+  @ApiProperty({
+    description: 'Mã location chứa media',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Mã media cần cập nhật',
+    example: 'MEDIA_00000001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  mediaCode: string;
+
+  @ApiProperty({
+    description: 'Loại media mới',
+    enum: LocationMediaType,
+    example: LocationMediaType.VIDEO,
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  mediaType?: LocationMediaType;
+
+  @ApiProperty({
+    description: 'Thứ tự hiển thị mới',
+    example: 2,
+    required: false,
+  })
+  @IsOptional()
+  displayOrder?: string | number;
+
+  @ApiProperty({
+    description: 'Có đặt làm logo hay không',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  isLogo?: string | boolean | number;
+}
+
+export class DeleteLocationMediaRequestDto {
+  @ApiProperty({
+    description: 'Mã location chứa media',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Mã media cần xóa',
+    example: 'MEDIA_00000001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  mediaCode: string;
+}
+
+export class ReorderLocationMediaItemDto {
+  @ApiProperty({
+    description: 'Mã media',
+    example: 'MEDIA_00000001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  mediaCode: string;
+
+  @ApiProperty({
+    description: 'Thứ tự hiển thị mới',
+    example: 1,
+  })
+  @IsInt()
+  displayOrder: number;
+}
+
+export class ReorderLocationMediaRequestDto {
+  @ApiProperty({
+    description: 'Mã location cần cập nhật thứ tự media',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Danh sách media và thứ tự mới',
+    type: [ReorderLocationMediaItemDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReorderLocationMediaItemDto)
+  data: ReorderLocationMediaItemDto[];
+}
+
+export class LocationMediaResponseDto {
+  @ApiProperty({
+    description: 'Thông báo kết quả',
+    example: 'Them media thanh cong.',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'Media sau khi xử lý',
+    type: () => LocationMediaDto,
+  })
+  data: LocationMediaDto;
+}
+
+export class LocationMediaListResponseDto {
+  @ApiProperty({
+    description: 'Thông báo kết quả',
+    example: 'Cap nhat thu tu media thanh cong.',
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'Danh sách media của location',
+    type: [LocationMediaDto],
+  })
+  data: LocationMediaDto[];
 }
 
 export class GetLocationAddressByLocationCodePayloadDto {

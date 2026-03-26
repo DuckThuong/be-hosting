@@ -37,9 +37,10 @@ export class CloudinaryService {
     configureCloudinary();
   }
 
-  public async uploadImage(
+  public async uploadMedia(
     file: FileUpload,
-  ): Promise<CloudinaryUploadResponseDto> {
+    folder: string,
+  ): Promise<string> {
     if (!file || !file.buffer) {
       throw new HttpException(
         ErrorUploadMessage.FILE_REQUIRED,
@@ -52,7 +53,7 @@ export class CloudinaryService {
         cloudinary.uploader
           .upload_stream(
             {
-              folder: file.fieldname,
+              folder,
               resource_type: RESOURCE_TYPE,
             },
             (error, result) => {
@@ -65,10 +66,7 @@ export class CloudinaryService {
           .end(file.buffer);
       });
 
-      return new CloudinaryUploadResponseDto({
-        message: SuccessUploadMessage.IMAGE_UPLOADED,
-        imageUrl: result.secure_url,
-      });
+      return result.secure_url;
     } catch (error) {
       console.error(error);
       throw new HttpException(
@@ -76,5 +74,16 @@ export class CloudinaryService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  public async uploadImage(
+    file: FileUpload,
+  ): Promise<CloudinaryUploadResponseDto> {
+    const mediaUrl = await this.uploadMedia(file, file.fieldname);
+
+    return new CloudinaryUploadResponseDto({
+      message: SuccessUploadMessage.IMAGE_UPLOADED,
+      imageUrl: mediaUrl,
+    });
   }
 }

@@ -7,7 +7,9 @@ import {
 } from '../assests/messages/location.message';
 import { ErrorServiceMessage } from '../assests/messages/service.message';
 import {
+  AddLocationMediaRequestDto,
   CreateLocationDto,
+  DeleteLocationMediaRequestDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
   FavoriteLocationListResponseDto,
@@ -16,13 +18,17 @@ import {
   GetLocationByFillterDto,
   GetShareLinkQueryDto,
   GetShareLinkResponseDto,
+  LocationMediaListResponseDto,
   LocationMediaDto,
+  LocationMediaResponseDto,
   LocationListDto,
   LocationResponseDto,
   PaginatedLocationListDto,
+  ReorderLocationMediaRequestDto,
   ToggleFavoriteRequestDto,
   ToggleFavoriteResponseDto,
   UpdatelocationPayloadDto,
+  UpdateLocationMediaRequestDto,
   UpdateLocationLogoRequestDto,
   UpdateLocationLogoResponseDto,
   UpdateRentStatusDto,
@@ -47,13 +53,18 @@ import {
   UpdateLocationAddressPayloadDto,
 } from '../dtos/location/locationAddress.dto';
 import { validString } from '../common/helpers/common.helper';
-import { LocationMediaType } from '../entities/location/locationMedia.entity';
+import {
+  LocationMediaType,
+  TbLocationMedia,
+} from '../entities/location/locationMedia.entity';
+import { CloudinaryService } from './cloudinary.service';
 
 @Injectable()
 export class LocationService {
   constructor(
     private locationRepo: LocationRepository,
     private configService: ConfigService,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   private async enrichLocationDetails(location: LocationListDto): Promise<void> {
@@ -73,6 +84,136 @@ export class LocationService {
 
     const media = await this.locationRepo.GetLocationMedia(location.locationCode);
     location.media = media;
+  }
+
+  private parseMediaType(mediaType?: string): LocationMediaType | undefined {
+    if (!mediaType) {
+      return undefined;
+    }
+
+    if (mediaType === LocationMediaType.IMAGE) {
+      return LocationMediaType.IMAGE;
+    }
+
+    if (mediaType === LocationMediaType.VIDEO) {
+      return LocationMediaType.VIDEO;
+    }
+
+    return undefined;
+  }
+
+  private parseOptionalBoolean(value: unknown): boolean | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true' || normalized === '1') return true;
+      if (normalized === 'false' || normalized === '0') return false;
+    }
+
+    return undefined;
+  }
+
+  private parseOptionalDisplayOrder(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return undefined;
+    }
+
+    return parsed;
+  }
+
+  private ensureMediaMatchesFileType(
+    file: Express.Multer.File,
+    mediaType: LocationMediaType,
+  ): void {
+    if (!file?.mimetype) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_FILE_REQUIRED.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      mediaType === LocationMediaType.IMAGE &&
+      !file.mimetype.startsWith('image/')
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      mediaType === LocationMediaType.VIDEO &&
+      !file.mimetype.startsWith('video/')
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  private async getOwnedLocation(
+    user: UserDecoratorDtoResponse,
+    locationCode: string,
+  ) {
+    const location = await this.locationRepo.FindLocationByCode(locationCode);
+
+    if (!location) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (location.ownerCode !== user.userCode) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_PERMISSION_DENIED.toString(),
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    return location;
+  }
+
+  private async getLocationMediaOrFail(
+    locationCode: string,
+    mediaCode: string,
+  ): Promise<TbLocationMedia> {
+    const media = await this.locationRepo.FindLocationMediaByCode(mediaCode);
+
+    if (!media) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (media.locationCode !== locationCode) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_BELONG_TO_LOCATION.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return media;
   }
 
   public async CreateLocationType(
@@ -1283,6 +1424,325 @@ export class LocationService {
       locationCode: result.locationCode,
       mediaCode: result.mediaCode,
       locationLogo: result.locationLogo,
+    };
+  }
+
+  public async AddLocationMedia(
+    user: UserDecoratorDtoResponse,
+    payload: AddLocationMediaRequestDto,
+    file: Express.Multer.File,
+  ): Promise<LocationMediaResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!file) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_FILE_REQUIRED.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const mediaType = this.parseMediaType(payload.mediaType);
+    if (!mediaType) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.getOwnedLocation(user, payload.locationCode);
+    this.ensureMediaMatchesFileType(file, mediaType);
+
+    const displayOrder = this.parseOptionalDisplayOrder(payload.displayOrder);
+    if (payload.displayOrder !== undefined && displayOrder === undefined) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_DISPLAY_ORDER_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const isLogo = this.parseOptionalBoolean(payload.isLogo) ?? false;
+    if (isLogo && mediaType !== LocationMediaType.IMAGE) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_LOGO_MUST_BE_IMAGE.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const mediaUrl = await this.cloudinaryService.uploadMedia(
+      file,
+      `location/${location.locationCode}`,
+    );
+
+    const createdMedia = await this.locationRepo.CreateLocationMedia({
+      locationCode: location.locationCode,
+      mediaUrl,
+      mediaType,
+      displayOrder,
+      isLogo,
+    });
+
+    if (isLogo) {
+      await this.locationRepo.UpdateLocationLogo(location, createdMedia);
+    }
+
+    const result = await this.locationRepo.FindLocationMediaDtoByCode(
+      createdMedia.mediaCode,
+    );
+
+    if (!result) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return {
+      message: SuccessLocationMessage.ADD_MEDIA_SUCCESS,
+      data: result,
+    };
+  }
+
+  public async UpdateLocationMedia(
+    user: UserDecoratorDtoResponse,
+    payload: UpdateLocationMediaRequestDto,
+    file?: Express.Multer.File,
+  ): Promise<LocationMediaResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!payload.mediaCode || payload.mediaCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.mediaCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      file === undefined &&
+      payload.mediaType === undefined &&
+      payload.displayOrder === undefined &&
+      payload.isLogo === undefined
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_UPDATE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.getOwnedLocation(user, payload.locationCode);
+    const existingMedia = await this.getLocationMediaOrFail(
+      payload.locationCode,
+      payload.mediaCode,
+    );
+
+    const nextMediaType =
+      this.parseMediaType(payload.mediaType) ?? existingMedia.mediaType;
+    if (payload.mediaType !== undefined && !this.parseMediaType(payload.mediaType)) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const displayOrder = this.parseOptionalDisplayOrder(payload.displayOrder);
+    if (payload.displayOrder !== undefined && displayOrder === undefined) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_DISPLAY_ORDER_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const requestedIsLogo = this.parseOptionalBoolean(payload.isLogo);
+    if (payload.isLogo !== undefined && requestedIsLogo === undefined) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_UPDATE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (file) {
+      this.ensureMediaMatchesFileType(file, nextMediaType);
+    }
+
+    if (existingMedia.isLogo && requestedIsLogo === false) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_UPDATE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const finalIsLogo = requestedIsLogo ?? Boolean(existingMedia.isLogo);
+    if (finalIsLogo && nextMediaType !== LocationMediaType.IMAGE) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_LOGO_MUST_BE_IMAGE.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    let mediaUrl: string | undefined;
+    if (file) {
+      mediaUrl = await this.cloudinaryService.uploadMedia(
+        file,
+        `location/${location.locationCode}`,
+      );
+    }
+
+    const updatedMedia = await this.locationRepo.UpdateLocationMediaRecord(
+      existingMedia,
+      {
+        mediaUrl,
+        mediaType: nextMediaType,
+        displayOrder,
+      },
+    );
+
+    if (finalIsLogo) {
+      await this.locationRepo.UpdateLocationLogo(location, updatedMedia);
+    }
+
+    const result = await this.locationRepo.FindLocationMediaDtoByCode(
+      updatedMedia.mediaCode,
+    );
+
+    if (!result) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return {
+      message: SuccessLocationMessage.UPDATE_MEDIA_SUCCESS,
+      data: result,
+    };
+  }
+
+  public async DeleteLocationMedia(
+    user: UserDecoratorDtoResponse,
+    payload: DeleteLocationMediaRequestDto,
+  ): Promise<LocationMediaResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!payload.mediaCode || payload.mediaCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.getOwnedLocation(user, payload.locationCode);
+    const media = await this.getLocationMediaOrFail(
+      payload.locationCode,
+      payload.mediaCode,
+    );
+
+    if (Boolean(media.isLogo)) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_DELETE_LOGO_FORBIDDEN.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const mediaDto = await this.locationRepo.FindLocationMediaDtoByCode(
+      media.mediaCode,
+    );
+
+    if (!mediaDto) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    await this.locationRepo.DeleteLocationMediaByCode(media.mediaCode);
+
+    return {
+      message: SuccessLocationMessage.DELETE_MEDIA_SUCCESS,
+      data: mediaDto,
+    };
+  }
+
+  public async ReorderLocationMedia(
+    user: UserDecoratorDtoResponse,
+    payload: ReorderLocationMediaRequestDto,
+  ): Promise<LocationMediaListResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!payload.data || payload.data.length === 0) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_REORDER_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.getOwnedLocation(user, payload.locationCode);
+
+    for (const item of payload.data) {
+      if (!item.mediaCode || item.mediaCode.trim() === '') {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_MEDIA_CODE_NOTEMPTY.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (!Number.isInteger(item.displayOrder) || item.displayOrder < 1) {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_MEDIA_DISPLAY_ORDER_INVALID.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      await this.getLocationMediaOrFail(payload.locationCode, item.mediaCode);
+    }
+
+    await this.locationRepo.ReorderLocationMedia(
+      payload.locationCode,
+      payload.data,
+    );
+
+    return {
+      message: SuccessLocationMessage.REORDER_MEDIA_SUCCESS,
+      data: await this.locationRepo.GetLocationMedia(payload.locationCode),
     };
   }
 

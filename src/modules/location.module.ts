@@ -10,9 +10,11 @@ import { LocationService } from '../services/location.service';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbUserDefault } from '../entities/user/user_default.entity';
 import { TbLocationMedia } from '../entities/location/locationMedia.entity';
+import { CloudinaryModule } from './cloudinary.module';
 
 @Module({
   imports: [
+    CloudinaryModule,
     TypeOrmModule.forFeature([
       TbLocation,
       TbLocationFavorite,

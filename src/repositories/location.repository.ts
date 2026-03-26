@@ -56,7 +56,10 @@ import { UserDecoratorDtoResponse, UserRole } from '../dtos/user/user.dto';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbLocationFavorite } from '../entities/location/locationFavorite.entity';
-import { TbLocationMedia } from '../entities/location/locationMedia.entity';
+import {
+  LocationMediaType,
+  TbLocationMedia,
+} from '../entities/location/locationMedia.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { TbUserDefault } from '../entities/user/user_default.entity';
@@ -1143,10 +1146,90 @@ export class LocationRepository {
       .getRawMany<LocationMediaDto>();
   }
 
+  public async FindLocationMediaDtoByCode(
+    mediaCode: string,
+  ): Promise<LocationMediaDto | null> {
+    const media = await this.locationMedia
+      .createQueryBuilder('tlm')
+      .select('tlm.mediaCode', 'mediaCode')
+      .addSelect('tlm.mediaUrl', 'mediaUrl')
+      .addSelect('tlm.mediaType', 'mediaType')
+      .addSelect('tlm.displayOrder', 'displayOrder')
+      .addSelect('tlm.isLogo', 'isLogo')
+      .where('tlm.mediaCode = :mediaCode', { mediaCode })
+      .getRawOne<LocationMediaDto>();
+
+    return media ?? null;
+  }
+
   public async FindLocationMediaByCode(
     mediaCode: string,
   ): Promise<TbLocationMedia | null> {
     return this.locationMedia.findOneBy({ mediaCode });
+  }
+
+  public async CreateLocationMedia(data: {
+    locationCode: string;
+    mediaUrl: string;
+    mediaType: LocationMediaType;
+    displayOrder?: number;
+    isLogo?: boolean;
+  }): Promise<TbLocationMedia> {
+    const lastMedia = await this.locationMedia
+      .createQueryBuilder('tlm')
+      .select('MAX(tlm.displayOrder)', 'maxDisplayOrder')
+      .where('tlm.locationCode = :locationCode', {
+        locationCode: data.locationCode,
+      })
+      .getRawOne<{ maxDisplayOrder: string | null }>();
+
+    const media = this.locationMedia.create({
+      mediaCode: randomString(),
+      locationCode: data.locationCode,
+      mediaUrl: data.mediaUrl,
+      mediaType: data.mediaType,
+      displayOrder:
+        data.displayOrder ??
+        (lastMedia?.maxDisplayOrder
+          ? Number(lastMedia.maxDisplayOrder) + 1
+          : 1),
+      isLogo: data.isLogo ? 1 : 0,
+    });
+
+    return this.locationMedia.save(media);
+  }
+
+  public async UpdateLocationMediaRecord(
+    media: TbLocationMedia,
+    data: {
+      mediaUrl?: string;
+      mediaType?: LocationMediaType;
+      displayOrder?: number;
+    },
+  ): Promise<TbLocationMedia> {
+    const updatedEntity = this.locationMedia.merge(media, {
+      mediaUrl: data.mediaUrl ?? media.mediaUrl,
+      mediaType: data.mediaType ?? media.mediaType,
+      displayOrder: data.displayOrder ?? media.displayOrder,
+    });
+
+    return this.locationMedia.save(updatedEntity);
+  }
+
+  public async DeleteLocationMediaByCode(mediaCode: string): Promise<void> {
+    await this.locationMedia.delete({ mediaCode });
+  }
+
+  public async ReorderLocationMedia(
+    locationCode: string,
+    items: Array<{ mediaCode: string; displayOrder: number }>,
+  ): Promise<void> {
+    for (const item of items) {
+      await this.locationMedia.update(
+        { locationCode, mediaCode: item.mediaCode },
+        { displayOrder: item.displayOrder },
+      );
+    }
   }
 
   public async UpdateLocationLogo(
