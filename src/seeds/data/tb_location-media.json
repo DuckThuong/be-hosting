@@ -48,6 +48,14 @@
     "isLogo": 0
   },
   {
+    "mediaCode": "MEDIA_MOCK_LOC_1001_03",
+    "locationCode": "MOCK_LOC_1001",
+    "mediaUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
+    "mediaType": "VIDEO",
+    "displayOrder": 3,
+    "isLogo": 0
+  },
+  {
     "mediaCode": "MEDIA_MOCK_LOC_1002_01",
     "locationCode": "MOCK_LOC_1002",
     "mediaUrl": "https://picsum.photos/seed/mock_loc_1002-1/1200/800",
@@ -72,6 +80,14 @@
     "isLogo": 0
   },
   {
+    "mediaCode": "MEDIA_MOCK_LOC_1002_04",
+    "locationCode": "MOCK_LOC_1002",
+    "mediaUrl": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    "mediaType": "VIDEO",
+    "displayOrder": 4,
+    "isLogo": 0
+  },
+  {
     "mediaCode": "MEDIA_MOCK_LOC_1003_01",
     "locationCode": "MOCK_LOC_1003",
     "mediaUrl": "https://picsum.photos/seed/mock_loc_1003-1/1200/800",
@@ -85,6 +101,14 @@
     "mediaUrl": "https://picsum.photos/seed/mock_loc_1003-2/1200/800",
     "mediaType": "IMAGE",
     "displayOrder": 2,
+    "isLogo": 0
+  },
+  {
+    "mediaCode": "MEDIA_MOCK_LOC_1003_03",
+    "locationCode": "MOCK_LOC_1003",
+    "mediaUrl": "https://www.w3schools.com/html/movie.mp4",
+    "mediaType": "VIDEO",
+    "displayOrder": 3,
     "isLogo": 0
   },
   {

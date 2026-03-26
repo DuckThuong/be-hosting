@@ -72,7 +72,7 @@ export class LocationService {
     location.address = address.data;
 
     const media = await this.locationRepo.GetLocationMedia(location.locationCode);
-    location.media = media as LocationMediaDto[];
+    location.media = media;
   }
 
   public async CreateLocationType(

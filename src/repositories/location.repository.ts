@@ -21,6 +21,7 @@ import {
   GetLocationByFillterDto,
   LocationAddressItemDto,
   LocationListDto,
+  LocationMediaDto,
   LocationResponseDto,
   LocationServiceDto,
   PaginatedLocationListDto,
@@ -1128,15 +1129,7 @@ export class LocationRepository {
 
   public async GetLocationMedia(
     locationCode: string,
-  ): Promise<
-    Array<{
-      mediaCode: string;
-      mediaUrl: string;
-      mediaType: string;
-      displayOrder: number;
-      isLogo: boolean;
-    }>
-  > {
+  ): Promise<LocationMediaDto[]> {
     return this.locationMedia
       .createQueryBuilder('tlm')
       .select('tlm.mediaCode', 'mediaCode')
@@ -1147,7 +1140,7 @@ export class LocationRepository {
       .where('tlm.locationCode = :locationCode', { locationCode })
       .orderBy('tlm.displayOrder', 'ASC')
       .addOrderBy('tlm.id', 'ASC')
-      .getRawMany();
+      .getRawMany<LocationMediaDto>();
   }
 
   public async FindLocationMediaByCode(

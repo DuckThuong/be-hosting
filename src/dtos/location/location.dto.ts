@@ -8,6 +8,7 @@ import {
   IsNumber,
 } from 'class-validator';
 import { TbLocation } from '../../entities/location/location.entity';
+import { LocationMediaType } from '../../entities/location/locationMedia.entity';
 import { LocationAddressUpdateDto } from './locationAddress.dto';
 
 export class CreateLocationDto {
@@ -521,8 +522,12 @@ export class LocationMediaDto {
   })
   mediaUrl: string;
 
-  @ApiProperty({ description: 'Loại media', example: 'IMAGE' })
-  mediaType: string;
+  @ApiProperty({
+    description: 'Loại media',
+    enum: LocationMediaType,
+    example: LocationMediaType.IMAGE,
+  })
+  mediaType: LocationMediaType;
 
   @ApiProperty({ description: 'Thứ tự hiển thị', example: 1 })
   displayOrder: number;
@@ -752,6 +757,22 @@ export class LocationListDto {
     description: 'Danh sách media của địa điểm',
     type: [LocationMediaDto],
     required: false,
+    example: [
+      {
+        mediaCode: 'MEDIA_00000001',
+        mediaUrl: 'https://cdn.example.com/location/media-1.jpg',
+        mediaType: LocationMediaType.IMAGE,
+        displayOrder: 1,
+        isLogo: true,
+      },
+      {
+        mediaCode: 'MEDIA_00000002',
+        mediaUrl: 'https://cdn.example.com/location/media-2.mp4',
+        mediaType: LocationMediaType.VIDEO,
+        displayOrder: 2,
+        isLogo: false,
+      },
+    ],
   })
   media?: LocationMediaDto[];
 }
