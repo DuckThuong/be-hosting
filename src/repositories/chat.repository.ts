@@ -5,6 +5,7 @@ import {
   ContactToUserDto,
   ConversationResponseDto,
 } from '../dtos/chat/chat.dto';
+import { UserResponseDto } from '../dtos/user/user.dto';
 import {
   ConversationType,
   TbConversation,
@@ -12,7 +13,6 @@ import {
 import { TbConversationParticipant } from '../entities/chat/converation_paticipant.entity';
 import { TbMessage } from '../entities/chat/message.entity';
 import { UserRepository } from './user.repository';
-import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 
 @Injectable()
 export class ChatRepository {
@@ -31,13 +31,13 @@ export class ChatRepository {
   ) {}
 
   private async createConversation(
-    user: UserDecoratorDtoResponse,
+    user: UserResponseDto,
     contactId: number,
   ): Promise<TbConversation> {
     const contact = await this.userRepo.getUserProfileByUserId(contactId);
     const newConversation = this.conversation.create({
       type: ConversationType.PRIVATE,
-      name: `Cuộc trò chuyện giữa ${user.fullName ?? user.username} và ${contact.fullName ?? contact.userName}`,
+      name: `Cuộc trò chuyện giữa ${user.fullName ?? user.userName} và ${contact.fullName ?? contact.userName}`,
       avatar: contact.avatarUrl || '',
       lastMessage: 'Xin chào!',
       lastMessageAt: new Date(),
@@ -56,7 +56,7 @@ export class ChatRepository {
   }
 
   private async checkConversationExistence(
-    user: UserDecoratorDtoResponse,
+    user: UserResponseDto,
     contactId: number,
   ): Promise<TbConversation> {
     const result = await this.conversation

@@ -5,9 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ErrorChatMessage } from '../assests/messages/chat.message';
-import { ContactToUserDto } from '../dtos/chat/chat.dto';
+import {
+  ContactToUserDto,
+  ContactToUserPayloadDto,
+} from '../dtos/chat/chat.dto';
 import { ChatRepository } from '../repositories/chat.repository';
 import { UserRepository } from '../repositories/user.repository';
+import {
+  UserDecoratorDtoResponse,
+  UserResponseDto,
+} from '../dtos/user/user.dto';
 
 @Injectable()
 export class ChatService {
@@ -16,22 +23,44 @@ export class ChatService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  public async contactToUser(payload: ContactToUserDto): Promise<any> {
-    if (payload.fromUser.id === payload.toUserId) {
+  public async contactToUser(
+    user: UserDecoratorDtoResponse,
+    payload: ContactToUserPayloadDto,
+  ): Promise<any> {
+    if (user.id === payload.toUserId) {
       throw new BadRequestException(ErrorChatMessage.CANNOT_CHAT_WITH_YOURSELF);
     }
 
-    const [fromUser, toUser] = await Promise.all([
-      this.userRepository.getUserProfileByUserId(payload.fromUser.id),
-      this.userRepository.getUserProfileByUserId(payload.toUserId),
-    ]);
+    let [fromUser, toUser] = [{}, {}] as UserResponseDto[];
+
+    try {
+      if (payload.toUserId) {
+        [fromUser, toUser] = await Promise.all([
+          this.userRepository.getUserProfileByUserId(user.id),
+          this.userRepository.getUserProfileByUserId(payload.toUserId),
+        ]);
+      } else if (payload.toUserCd) {
+        [fromUser, toUser] = await Promise.all([
+          this.userRepository.getUserProfileByUserId(user.id),
+          this.userRepository.GetUserInfomation(payload.toUserCd),
+        ]);
+      }
+    } catch (error) {
+      console.log(error);
+      throw new NotFoundException(ErrorChatMessage.TO_USER_NOT_FOUND);
+    }
 
     if (!fromUser)
       throw new NotFoundException(ErrorChatMessage.FROM_USER_NOT_FOUND);
     if (!toUser)
       throw new NotFoundException(ErrorChatMessage.TO_USER_NOT_FOUND);
 
-    return this.chatRepository.contactToUser(payload);
+    const contactData: ContactToUserDto = {
+      fromUser,
+      toUserId: toUser.id as number,
+    };
+
+    return this.chatRepository.contactToUser(contactData);
   }
 
   public async getConversations(userId: number): Promise<any> {

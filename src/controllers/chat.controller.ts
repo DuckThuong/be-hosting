@@ -27,10 +27,7 @@ export class ChatController {
     @Body() body: ContactToUserPayloadDto,
     @User() user: UserDecoratorDtoResponse,
   ): Promise<any> {
-    return this.chatService.contactToUser({
-      fromUser: user,
-      toUserId: body.toUserId,
-    });
+    return this.chatService.contactToUser(user, body);
   }
 
   @ApiOperation({ summary: 'Lấy danh sách cuộc trò chuyện của user' })
