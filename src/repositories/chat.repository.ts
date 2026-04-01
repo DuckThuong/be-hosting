@@ -35,6 +35,7 @@ export class ChatRepository {
     contactId: number,
   ): Promise<TbConversation> {
     const contact = await this.userRepo.getUserProfileByUserId(contactId);
+
     const newConversation = this.conversation.create({
       type: ConversationType.PRIVATE,
       name: `Cuộc trò chuyện giữa ${user.fullName ?? user.userName} và ${contact.fullName ?? contact.userName}`,
@@ -50,6 +51,7 @@ export class ChatRepository {
       { conversationId: savedConversation.id, userId: user.id },
       { conversationId: savedConversation.id, userId: contactId },
     ]);
+
     await this.conversationParticipant.save(participants);
 
     return savedConversation;
@@ -74,10 +76,9 @@ export class ChatRepository {
         { userB: contactId },
       )
       .where('c.type = :type', { type: ConversationType.PRIVATE })
-      .limit(1)
       .getOne();
 
-    if (result === null) {
+    if (!result) {
       return this.createConversation(user, contactId);
     } else {
       return result;

@@ -100,6 +100,7 @@ export class UserRepository {
       .createQueryBuilder('TUD')
       .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
       .select([
+        'TUD.id AS id',
         'TUD.userCode AS userCode',
         'TUD.username AS username',
         'TUD.email AS email',
@@ -137,6 +138,7 @@ export class UserRepository {
       .createQueryBuilder('TUD')
       .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
       .select([
+        'TUD.id AS id',
         'TUD.userCode AS userCode',
         'TUD.username AS username',
         'TUD.email AS email',

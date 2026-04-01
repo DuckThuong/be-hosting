@@ -27,10 +27,6 @@ export class ChatService {
     user: UserDecoratorDtoResponse,
     payload: ContactToUserPayloadDto,
   ): Promise<any> {
-    if (user.id === payload.toUserId) {
-      throw new BadRequestException(ErrorChatMessage.CANNOT_CHAT_WITH_YOURSELF);
-    }
-
     let [fromUser, toUser] = [{}, {}] as UserResponseDto[];
 
     try {
@@ -49,12 +45,14 @@ export class ChatService {
       console.log(error);
       throw new NotFoundException(ErrorChatMessage.TO_USER_NOT_FOUND);
     }
-
     if (!fromUser)
       throw new NotFoundException(ErrorChatMessage.FROM_USER_NOT_FOUND);
     if (!toUser)
       throw new NotFoundException(ErrorChatMessage.TO_USER_NOT_FOUND);
 
+    if (fromUser.id === toUser.id) {
+      throw new BadRequestException(ErrorChatMessage.CANNOT_CHAT_WITH_YOURSELF);
+    }
     const contactData: ContactToUserDto = {
       fromUser,
       toUserId: toUser.id as number,
