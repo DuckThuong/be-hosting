@@ -127,6 +127,7 @@ export class ChatRepository {
         payload.locationCd,
       );
       const newMessage: MessagePayloadDto = {
+        avartarUrl: payload.fromUser.avatarUrl,
         conversationId: conversation.id,
         senderId: payload.fromUser.id!,
         content: RentLocationMessageTemplate({
@@ -148,6 +149,7 @@ export class ChatRepository {
         payload.locationCd,
       );
       const newMessage: MessagePayloadDto = {
+        avartarUrl: payload.fromUser.avatarUrl,
         conversationId: conversation.id,
         senderId: payload.fromUser.id!,
         content: ContactMessageTemplate({

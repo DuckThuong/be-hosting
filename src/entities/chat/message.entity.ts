@@ -33,6 +33,11 @@ export class TbMessage {
   senderId: number;
 
   @Column({
+    comment: 'URL avatar của người gửi',
+  })
+  avartarUrl?: string;
+
+  @Column({
     type: 'enum',
     enum: MessageType,
     default: MessageType.TEXT,

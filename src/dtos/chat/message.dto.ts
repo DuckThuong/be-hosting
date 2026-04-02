@@ -1,6 +1,7 @@
 import { MessageType } from '../../entities/chat/message.entity';
 
 export interface MessagePayloadDto {
+  avartarUrl?: string;
   conversationId: number;
   senderId: number;
   content: string;
