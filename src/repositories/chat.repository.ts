@@ -11,8 +11,14 @@ import {
   TbConversation,
 } from '../entities/chat/converation.entity';
 import { TbConversationParticipant } from '../entities/chat/converation_paticipant.entity';
-import { TbMessage } from '../entities/chat/message.entity';
+import { MessageType, TbMessage } from '../entities/chat/message.entity';
 import { UserRepository } from './user.repository';
+import { MessagePayloadDto, MessageTypeEnum } from '../dtos/chat/message.dto';
+import {
+  ContactMessageTemplate,
+  RentLocationMessageTemplate,
+} from '../templates/message.template';
+import { LocationRepository } from './location.repository';
 
 @Injectable()
 export class ChatRepository {
@@ -28,11 +34,15 @@ export class ChatRepository {
 
     @Inject(forwardRef(() => UserRepository))
     private readonly userRepo: UserRepository,
+
+    @Inject(forwardRef(() => LocationRepository))
+    private readonly locationRepo: LocationRepository,
   ) {}
 
   private async createConversation(
     user: UserResponseDto,
     contactId: number,
+    type: string,
   ): Promise<TbConversation> {
     const contact = await this.userRepo.getUserProfileByUserId(contactId);
 
@@ -42,6 +52,7 @@ export class ChatRepository {
       avatar: contact.avatarUrl || '',
       lastMessage: 'Xin chào!',
       lastMessageAt: new Date(),
+      lastMessageType: type,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -60,6 +71,7 @@ export class ChatRepository {
   private async checkConversationExistence(
     user: UserResponseDto,
     contactId: number,
+    type: string,
   ): Promise<TbConversation> {
     const result = await this.conversation
       .createQueryBuilder('c')
@@ -79,7 +91,7 @@ export class ChatRepository {
       .getOne();
 
     if (!result) {
-      return this.createConversation(user, contactId);
+      return this.createConversation(user, contactId, type);
     } else {
       return result;
     }
@@ -107,7 +119,50 @@ export class ChatRepository {
     const conversation = await this.checkConversationExistence(
       payload.fromUser,
       payload.toUserId,
+      payload.type as string,
     );
+
+    if (payload.type === MessageTypeEnum.RENT && payload.locationCd) {
+      const location = await this.locationRepo.GetLocationByCode(
+        payload.locationCd,
+      );
+      const newMessage: MessagePayloadDto = {
+        conversationId: conversation.id,
+        senderId: payload.fromUser.id!,
+        content: RentLocationMessageTemplate({
+          imgUrl: location?.locationLogo as string,
+          locationName: location?.locationName || '',
+          locationPriceStart: location?.locationPriceStart || '0',
+          locationPriceEnd: location?.locationPriceEnd || '0',
+          typeName: location?.typeName as string,
+          time: new Date().toLocaleString('vi-VN', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+          }),
+        }),
+        type: MessageType.SYSTEM,
+        metaData: '',
+      };
+      await this.message.save(this.message.create(newMessage));
+    } else if (payload.type === MessageTypeEnum.CONTACT && payload.locationCd) {
+      const location = await this.locationRepo.GetLocationByCode(
+        payload.locationCd,
+      );
+      const newMessage: MessagePayloadDto = {
+        conversationId: conversation.id,
+        senderId: payload.fromUser.id!,
+        content: ContactMessageTemplate({
+          imgUrl: location?.locationLogo as string,
+          locationName: location?.locationName || '',
+          locationPriceStart: location?.locationPriceStart || '0',
+          locationPriceEnd: location?.locationPriceEnd || '0',
+          typeName: location?.typeName as string,
+        }),
+        type: MessageType.SYSTEM,
+        metaData: '',
+      };
+      await this.message.save(this.message.create(newMessage));
+    }
+
     return conversation;
   }
 
@@ -211,6 +266,7 @@ export class ChatRepository {
         conversationAvatar: conversation.avatar,
         lastMessage: lastMessage?.content ?? conversation.lastMessage,
         lastMessageAt: conversation.lastMessageAt,
+        lastMessageType: conversation.lastMessageType,
         conversationCreatedAt: conversation.createdAt,
         participants,
         toUser,

@@ -51,6 +51,12 @@ export class TbConversation {
   })
   lastMessageAt?: Date;
 
+  @Column({
+    nullable: true,
+    comment: 'Loại tin nhắn cuối cùng (lưu cache để load danh sách nhanh)',
+  })
+  lastMessageType?: string;
+
   @CreateDateColumn({
     type: 'timestamp',
     comment: 'Thời điểm tạo cuộc trò chuyện',

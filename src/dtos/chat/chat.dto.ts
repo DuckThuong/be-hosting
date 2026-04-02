@@ -19,10 +19,28 @@ export class ContactToUserPayloadDto {
     maxLength: 50,
   })
   toUserCd?: string;
+
+  @ApiProperty({
+    description: 'Phân loại cuộc trò chuyện',
+    example: 'type',
+    required: true,
+    maxLength: 50,
+  })
+  type?: string;
+
+  @ApiProperty({
+    description: 'Mã địa điểm',
+    example: 'locationCd',
+    required: true,
+    maxLength: 50,
+  })
+  locationCd?: string;
 }
 export class ContactToUserDto {
   fromUser: UserResponseDto;
   toUserId: number;
+  type?: string;
+  locationCd?: string;
 }
 
 export class SendMessageDto {
@@ -110,6 +128,7 @@ export class ConversationResponseDto {
   conversationAvatar: string;
   lastMessage: string;
   lastMessageAt: Date;
+  lastMessageType: string;
   conversationCreatedAt: Date;
 
   participants: ParticipantDto[];

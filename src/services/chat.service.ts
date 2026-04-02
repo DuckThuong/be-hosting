@@ -56,6 +56,8 @@ export class ChatService {
     const contactData: ContactToUserDto = {
       fromUser,
       toUserId: toUser.id as number,
+      type: payload.type,
+      locationCd: payload.locationCd,
     };
 
     return this.chatRepository.contactToUser(contactData);

@@ -545,6 +545,32 @@ export class LocationListDto {
   locationNote?: string;
 
   @ApiProperty({
+    description: 'Logo địa điểm',
+    example: 'https://cdn.example.com/location-logo.png',
+    required: false,
+  })
+  locationLogo?: string;
+
+  @ApiProperty({
+    description: 'Giá thuê bắt đầu',
+    example: 100000,
+  })
+  locationPriceStart: number;
+
+  @ApiProperty({
+    description: 'Giá thuê kết thúc',
+    example: 500000,
+  })
+  locationPriceEnd: number;
+
+  @ApiProperty({
+    description: 'Giá thuê sau khi thỏa thuận',
+    example: 450000,
+    required: false,
+  })
+  locationPriceAfterDeal?: number;
+
+  @ApiProperty({
     description: 'Thời gian thuê tối thiểu (giờ)',
     example: 1,
   })

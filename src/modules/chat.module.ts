@@ -9,6 +9,11 @@ import { ChatService } from '../services/chat.service';
 import { UserRepository } from '../repositories/user.repository';
 import { TbUserDefault } from '../entities/user/user_default.entity';
 import { TbUserProfile } from '../entities/user/user_profile.entity';
+import { LocationRepository } from '../repositories/location.repository';
+import { TbLocation } from '../entities/location/location.entity';
+import { TbLocationAddress } from '../entities/location/locationAddress.entity';
+import { TbLocationService } from '../entities/location/locationService.entity';
+import { TbLocationType } from '../entities/location/locationType.entity';
 
 @Module({
   imports: [
@@ -18,9 +23,13 @@ import { TbUserProfile } from '../entities/user/user_profile.entity';
       TbMessage,
       TbUserDefault,
       TbUserProfile,
+      TbLocation,
+      TbLocationAddress,
+      TbLocationService,
+      TbLocationType,
     ]),
   ],
-  providers: [ChatService, ChatRepository, UserRepository],
+  providers: [ChatService, ChatRepository, UserRepository, LocationRepository],
   controllers: [ChatController],
   exports: [ChatService],
 })
