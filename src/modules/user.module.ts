@@ -13,7 +13,7 @@ import { TbUserProfile } from '../entities/user/user_profile.entity';
 import { ChatRepository } from '../repositories/chat.repository';
 import { UserRepository } from '../repositories/user.repository';
 import { UserService } from '../services/user.service';
-import { LocationRepository } from '../repositories/location.repository';
+import { LocationRepository } from '../repositories/location/location.repository';
 
 @Module({
   imports: [

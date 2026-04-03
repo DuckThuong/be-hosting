@@ -4,10 +4,15 @@ import { LocationController } from '../controllers/location.controller';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
-import { LocationRepository } from '../repositories/location.repository';
+import { LocationRepository } from '../repositories/location/location.repository';
 import { LocationService } from '../services/location.service';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbUserDefault } from '../entities/user/user_default.entity';
+import {
+  TbLocationComment,
+  TbLocationCommentReply,
+} from '../entities/location/locationComment.entity';
+import { LocationCommentRepository } from '../repositories/location/locationComment.repository';
 
 @Module({
   imports: [
@@ -17,9 +22,11 @@ import { TbUserDefault } from '../entities/user/user_default.entity';
       TbLocationAddress,
       TbLocationService,
       TbUserDefault,
+      TbLocationComment,
+      TbLocationCommentReply,
     ]),
   ],
-  providers: [LocationService, LocationRepository],
+  providers: [LocationService, LocationRepository, LocationCommentRepository],
   controllers: [LocationController],
   exports: [LocationService],
 })

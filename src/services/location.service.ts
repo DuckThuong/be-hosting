@@ -1,5 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
+import {
+  COMMENT_TYPE,
+  LOCATION_RENT_STATUS,
+} from '../assests/constants/constants';
 import { ErrorLocationMessage } from '../assests/messages/location.message';
 import { ErrorServiceMessage } from '../assests/messages/service.message';
 import {
@@ -28,17 +31,27 @@ import {
 } from '../dtos/location/locationType.dto';
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
-import { LocationRepository } from '../repositories/location.repository';
+import { LocationRepository } from '../repositories/location/location.repository';
 import {
   DeleteLocationAddressesDto,
   DeleteLocationAddressResponseDto,
   UpdateLocationAddressPayloadDto,
 } from '../dtos/location/locationAddress.dto';
 import { validString } from '../common/helpers/common.helper';
+import { LocationCommentRepository } from '../repositories/location/locationComment.repository';
+import {
+  GetAllCommentDto,
+  GetAllCommentResponseDto,
+  LocationCommentPayloadDto,
+} from '../dtos/location/locationComment.dto';
 
 @Injectable()
 export class LocationService {
-  constructor(private locationRepo: LocationRepository) {}
+  constructor(
+    private locationRepo: LocationRepository,
+
+    private readonly commentRepo: LocationCommentRepository,
+  ) {}
 
   public async CreateLocationType(
     payload: CreateLocationTypePayloadDto,
@@ -1145,6 +1158,86 @@ export class LocationService {
         throw error;
       }
       console.error('Error during get location by filter:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async createNewComment(
+    user: UserDecoratorDtoResponse,
+    payload: LocationCommentPayloadDto,
+  ): Promise<any> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.commentId !== null) {
+      payload.type = COMMENT_TYPE.REPLY;
+    } else {
+      payload.type = COMMENT_TYPE.COMMENT;
+    }
+
+    try {
+      const location = await this.locationRepo.GetLocationByCode(
+        payload.locationCode,
+      );
+
+      if (!location) {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return await this.commentRepo.createComment(user.userCode, payload);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get location by code:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async getComment(
+    payload: GetAllCommentDto,
+  ): Promise<GetAllCommentResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      return await this.commentRepo.getAllComment(payload);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get location by code:', error);
       throw new HttpException(
         ErrorLocationMessage.CATCH_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -6,12 +6,12 @@ import {
   ADDRESS_STATUS,
   ADDRESS_TYPE,
   LOCATION_RENT_STATUS,
-} from '../assests/constants/constants';
+} from '../../assests/constants/constants';
 import {
   ErrorLocationMessage,
   SuccessLocationMessage,
-} from '../assests/messages/location.message';
-import { randomString, validString } from '../common/helpers/common.helper';
+} from '../../assests/messages/location.message';
+import { randomString, validString } from '../../common/helpers/common.helper';
 import {
   CreateLocationDto,
   DeleteLocationDto,
@@ -26,7 +26,7 @@ import {
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
-} from '../dtos/location/location.dto';
+} from '../../dtos/location/location.dto';
 import {
   CreateLocationAddressPayloadDto,
   CreateLocationAddressResponseDto,
@@ -36,25 +36,25 @@ import {
   LocationAddressDto,
   UpdateLocationAddressPayloadDto,
   UpdateLocationAddressResponseDto,
-} from '../dtos/location/locationAddress.dto';
+} from '../../dtos/location/locationAddress.dto';
 import {
   AddLocationServicePayload,
   LocationServiceData,
   LocationServiceResponse,
-} from '../dtos/location/locationService.dto';
+} from '../../dtos/location/locationService.dto';
 import {
   CreateLocationTypePayloadDto,
   CreateLocationTypeResponseDto,
   LocationTypeDto,
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
-} from '../dtos/location/locationType.dto';
-import { UserDecoratorDtoResponse, UserRole } from '../dtos/user/user.dto';
-import { TbLocation } from '../entities/location/location.entity';
-import { TbLocationAddress } from '../entities/location/locationAddress.entity';
-import { TbLocationService } from '../entities/location/locationService.entity';
-import { TbLocationType } from '../entities/location/locationType.entity';
-import { TbUserDefault } from '../entities/user/user_default.entity';
+} from '../../dtos/location/locationType.dto';
+import { UserDecoratorDtoResponse, UserRole } from '../../dtos/user/user.dto';
+import { TbLocation } from '../../entities/location/location.entity';
+import { TbLocationAddress } from '../../entities/location/locationAddress.entity';
+import { TbLocationService } from '../../entities/location/locationService.entity';
+import { TbLocationType } from '../../entities/location/locationType.entity';
+import { TbUserDefault } from '../../entities/user/user_default.entity';
 
 @Injectable()
 export class LocationRepository {

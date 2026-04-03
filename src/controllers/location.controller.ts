@@ -38,6 +38,11 @@ import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
 import { User } from '../user.decorator';
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
+import {
+  GetAllCommentDto,
+  GetAllCommentResponseDto,
+  LocationCommentPayloadDto,
+} from '../dtos/location/locationComment.dto';
 
 @Controller('location')
 @UseGuards(JwtAuthGuard)
@@ -171,5 +176,22 @@ export class LocationController {
     @Query() payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     return this.locationService.GetLocationByFilter(user, payload);
+  }
+
+  @ApiOperation({ summary: 'Lấy comment' })
+  @Get('get-comment')
+  public async getComment(
+    @Query() payload: GetAllCommentDto,
+  ): Promise<GetAllCommentResponseDto> {
+    return this.locationService.getComment(payload);
+  }
+
+  @ApiOperation({ summary: 'Tạo comment' })
+  @Post('create-comment')
+  public async createNewComment(
+    @User() user: UserDecoratorDtoResponse,
+    @Body() payload: LocationCommentPayloadDto,
+  ): Promise<any> {
+    return this.locationService.createNewComment(user, payload);
   }
 }
