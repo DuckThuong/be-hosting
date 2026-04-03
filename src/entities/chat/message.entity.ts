@@ -1,9 +1,10 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Entity,
   Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 export enum MessageType {
@@ -11,6 +12,12 @@ export enum MessageType {
   IMAGE = 'IMAGE',
   FILE = 'FILE',
   SYSTEM = 'SYSTEM',
+}
+
+export enum MessageStatus {
+  SENT = 'SENT',
+  DELIVERED = 'DELIVERED',
+  READ = 'READ',
 }
 
 @Entity('tb_message')
@@ -33,10 +40,16 @@ export class TbMessage {
   senderId: number;
 
   @Column({
+    nullable: true,
+    comment: 'URL avatar của người gửi',
+  })
+  senderAvatarUrl?: string;
+
+  @Column({
     type: 'enum',
     enum: MessageType,
     default: MessageType.TEXT,
-    comment: 'Loại tin nhắn: TEXT, IMAGE, FILE, SYSTEM',
+    comment: 'Loại tin nhắn',
   })
   type: MessageType;
 
@@ -50,20 +63,53 @@ export class TbMessage {
   @Column({
     type: 'json',
     nullable: true,
-    comment:
-      'Dữ liệu bổ sung (ví dụ: imageUrl, fileUrl, kích thước, metadata...)',
+    comment: 'Dữ liệu bổ sung của tin nhắn',
   })
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
 
   @Column({
-    default: false,
-    comment: 'Trạng thái xóa tin nhắn (xóa cho tất cả thành viên)',
+    nullable: true,
+    comment: 'ID của tin nhắn được trả lời (nếu có)',
   })
-  isDeleted: boolean;
+  replyToMessageId?: number;
+
+  @Column({
+    type: 'enum',
+    enum: MessageStatus,
+    default: MessageStatus.SENT,
+    comment: 'Trạng thái của tin nhắn',
+  })
+  status: MessageStatus;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    comment: 'Thời điểm chỉnh sửa tin nhắn',
+  })
+  editedAt?: Date;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    comment: 'Thời điểm xóa mềm tin nhắn',
+  })
+  deletedAt?: Date;
+
+  @Column({
+    nullable: true,
+    comment: 'Người thực hiện xóa mềm tin nhắn',
+  })
+  deletedByUserId?: number;
 
   @CreateDateColumn({
     type: 'timestamp',
     comment: 'Thời điểm gửi tin nhắn',
   })
   createdAt: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    comment: 'Thời điểm cập nhật tin nhắn',
+  })
+  updatedAt: Date;
 }

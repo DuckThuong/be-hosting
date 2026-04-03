@@ -65,6 +65,14 @@ export class CommonMetadataListResponseDto {
   data: CommonMetadataOptionDto[];
 }
 
+export class NumericMetadataListResponseDto {
+  @ApiProperty({ example: 'Lấy metadata khoảng giá thành công.' })
+  message: string;
+
+  @ApiProperty({ type: [Number], example: [0, 25, 50, 75, 100] })
+  data: number[];
+}
+
 export class LocationFilterDefaultsResponseDto {
   @ApiProperty({ example: 'Lấy cấu hình mặc định bộ lọc địa điểm thành công.' })
   message: string;

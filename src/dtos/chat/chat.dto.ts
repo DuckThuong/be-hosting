@@ -1,35 +1,102 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ConversationStatus,
+  } from '../../entities/chat/conversation.entity';
 import { MessageType } from '../../entities/chat/message.entity';
-import { ConversationType } from '../../entities/chat/converation.entity';
-import { UserDecoratorDtoResponse, UserResponseDto } from '../user/user.dto';
+import { UserResponseDto } from '../user/user.dto';
+import { MessageAttachmentPayloadDto } from './message.dto';
+
+export enum PublicConversationType {
+  RENT = 'RENT',
+  CONTACT = 'CONTACT',
+  NORMAL = 'NORMAL',
+}
 
 export class ContactToUserPayloadDto {
   @ApiProperty({
     description: 'Người nhận tin nhắn',
-    example: 'toUserId',
-    required: true,
-    maxLength: 50,
+    example: 2,
   })
   toUserId: number;
-}
-export class ContactToUserDto {
-  fromUser: UserDecoratorDtoResponse;
 
-  @ApiProperty({
-    description: 'Người nhận tin nhắn',
-    example: 'toUserId',
-    required: true,
-    maxLength: 50,
+  @ApiPropertyOptional({
+    description: 'Mã người nhận tin nhắn',
+    example: 'USR001',
   })
+  toUserCd?: string;
+
+  @ApiPropertyOptional({
+    description: 'Phân loại tin nhắn khởi tạo',
+    example: 'CONTACT',
+  })
+  type?: string;
+
+  @ApiPropertyOptional({
+    description: 'Mã địa điểm liên quan',
+    example: 'LOC001',
+  })
+  locationCd?: string;
+}
+
+export class ContactToUserDto {
+  fromUser: UserResponseDto;
   toUserId: number;
+  type?: string;
+  locationCd?: string;
+}
+
+export class SendMessageAttachmentDto implements MessageAttachmentPayloadDto {
+  @ApiProperty({ example: 'room-photo.jpg' })
+  fileName: string;
+
+  @ApiProperty({ example: 'image/jpeg' })
+  mimeType: string;
+
+  @ApiProperty({ example: 102400 })
+  size: number;
+
+  @ApiProperty({ example: 'https://example.com/files/room-photo.jpg' })
+  url: string;
+
+  @ApiPropertyOptional({ example: 'chat/room-photo.jpg' })
+  storageKey?: string;
+
+  @ApiPropertyOptional({ example: 1280 })
+  width?: number;
+
+  @ApiPropertyOptional({ example: 720 })
+  height?: number;
 }
 
 export class SendMessageDto {
   @ApiProperty({ description: 'ID cuộc trò chuyện', example: 1 })
   conversationId: number;
 
-  @ApiProperty({ description: 'Nội dung tin nhắn', example: 'Xin chào!' })
-  content: string;
+  @ApiPropertyOptional({ description: 'Nội dung tin nhắn', example: 'Xin chào!' })
+  content?: string;
+
+  @ApiPropertyOptional({ enum: MessageType, example: MessageType.TEXT })
+  type?: MessageType;
+
+  @ApiPropertyOptional({ example: 10 })
+  replyToMessageId?: number;
+
+  @ApiPropertyOptional({
+    type: () => [SendMessageAttachmentDto],
+    description: 'Danh sách file đính kèm',
+  })
+  attachments?: SendMessageAttachmentDto[];
+}
+
+export class MarkConversationReadDto {
+  @ApiProperty({ description: 'ID cuộc trò chuyện', example: 1 })
+  conversationId: number;
+
+  @ApiPropertyOptional({
+    description: 'ID tin nhắn cuối đã đọc, mặc định lấy tin mới nhất của cuộc trò chuyện',
+    example: 99,
+  })
+  messageId?: number;
 }
 
 export class ChatResponseDto {
@@ -37,11 +104,18 @@ export class ChatResponseDto {
   conversationId?: number;
 
   @ApiProperty({
-    enum: ConversationType,
-    example: ConversationType.PRIVATE,
+    enum: PublicConversationType,
+    example: PublicConversationType.NORMAL,
     nullable: true,
   })
-  conversationType?: ConversationType;
+  conversationType?: PublicConversationType;
+
+  @ApiProperty({
+    enum: ConversationStatus,
+    example: ConversationStatus.ACTIVE,
+    nullable: true,
+  })
+  conversationStatus?: ConversationStatus;
 
   @ApiProperty({ example: 'Cuộc trò chuyện giữa A và B', nullable: true })
   conversationName?: string;
@@ -50,7 +124,10 @@ export class ChatResponseDto {
   conversationAvatar?: string;
 
   @ApiProperty({ example: 'Xin chào!', nullable: true })
-  lastMessage?: string;
+  lastMessagePreview?: string;
+
+  @ApiProperty({ example: 5, nullable: true })
+  lastMessageId?: number;
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z', nullable: true })
   lastMessageAt?: Date;
@@ -71,10 +148,10 @@ export class ChatResponseDto {
   content?: string;
 
   @ApiProperty({ example: null, nullable: true })
-  metadata?: any;
+  metadata?: Record<string, unknown> | null;
 
-  @ApiProperty({ example: false, nullable: true })
-  isDeleted?: boolean;
+  @ApiProperty({ example: null, nullable: true })
+  deletedAt?: Date | null;
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z', nullable: true })
   messageCreatedAt?: Date;
@@ -98,20 +175,28 @@ export class ParticipantDto {
   userId: number;
   unreadCount: number;
   lastReadMessageId: number | null;
-  isMuted: boolean;
+  lastReadAt: Date | null;
+  muteUntil: Date | null;
   isPinned: boolean;
-  isDeleted: boolean;
+  deletedAt: Date | null;
+  joinedAt: Date;
 }
+
 export class ConversationResponseDto {
   conversationId: number;
-  conversationType: string;
-  conversationName: string;
-  conversationAvatar: string;
-  lastMessage: string;
-  lastMessageAt: Date;
+  conversationType: PublicConversationType;
+  conversationStatus: ConversationStatus;
+  conversationName: string | null;
+  conversationAvatar: string | null;
+  lastMessageId: number | null;
+  lastMessagePreview: string | null;
+  lastMessageAt: Date | null;
+  lastMessageType: MessageType | null;
   conversationCreatedAt: Date;
+  unreadCount: number;
+  lastReadMessageId: number | null;
 
   participants: ParticipantDto[];
 
-  toUser: UserResponseDto;
+  toUser: UserResponseDto | null;
 }

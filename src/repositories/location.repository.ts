@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Like, Repository } from 'typeorm';
+import { Brackets, Like, Repository } from 'typeorm';
 import {
   ADDRESS_STATUS,
   ADDRESS_TYPE,
@@ -63,6 +63,11 @@ import {
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { TbUserDefault } from '../entities/user/user_default.entity';
+
+type RangeBounds = {
+  minValue: number | null;
+  maxValue: number | null;
+};
 
 @Injectable()
 export class LocationRepository {
@@ -467,6 +472,7 @@ export class LocationRepository {
       locationPriceStart: payload.locationPriceStart,
       locationPriceEnd: payload.locationPriceEnd,
       locationPriceAfterDeal: payload.locationPriceAfterDeal,
+      locationArea: payload.locationArea,
       minTimeLimit: payload.minTimeLimit,
       maxTimeLimit: payload.maxTimeLimit,
       hasRent: payload.hasRent ?? 0,
@@ -533,6 +539,9 @@ export class LocationRepository {
       }
       if (payload.data.locationPriceAfterDeal !== undefined) {
         updateData.locationPriceAfterDeal = payload.data.locationPriceAfterDeal;
+      }
+      if (payload.data.locationArea !== undefined) {
+        updateData.locationArea = payload.data.locationArea;
       }
 
       const updatedEntity = this.location.merge(existingLocation, updateData);
@@ -632,6 +641,7 @@ export class LocationRepository {
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -680,6 +690,7 @@ export class LocationRepository {
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -729,6 +740,7 @@ export class LocationRepository {
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -778,6 +790,7 @@ export class LocationRepository {
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -862,6 +875,7 @@ export class LocationRepository {
       .addSelect('TL.locationLogo', 'locationLogo')
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.hasRent', 'hasRent')
       .addSelect('TL.typeCode', 'typeCode')
       .addSelect('TLT.typeName', 'typeName')
@@ -877,6 +891,7 @@ export class LocationRepository {
   }
 
   public async GetLocationByFilter(
+    user: UserDecoratorDtoResponse,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     const qb = this.location
@@ -900,6 +915,7 @@ export class LocationRepository {
         'TL.locationPriceStart AS locationPriceStart',
         'TL.locationPriceEnd AS locationPriceEnd',
         'TL.locationPriceAfterDeal AS locationPriceAfterDeal',
+        'TL.locationArea AS locationArea',
 
         'TLT.typeName AS typeName',
         'TLT.typeDescription AS typeDescription',
@@ -999,17 +1015,50 @@ export class LocationRepository {
       });
     }
 
+    if (validString(payload.searchValue)) {
+      const sv = `%${payload.searchValue}%`;
+
+      const addressMatchedCodes = await this.getLocationCodesByAddress({
+        ...payload,
+        fullAddress: payload.searchValue,
+      });
+
+      if (addressMatchedCodes && addressMatchedCodes.length > 0) {
+        qb.andWhere(
+          new Brackets((qb2) => {
+            qb2
+              .where('TL.locationName LIKE :sv', { sv })
+              .orWhere('TLT.typeName LIKE :sv', { sv })
+              .orWhere('TL.locationCode IN (:...addressMatchedCodes)', {
+                addressMatchedCodes,
+              });
+          }),
+        );
+      } else {
+        qb.andWhere(
+          new Brackets((qb2) => {
+            qb2
+              .where('TL.locationName LIKE :sv', { sv })
+              .orWhere('TLT.typeName LIKE :sv', { sv });
+          }),
+        );
+      }
+    }
+
+    qb.andWhere('TL.ownerCode NOT LIKE :ownerCodeLogin', {
+      ownerCodeLogin: `%${user.userCode}%`,
+    });
+
     const page = Number(payload.page) || 1;
     const limit = Number(payload.limit) || 10;
     const offset = (page - 1) * limit;
 
-    // âœ… Clone trÆ°á»›c khi getCount Ä‘á»ƒ trÃ¡nh áº£nh hÆ°á»Ÿng state cá»§a qb
     const total = await qb.clone().getCount();
 
     const data = await qb
       .orderBy('TL.locationCode', 'ASC')
-      .offset(offset) // âœ… thay skip()
-      .limit(limit) // âœ… thay take()
+      .offset(offset)
+      .limit(limit)
       .getRawMany<LocationListDto>();
 
     return {
@@ -1144,6 +1193,60 @@ export class LocationRepository {
       .orderBy('tlm.displayOrder', 'ASC')
       .addOrderBy('tlm.id', 'ASC')
       .getRawMany<LocationMediaDto>();
+  }
+
+  public async GetLocationPriceRangeBounds(): Promise<RangeBounds> {
+    const raw = await this.location
+      .createQueryBuilder('TL')
+      .select(
+        `MIN(LEAST(COALESCE(TL.locationPriceStart, TL.locationPriceEnd), COALESCE(TL.locationPriceEnd, TL.locationPriceStart)))`,
+        'minValue',
+      )
+      .addSelect(
+        `MAX(GREATEST(COALESCE(TL.locationPriceStart, TL.locationPriceEnd), COALESCE(TL.locationPriceEnd, TL.locationPriceStart)))`,
+        'maxValue',
+      )
+      .where(
+        'TL.locationPriceStart IS NOT NULL OR TL.locationPriceEnd IS NOT NULL',
+      )
+      .getRawOne<{
+        minValue: string | number | null;
+        maxValue: string | number | null;
+      }>();
+
+    return {
+      minValue:
+        raw?.minValue === null || raw?.minValue === undefined
+          ? null
+          : Number(raw.minValue),
+      maxValue:
+        raw?.maxValue === null || raw?.maxValue === undefined
+          ? null
+          : Number(raw.maxValue),
+    };
+  }
+
+  public async GetLocationAreaRangeBounds(): Promise<RangeBounds> {
+    const raw = await this.location
+      .createQueryBuilder('TL')
+      .select('MIN(TL.locationArea)', 'minValue')
+      .addSelect('MAX(TL.locationArea)', 'maxValue')
+      .where('TL.locationArea IS NOT NULL')
+      .getRawOne<{
+        minValue: string | number | null;
+        maxValue: string | number | null;
+      }>();
+
+    return {
+      minValue:
+        raw?.minValue === null || raw?.minValue === undefined
+          ? null
+          : Number(raw.minValue),
+      maxValue:
+        raw?.maxValue === null || raw?.maxValue === undefined
+          ? null
+          : Number(raw.maxValue),
+    };
   }
 
   public async FindLocationMediaDtoByCode(

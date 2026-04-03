@@ -5,9 +5,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ErrorChatMessage } from '../assests/messages/chat.message';
-import { ContactToUserDto } from '../dtos/chat/chat.dto';
+import {
+  ContactToUserDto,
+  ContactToUserPayloadDto,
+  MarkConversationReadDto,
+  SendMessageDto,
+} from '../dtos/chat/chat.dto';
 import { ChatRepository } from '../repositories/chat.repository';
 import { UserRepository } from '../repositories/user.repository';
+import {
+  UserDecoratorDtoResponse,
+  UserResponseDto,
+} from '../dtos/user/user.dto';
 
 @Injectable()
 export class ChatService {
@@ -16,22 +25,44 @@ export class ChatService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  public async contactToUser(payload: ContactToUserDto): Promise<any> {
-    if (payload.fromUser.id === payload.toUserId) {
-      throw new BadRequestException(ErrorChatMessage.CANNOT_CHAT_WITH_YOURSELF);
+  public async contactToUser(
+    user: UserDecoratorDtoResponse,
+    payload: ContactToUserPayloadDto,
+  ): Promise<any> {
+    let [fromUser, toUser] = [{}, {}] as UserResponseDto[];
+
+    try {
+      if (payload.toUserId) {
+        [fromUser, toUser] = await Promise.all([
+          this.userRepository.getUserProfileByUserId(user.id),
+          this.userRepository.getUserProfileByUserId(payload.toUserId),
+        ]);
+      } else if (payload.toUserCd) {
+        [fromUser, toUser] = await Promise.all([
+          this.userRepository.getUserProfileByUserId(user.id),
+          this.userRepository.GetUserInfomation(payload.toUserCd),
+        ]);
+      }
+    } catch (error) {
+      console.log(error);
+      throw new NotFoundException(ErrorChatMessage.TO_USER_NOT_FOUND);
     }
-
-    const [fromUser, toUser] = await Promise.all([
-      this.userRepository.getUserProfileByUserId(payload.fromUser.id),
-      this.userRepository.getUserProfileByUserId(payload.toUserId),
-    ]);
-
     if (!fromUser)
       throw new NotFoundException(ErrorChatMessage.FROM_USER_NOT_FOUND);
     if (!toUser)
       throw new NotFoundException(ErrorChatMessage.TO_USER_NOT_FOUND);
 
-    return this.chatRepository.contactToUser(payload);
+    if (fromUser.id === toUser.id) {
+      throw new BadRequestException(ErrorChatMessage.CANNOT_CHAT_WITH_YOURSELF);
+    }
+    const contactData: ContactToUserDto = {
+      fromUser,
+      toUserId: toUser.id as number,
+      type: payload.type,
+      locationCd: payload.locationCd,
+    };
+
+    return this.chatRepository.contactToUser(contactData);
   }
 
   public async getConversations(userId: number): Promise<any> {
@@ -43,6 +74,7 @@ export class ChatService {
 
   public async getMessages(
     conversationId: number,
+    userId: number,
     page: number = 1,
     limit: number = 20,
   ): Promise<any> {
@@ -59,40 +91,82 @@ export class ChatService {
       throw new NotFoundException(ErrorChatMessage.CONVERSATION_NOT_FOUND);
     }
 
+    const isMember = await this.chatRepository.isParticipant(
+      conversationId,
+      userId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException(ErrorChatMessage.NOT_A_PARTICIPANT);
+    }
+
     return this.chatRepository.getMessages(conversationId, page, limit);
   }
 
   public async sendMessage(
-    conversationId: number,
-    senderId: number,
-    content: string,
+    user: UserDecoratorDtoResponse,
+    dto: SendMessageDto,
   ): Promise<any> {
-    if (!content || content.trim().length === 0) {
+    const hasContent = !!dto.content?.trim();
+    const hasAttachments = !!dto.attachments?.length;
+
+    if (!hasContent && !hasAttachments) {
       throw new BadRequestException(ErrorChatMessage.MESSAGE_CONTENT_NOTEMPTY);
     }
 
-    if (content.length > 2000) {
+    if (dto.content && dto.content.length > 2000) {
       throw new BadRequestException(ErrorChatMessage.MESSAGE_CONTENT_TOO_LONG);
     }
 
-    const conversation =
-      await this.chatRepository.findConversationById(conversationId);
+    const conversation = await this.chatRepository.findConversationById(
+      dto.conversationId,
+    );
     if (!conversation) {
       throw new NotFoundException(ErrorChatMessage.CONVERSATION_NOT_FOUND);
     }
 
     const isMember = await this.chatRepository.isParticipant(
-      conversationId,
-      senderId,
+      dto.conversationId,
+      user.id,
     );
     if (!isMember) {
       throw new ForbiddenException(ErrorChatMessage.FORBIDDEN_SEND_MESSAGE);
     }
 
+    const sender = await this.userRepository.getUserProfileByUserId(user.id);
+
     return this.chatRepository.sendMessage(
-      conversationId,
-      senderId,
-      content.trim(),
+      user.id,
+      {
+        ...dto,
+        content: dto.content?.trim(),
+      },
+      sender?.avatarUrl,
+    );
+  }
+
+  public async markConversationAsRead(
+    userId: number,
+    dto: MarkConversationReadDto,
+  ): Promise<any> {
+    const conversation = await this.chatRepository.findConversationById(
+      dto.conversationId,
+    );
+    if (!conversation) {
+      throw new NotFoundException(ErrorChatMessage.CONVERSATION_NOT_FOUND);
+    }
+
+    const isMember = await this.chatRepository.isParticipant(
+      dto.conversationId,
+      userId,
+    );
+    if (!isMember) {
+      throw new ForbiddenException(ErrorChatMessage.NOT_A_PARTICIPANT);
+    }
+
+    return this.chatRepository.markConversationAsRead(
+      dto.conversationId,
+      userId,
+      dto.messageId,
     );
   }
 }

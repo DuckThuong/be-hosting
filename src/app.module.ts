@@ -16,8 +16,8 @@ import { CloudinaryModule } from './modules/cloudinary.module';
 import { ChatModule } from './modules/chat.module';
 import { CommonModule } from './modules/common.module';
 import { TbMessage } from './entities/chat/message.entity';
-import { TbConversationParticipant } from './entities/chat/converation_paticipant.entity';
-import { TbConversation } from './entities/chat/converation.entity';
+import { TbConversationParticipant } from './entities/chat/conversation_participant.entity';
+import { TbConversation } from './entities/chat/conversation.entity';
 import { TbLocationMedia } from './entities/location/locationMedia.entity';
 
 @Module({

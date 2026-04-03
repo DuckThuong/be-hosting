@@ -38,6 +38,9 @@ export class TbLocation {
   @Column({ type: 'decimal', unique: false, nullable: true })
   locationPriceAfterDeal: number;
 
+  @Column({ type: 'decimal', unique: false, nullable: true })
+  locationArea: number;
+
   @Column({ type: 'int', unique: false, nullable: true })
   hasRent: number;
 

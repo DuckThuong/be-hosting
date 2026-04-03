@@ -131,14 +131,14 @@ export class MailService {
       this.storeOtp(payload.email, otp);
 
       //fix cứng
-      // const testEmail = 'trinhthuong26022003@gmail.com';
+      const testEmail = 'trinhthuong26022003@gmail.com';
       await this.sendEmail({
-        to: payload.email,
+        to: testEmail,
         subject: 'Mã OTP xác thực tài khoản',
         html: SendOtpTemplate(otp),
       });
 
-      this.logger.log(`OTP sent to ${payload.email}`);
+      this.logger.log(`OTP sent to ${testEmail} for email ${payload.email}`);
       return { message: MailSuccessMessage.OTP_SENT.toString() };
     } catch (error) {
       this.logger.error('Error in sendOTP:', error);

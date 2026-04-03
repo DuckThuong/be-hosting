@@ -607,6 +607,16 @@ export class LocationService {
       );
     }
 
+    if (
+      payload.locationArea !== undefined &&
+      (!Number.isFinite(payload.locationArea) || payload.locationArea < 0)
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_AREA_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     if (payload.serviceCode.length > 0) {
       for (const item of payload.serviceCode) {
         if (!item.serviceCode || item.serviceCode.trim() === '') {
@@ -804,6 +814,17 @@ export class LocationService {
     ) {
       throw new HttpException(
         ErrorLocationMessage.LOCATION_RATE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      payload.data.locationArea !== undefined &&
+      (!Number.isFinite(payload.data.locationArea) ||
+        payload.data.locationArea < 0)
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_AREA_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -1101,6 +1122,7 @@ export class LocationService {
   }
 
   public async GetLocationByFilter(
+    user: UserDecoratorDtoResponse,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     if (payload.locationName && payload.locationName.length > 200) {
@@ -1251,7 +1273,7 @@ export class LocationService {
     }
 
     try {
-      const result = await this.locationRepo.GetLocationByFilter(payload);
+      const result = await this.locationRepo.GetLocationByFilter(user, payload);
       for (const item of result.data) {
         if (item.locationCode) {
           await this.enrichLocationDetails(item);
@@ -1337,6 +1359,20 @@ export class LocationService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  public async GetLocationPriceRangeBounds(): Promise<{
+    minValue: number | null;
+    maxValue: number | null;
+  }> {
+    return await this.locationRepo.GetLocationPriceRangeBounds();
+  }
+
+  public async GetLocationAreaRangeBounds(): Promise<{
+    minValue: number | null;
+    maxValue: number | null;
+  }> {
+    return await this.locationRepo.GetLocationAreaRangeBounds();
   }
 
   public async UpdateLocationLogo(
@@ -1789,4 +1825,5 @@ export class LocationService {
       shareUrl: `${baseUrl}/room-detail?locationCode=${encodeURIComponent(payload.locationCode)}`,
     };
   }
+  
 }

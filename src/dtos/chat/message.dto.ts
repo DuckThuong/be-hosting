@@ -1,0 +1,29 @@
+import { MessageStatus, MessageType } from '../../entities/chat/message.entity';
+
+export interface MessageAttachmentPayloadDto {
+  fileName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  storageKey?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface MessagePayloadDto {
+  senderAvatarUrl?: string;
+  conversationId: number;
+  senderId: number;
+  content?: string;
+  type: MessageType;
+  metadata?: Record<string, unknown> | null;
+  replyToMessageId?: number;
+  status?: MessageStatus;
+  attachments?: MessageAttachmentPayloadDto[];
+}
+
+export enum MessageTypeEnum {
+  RENT = 'RENT',
+  CONTACT = 'CONTACT',
+  NORMAL = 'NORMAL',
+}

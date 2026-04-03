@@ -64,6 +64,7 @@ type SeedLocation = {
   locationPriceStart: number;
   locationPriceEnd: number;
   locationPriceAfterDeal: number;
+  locationArea: number;
   hasRent: number;
   userRentCd: string | null;
   locationDescription: string | null;
@@ -111,6 +112,55 @@ type SeedFavorite = {
   userCode: string;
 };
 
+type SeedConversation = {
+  seedKey: string;
+  type: string;
+  name: string | null;
+  avatar: string | null;
+  createdByUserCode: string;
+  status: string;
+};
+
+type SeedConversationParticipant = {
+  conversationSeedKey: string;
+  userCode: string;
+  unreadCount: number;
+  lastReadMessageSeedKey: string | null;
+  lastReadAt: string | null;
+  muteUntil: string | null;
+  isPinned: boolean;
+  joinedAt: string;
+  deletedAt: string | null;
+};
+
+type SeedMessage = {
+  seedKey: string;
+  conversationSeedKey: string;
+  senderUserCode: string;
+  senderAvatarUrl: string | null;
+  type: string;
+  content: string | null;
+  metadata: Record<string, unknown> | null;
+  replyToMessageSeedKey: string | null;
+  status: string;
+  editedAt: string | null;
+  deletedAt: string | null;
+  deletedByUserCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type SeedMessageAttachment = {
+  messageSeedKey: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  storageKey: string | null;
+  width: number | null;
+  height: number | null;
+};
+
 type SeedDataset = {
   locationTypes: SeedLocationType[];
   services: SeedService[];
@@ -121,483 +171,55 @@ type SeedDataset = {
   locationServices: SeedLocationService[];
   locationMedia: SeedLocationMedia[];
   favorites: SeedFavorite[];
+  conversations: SeedConversation[];
+  conversationParticipants: SeedConversationParticipant[];
+  messages: SeedMessage[];
+  messageAttachments: SeedMessageAttachment[];
+};
+
+type ChatMaps = {
+  userIdByCode: Map<string, number>;
+  conversationIdBySeedKey: Map<string, number>;
+  messageIdBySeedKey: Map<string, number>;
 };
 
 const FIXTURE_ROOT = path.join(__dirname, 'data');
 
 function getSeedPassword(): string {
   const seedPassword = process.env.SEEDPASSWORD;
-
-  if (!seedPassword) {
-    throw new Error('Missing SEEDPASSWORD in environment');
-  }
-
+  if (!seedPassword) throw new Error('Missing SEEDPASSWORD in environment');
   return seedPassword;
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function isNullableString(value: unknown): value is string | null {
-  return value === null || typeof value === 'string';
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
-function readJsonArrayFile(filePath: string): unknown[] {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
-  } catch (error) {
-    throw new Error(`Unable to read fixture file: ${filePath}`, {
-      cause: error,
-    });
-  }
-
+function loadJson<T>(fileName: string): T[] {
+  const filePath = path.join(FIXTURE_ROOT, fileName);
+  const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
   if (!Array.isArray(parsed)) {
-    throw new Error(`Fixture "${filePath}" must contain an array.`);
+    throw new Error(`Fixture "${fileName}" must contain an array.`);
   }
-
-  return parsed;
+  return parsed as T[];
 }
 
-function loadTableRows<T>(
-  tableName: string,
-  validate: (value: unknown, index: number) => T,
-): T[] {
-  const tableFile = path.join(FIXTURE_ROOT, `${tableName}.json`);
-  const rows = readJsonArrayFile(tableFile);
-  return rows.map((row, index) => validate(row, index));
-}
-
-function validateSeedUser(value: unknown, index: number): SeedUser {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_user_default row at index ${index}: expected object.`);
-  }
-
-  const requiredStringFields = [
-    'userCode',
-    'username',
-    'email',
-    'fullName',
-  ] as const;
-
-  for (const field of requiredStringFields) {
-    if (!isNonEmptyString(value[field])) {
-      throw new Error(
-        `Invalid tb_user_default row at index ${index}: field "${field}" is required.`,
-      );
-    }
-  }
-
-  if (!isFiniteNumber(value.role) || !isFiniteNumber(value.status)) {
-    throw new Error(
-      `Invalid tb_user_default row at index ${index}: "role" and "status" must be numbers.`,
-    );
-  }
-
-  if (typeof value.isEmailVerified !== 'boolean') {
-    throw new Error(
-      `Invalid tb_user_default row at index ${index}: "isEmailVerified" must be boolean.`,
-    );
-  }
-
-  return value as unknown as SeedUser;
-}
-
-function validateSeedProfile(value: unknown, index: number): SeedProfile {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_user_profile row at index ${index}: expected object.`);
-  }
-
-  const requiredStringFields = [
-    'userCode',
-    'avatarUrl',
-    'coverUrl',
-    'bio',
-    'dateOfBirth',
-    'phone',
-    'fullAddress',
-    'userWard',
-    'userDistrict',
-    'userCity',
-    'userProvince',
-    'userCountry',
-    'userPortal',
-    'userLat',
-    'userLong',
-    'userDescription',
-    'userNote',
-  ] as const;
-
-  for (const field of requiredStringFields) {
-    if (!isNonEmptyString(value[field])) {
-      throw new Error(
-        `Invalid tb_user_profile row at index ${index}: field "${field}" is required.`,
-      );
-    }
-  }
-
-  return value as unknown as SeedProfile;
-}
-
-function validateLocationType(value: unknown, index: number): SeedLocationType {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_location-type row at index ${index}: expected object.`);
-  }
-
-  if (!isNonEmptyString(value.typeCode) || !isNonEmptyString(value.typeName)) {
-    throw new Error(
-      `Invalid tb_location-type row at index ${index}: "typeCode" and "typeName" are required.`,
-    );
-  }
-
-  if (
-    !isNullableString(value.typeDescription) ||
-    !isNullableString(value.typeLogo) ||
-    !isNullableString(value.typeBackGround)
-  ) {
-    throw new Error(
-      `Invalid tb_location-type row at index ${index}: description/logo/background must be string or null.`,
-    );
-  }
-
-  return value as unknown as SeedLocationType;
-}
-
-function validateService(value: unknown, index: number): SeedService {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_service row at index ${index}: expected object.`);
-  }
-
-  if (
-    !isNonEmptyString(value.serviceCode) ||
-    !isNonEmptyString(value.serviceName) ||
-    !isNonEmptyString(value.serviceDescription)
-  ) {
-    throw new Error(
-      `Invalid tb_service row at index ${index}: code/name/description are required.`,
-    );
-  }
-
-  if (
-    !isNullableString(value.serviceLogo) ||
-    !isNullableString(value.serviceBackGround) ||
-    !isFiniteNumber(value.servicePrice) ||
-    !isFiniteNumber(value.serviceDiscount)
-  ) {
-    throw new Error(
-      `Invalid tb_service row at index ${index}: invalid logo/background/price/discount.`,
-    );
-  }
-
-  return value as unknown as SeedService;
-}
-
-function validateLocation(value: unknown, index: number): SeedLocation {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_location row at index ${index}: expected object.`);
-  }
-
-  const requiredStringFields = [
-    'locationCode',
-    'typeCode',
-    'locationName',
-    'locationLogo',
-    'ownerCode',
-  ] as const;
-
-  for (const field of requiredStringFields) {
-    if (!isNonEmptyString(value[field])) {
-      throw new Error(
-        `Invalid tb_location row at index ${index}: field "${field}" is required.`,
-      );
-    }
-  }
-
-  const numericFields = [
-    'locationPriceStart',
-    'locationPriceEnd',
-    'locationPriceAfterDeal',
-    'hasRent',
-    'locationStatus',
-    'locationRate',
-  ] as const;
-
-  for (const field of numericFields) {
-    if (!isFiniteNumber(value[field])) {
-      throw new Error(
-        `Invalid tb_location row at index ${index}: field "${field}" must be a number.`,
-      );
-    }
-  }
-
-  if (
-    !isNullableString(value.minTimeLimit) ||
-    !isNullableString(value.maxTimeLimit) ||
-    !isNullableString(value.userRentCd) ||
-    !isNullableString(value.locationDescription) ||
-    !isNullableString(value.locationNote)
-  ) {
-    throw new Error(
-      `Invalid tb_location row at index ${index}: invalid nullable string field.`,
-    );
-  }
-
-  return value as unknown as SeedLocation;
-}
-
-function validateAddress(value: unknown, index: number): SeedAddress {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_location-address row at index ${index}: expected object.`);
-  }
-
-  const requiredStringFields = [
-    'locationCode',
-    'addressCode',
-    'addressName',
-    'fullAddress',
-    'addressWard',
-    'addressDistrict',
-    'addressCity',
-    'addressProvince',
-    'addressCountry',
-    'addressPortal',
-    'addressLat',
-    'addressLong',
-    'addressRegion',
-    'addressStatus',
-    'addressDescription',
-    'addressNote',
-    'addressType',
-  ] as const;
-
-  for (const field of requiredStringFields) {
-    if (!isNonEmptyString(value[field])) {
-      throw new Error(
-        `Invalid tb_location-address row at index ${index}: field "${field}" is required.`,
-      );
-    }
-  }
-
-  return value as unknown as SeedAddress;
-}
-
-function validateLocationService(
-  value: unknown,
-  index: number,
-): SeedLocationService {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_location-service row at index ${index}: expected object.`);
-  }
-
-  if (!isNonEmptyString(value.locationCode)) {
-    throw new Error(
-      `Invalid tb_location-service row at index ${index}: locationCode is required.`,
-    );
-  }
-
-  if (
-    !Array.isArray(value.serviceCodes) ||
-    value.serviceCodes.length === 0 ||
-    value.serviceCodes.some((serviceCode) => !isNonEmptyString(serviceCode))
-  ) {
-    throw new Error(
-      `Invalid tb_location-service row at index ${index}: serviceCodes must be a non-empty array of strings.`,
-    );
-  }
-
-  const uniqueServiceCodes = new Set(value.serviceCodes);
-  if (uniqueServiceCodes.size !== value.serviceCodes.length) {
-    throw new Error(
-      `Invalid tb_location-service row at index ${index}: serviceCodes contains duplicates.`,
-    );
-  }
-
-  return value as unknown as SeedLocationService;
-}
-
-function validateLocationMedia(value: unknown, index: number): SeedLocationMedia {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_location-media row at index ${index}: expected object.`);
-  }
-
-  if (
-    !isNonEmptyString(value.mediaCode) ||
-    !isNonEmptyString(value.locationCode) ||
-    !isNonEmptyString(value.mediaUrl) ||
-    !isNonEmptyString(value.mediaType)
-  ) {
-    throw new Error(
-      `Invalid tb_location-media row at index ${index}: missing required string field.`,
-    );
-  }
-
-  if (!isFiniteNumber(value.displayOrder) || !isFiniteNumber(value.isLogo)) {
-    throw new Error(
-      `Invalid tb_location-media row at index ${index}: displayOrder/isLogo must be numbers.`,
-    );
-  }
-
-  return value as unknown as SeedLocationMedia;
-}
-
-function validateFavorite(value: unknown, index: number): SeedFavorite {
-  if (!isObject(value)) {
-    throw new Error(`Invalid tb_location-favorite row at index ${index}: expected object.`);
-  }
-
-  if (!isNonEmptyString(value.locationCode) || !isNonEmptyString(value.userCode)) {
-    throw new Error(
-      `Invalid tb_location-favorite row at index ${index}: locationCode and userCode are required.`,
-    );
-  }
-
-  return value as unknown as SeedFavorite;
-}
-
-function ensureUnique(
-  values: string[],
-  context: string,
-  formatter?: (value: string) => string,
-): void {
-  const seen = new Set<string>();
-
-  for (const value of values) {
-    if (seen.has(value)) {
-      throw new Error(
-        `Duplicate ${context}: ${formatter ? formatter(value) : value}`,
-      );
-    }
-
-    seen.add(value);
-  }
-}
-
-function loadSeedDataset(): SeedDataset {
-  const dataset: SeedDataset = {
-    locationTypes: loadTableRows('tb_location-type', validateLocationType),
-    services: loadTableRows('tb_service', validateService),
-    users: loadTableRows('tb_user_default', validateSeedUser),
-    profiles: loadTableRows('tb_user_profile', validateSeedProfile),
-    locations: loadTableRows('tb_location', validateLocation),
-    addresses: loadTableRows('tb_location-address', validateAddress),
-    locationServices: loadTableRows(
-      'tb_location-service',
-      validateLocationService,
+function loadDataset(): SeedDataset {
+  return {
+    locationTypes: loadJson<SeedLocationType>('tb_location-type.json'),
+    services: loadJson<SeedService>('tb_service.json'),
+    users: loadJson<SeedUser>('tb_user_default.json'),
+    profiles: loadJson<SeedProfile>('tb_user_profile.json'),
+    locations: loadJson<SeedLocation>('tb_location.json'),
+    addresses: loadJson<SeedAddress>('tb_location-address.json'),
+    locationServices: loadJson<SeedLocationService>('tb_location-service.json'),
+    locationMedia: loadJson<SeedLocationMedia>('tb_location-media.json'),
+    favorites: loadJson<SeedFavorite>('tb_location-favorite.json'),
+    conversations: loadJson<SeedConversation>('tb_conversation.json'),
+    conversationParticipants: loadJson<SeedConversationParticipant>(
+      'tb_conversation_participant.json',
     ),
-    locationMedia: loadTableRows('tb_location-media', validateLocationMedia),
-    favorites: loadTableRows('tb_location-favorite', validateFavorite),
+    messages: loadJson<SeedMessage>('tb_message.json'),
+    messageAttachments: loadJson<SeedMessageAttachment>(
+      'tb_message_attachment.json',
+    ),
   };
-
-  validateDataset(dataset);
-  return dataset;
-}
-
-function validateDataset(dataset: SeedDataset): void {
-  ensureUnique(dataset.locationTypes.map((item) => item.typeCode), 'typeCode');
-  ensureUnique(dataset.services.map((item) => item.serviceCode), 'serviceCode');
-  ensureUnique(dataset.users.map((item) => item.userCode), 'userCode');
-  ensureUnique(dataset.locations.map((item) => item.locationCode), 'locationCode');
-  ensureUnique(dataset.addresses.map((item) => item.addressCode), 'addressCode');
-  ensureUnique(dataset.locationMedia.map((item) => item.mediaCode), 'mediaCode');
-  ensureUnique(
-    dataset.locationServices.flatMap((item) =>
-      item.serviceCodes.map((serviceCode) => `${item.locationCode}:${serviceCode}`),
-    ),
-    'location-service pair',
-  );
-  ensureUnique(
-    dataset.favorites.map((item) => `${item.locationCode}:${item.userCode}`),
-    'location-favorite pair',
-  );
-
-  const userCodes = new Set(dataset.users.map((item) => item.userCode));
-  const locationCodes = new Set(dataset.locations.map((item) => item.locationCode));
-  const serviceCodes = new Set(dataset.services.map((item) => item.serviceCode));
-  const typeCodes = new Set(dataset.locationTypes.map((item) => item.typeCode));
-
-  for (const profile of dataset.profiles) {
-    if (!userCodes.has(profile.userCode)) {
-      throw new Error(
-        `tb_user_profile references missing userCode: ${profile.userCode}`,
-      );
-    }
-  }
-
-  for (const location of dataset.locations) {
-    if (!typeCodes.has(location.typeCode)) {
-      throw new Error(
-        `tb_location ${location.locationCode} references missing typeCode: ${location.typeCode}`,
-      );
-    }
-
-    if (!userCodes.has(location.ownerCode)) {
-      throw new Error(
-        `tb_location ${location.locationCode} references missing ownerCode: ${location.ownerCode}`,
-      );
-    }
-
-    if (location.userRentCd && !userCodes.has(location.userRentCd)) {
-      throw new Error(
-        `tb_location ${location.locationCode} references missing userRentCd: ${location.userRentCd}`,
-      );
-    }
-  }
-
-  for (const address of dataset.addresses) {
-    if (!locationCodes.has(address.locationCode)) {
-      throw new Error(
-        `tb_location-address ${address.addressCode} references missing locationCode: ${address.locationCode}`,
-      );
-    }
-  }
-
-  for (const locationService of dataset.locationServices) {
-    if (!locationCodes.has(locationService.locationCode)) {
-      throw new Error(
-        `tb_location-service references missing locationCode: ${locationService.locationCode}`,
-      );
-    }
-
-    for (const serviceCode of locationService.serviceCodes) {
-      if (!serviceCodes.has(serviceCode)) {
-        throw new Error(
-          `tb_location-service references missing serviceCode: ${serviceCode}`,
-        );
-      }
-    }
-  }
-
-  for (const media of dataset.locationMedia) {
-    if (!locationCodes.has(media.locationCode)) {
-      throw new Error(
-        `tb_location-media ${media.mediaCode} references missing locationCode: ${media.locationCode}`,
-      );
-    }
-  }
-
-  for (const favorite of dataset.favorites) {
-    if (!locationCodes.has(favorite.locationCode)) {
-      throw new Error(
-        `tb_location-favorite references missing locationCode: ${favorite.locationCode}`,
-      );
-    }
-
-    if (!userCodes.has(favorite.userCode)) {
-      throw new Error(
-        `tb_location-favorite references missing userCode: ${favorite.userCode}`,
-      );
-    }
-  }
 }
 
 async function ensureSchema(): Promise<void> {
@@ -611,64 +233,43 @@ async function ensureSchema(): Promise<void> {
     'tb_location-service',
     'tb_location-favorite',
     'tb_location-media',
+    'tb_conversation',
+    'tb_conversation_participant',
+    'tb_message',
+    'tb_message_attachment',
   ];
 
   for (const tableName of requiredTables) {
     const rows = await dataSource.query(
-      `
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_schema = DATABASE()
-          AND table_name = ?
-        LIMIT 1
-      `,
+      `SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1`,
       [tableName],
     );
-
-    if (!rows.length) {
-      throw new Error(`Missing table: ${tableName}. Run migrations first.`);
-    }
+    if (!rows.length) throw new Error(`Missing table: ${tableName}. Run migrations first.`);
   }
 }
 
-async function hasColumn(
-  tableName: string,
-  columnName: string,
-): Promise<boolean> {
+async function hasColumn(tableName: string, columnName: string): Promise<boolean> {
   const rows = await dataSource.query(
-    `
-      SELECT 1
-      FROM information_schema.columns
-      WHERE table_schema = DATABASE()
-        AND table_name = ?
-        AND column_name = ?
-      LIMIT 1
-    `,
+    `SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ? LIMIT 1`,
     [tableName, columnName],
   );
-
   return rows.length > 0;
+}
+
+async function loadUserIdMap(): Promise<Map<string, number>> {
+  const rows = (await dataSource.query(
+    'SELECT `id`, `userCode` FROM `tb_user_default`',
+  )) as Array<{ id: number; userCode: string }>;
+  return new Map(rows.map((row) => [row.userCode, Number(row.id)]));
 }
 
 async function seedLocationTypes(items: SeedLocationType[]): Promise<void> {
   for (const item of items) {
     await dataSource.query(
-      `
-        INSERT INTO \`tb_location-type\`
-          (\`typeCode\`, \`typeName\`, \`typeDescription\`, \`typeLogo\`, \`typeBackGround\`)
-        SELECT ?, ?, ?, ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1 FROM \`tb_location-type\` WHERE \`typeCode\` = ?
-        )
-      `,
-      [
-        item.typeCode,
-        item.typeName,
-        item.typeDescription,
-        item.typeLogo,
-        item.typeBackGround,
-        item.typeCode,
-      ],
+      `INSERT INTO \`tb_location-type\` (\`typeCode\`, \`typeName\`, \`typeDescription\`, \`typeLogo\`, \`typeBackGround\`)
+       SELECT ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-type\` WHERE \`typeCode\` = ?)`,
+      [item.typeCode, item.typeName, item.typeDescription, item.typeLogo, item.typeBackGround, item.typeCode],
     );
   }
 }
@@ -676,103 +277,36 @@ async function seedLocationTypes(items: SeedLocationType[]): Promise<void> {
 async function seedServices(items: SeedService[]): Promise<void> {
   for (const item of items) {
     await dataSource.query(
-      `
-        INSERT INTO \`tb_service\`
-          (\`serviceCode\`, \`serviceName\`, \`serviceDescription\`, \`serviceLogo\`, \`serviceBackGround\`, \`servicePrice\`, \`serviceDiscount\`)
-        SELECT ?, ?, ?, ?, ?, ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1 FROM \`tb_service\` WHERE \`serviceCode\` = ?
-        )
-      `,
-      [
-        item.serviceCode,
-        item.serviceName,
-        item.serviceDescription,
-        item.serviceLogo,
-        item.serviceBackGround,
-        item.servicePrice,
-        item.serviceDiscount,
-        item.serviceCode,
-      ],
+      `INSERT INTO \`tb_service\` (\`serviceCode\`, \`serviceName\`, \`serviceDescription\`, \`serviceLogo\`, \`serviceBackGround\`, \`servicePrice\`, \`serviceDiscount\`)
+       SELECT ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_service\` WHERE \`serviceCode\` = ?)`,
+      [item.serviceCode, item.serviceName, item.serviceDescription, item.serviceLogo, item.serviceBackGround, item.servicePrice, item.serviceDiscount, item.serviceCode],
     );
   }
 }
 
 async function seedUsers(items: SeedUser[]): Promise<void> {
   const hashedPassword = await bcrypt.hash(getSeedPassword(), ROUND);
-
   for (const user of items) {
     await dataSource.query(
-      `
-        INSERT INTO \`tb_user_default\`
-          (\`username\`, \`userCode\`, \`email\`, \`password\`, \`fullName\`, \`status\`, \`role\`, \`isEmailVerified\`)
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1 FROM \`tb_user_default\` WHERE \`userCode\` = ?
-        )
-      `,
-      [
-        user.username,
-        user.userCode,
-        user.email,
-        hashedPassword,
-        user.fullName,
-        String(user.status),
-        String(user.role),
-        user.isEmailVerified ? 1 : 0,
-        user.userCode,
-      ],
+      `INSERT INTO \`tb_user_default\` (\`username\`, \`userCode\`, \`email\`, \`password\`, \`fullName\`, \`status\`, \`role\`, \`isEmailVerified\`)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_user_default\` WHERE \`userCode\` = ?)`,
+      [user.username, user.userCode, user.email, hashedPassword, user.fullName, String(user.status), String(user.role), user.isEmailVerified ? 1 : 0, user.userCode],
     );
   }
 }
 
-async function loadUserIdMap(): Promise<Map<string, number>> {
-  const rows = (await dataSource.query(
-    'SELECT `id`, `userCode` FROM `tb_user_default`',
-  )) as Array<{ id: number; userCode: string }>;
-
-  return new Map(rows.map((row) => [row.userCode, Number(row.id)]));
-}
-
 async function seedProfiles(items: SeedProfile[]): Promise<void> {
-  const userIdMap = await loadUserIdMap();
-
+  const userIdByCode = await loadUserIdMap();
   for (const profile of items) {
-    const userId = userIdMap.get(profile.userCode);
-
-    if (!userId) {
-      throw new Error(`Cannot seed profile. Missing user: ${profile.userCode}`);
-    }
-
+    const userId = userIdByCode.get(profile.userCode);
+    if (!userId) throw new Error(`Cannot seed profile. Missing user: ${profile.userCode}`);
     await dataSource.query(
-      `
-        INSERT INTO \`tb_user_profile\`
-          (\`user_id\`, \`avatarUrl\`, \`coverUrl\`, \`bio\`, \`dateOfBirth\`, \`phone\`, \`fullAddress\`, \`userWard\`, \`userDistrict\`, \`userCity\`, \`userProvince\`, \`userCountry\`, \`userPortal\`, \`userLat\`, \`userLong\`, \`userDescription\`, \`userNote\`)
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1 FROM \`tb_user_profile\` WHERE \`user_id\` = ?
-        )
-      `,
-      [
-        userId,
-        profile.avatarUrl,
-        profile.coverUrl,
-        profile.bio,
-        profile.dateOfBirth,
-        profile.phone,
-        profile.fullAddress,
-        profile.userWard,
-        profile.userDistrict,
-        profile.userCity,
-        profile.userProvince,
-        profile.userCountry,
-        profile.userPortal,
-        profile.userLat,
-        profile.userLong,
-        profile.userDescription,
-        profile.userNote,
-        userId,
-      ],
+      `INSERT INTO \`tb_user_profile\` (\`user_id\`, \`avatarUrl\`, \`coverUrl\`, \`bio\`, \`dateOfBirth\`, \`phone\`, \`fullAddress\`, \`userWard\`, \`userDistrict\`, \`userCity\`, \`userProvince\`, \`userCountry\`, \`userPortal\`, \`userLat\`, \`userLong\`, \`userDescription\`, \`userNote\`)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_user_profile\` WHERE \`user_id\` = ?)`,
+      [userId, profile.avatarUrl, profile.coverUrl, profile.bio, profile.dateOfBirth, profile.phone, profile.fullAddress, profile.userWard, profile.userDistrict, profile.userCity, profile.userProvince, profile.userCountry, profile.userPortal, profile.userLat, profile.userLong, profile.userDescription, profile.userNote, userId],
     );
   }
 }
@@ -780,33 +314,10 @@ async function seedProfiles(items: SeedProfile[]): Promise<void> {
 async function seedLocations(items: SeedLocation[]): Promise<void> {
   for (const item of items) {
     await dataSource.query(
-      `
-        INSERT INTO \`tb_location\`
-          (\`typeCode\`, \`locationName\`, \`locationLogo\`, \`ownerCode\`, \`locationCode\`, \`minTimeLimit\`, \`maxTimeLimit\`, \`locationPriceStart\`, \`locationPriceEnd\`, \`locationPriceAfterDeal\`, \`hasRent\`, \`userRentCd\`, \`locationDescription\`, \`locationNote\`, \`locationStatus\`, \`locationRate\`)
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1 FROM \`tb_location\` WHERE \`locationCode\` = ?
-        )
-      `,
-      [
-        item.typeCode,
-        item.locationName,
-        item.locationLogo,
-        item.ownerCode,
-        item.locationCode,
-        item.minTimeLimit,
-        item.maxTimeLimit,
-        item.locationPriceStart,
-        item.locationPriceEnd,
-        item.locationPriceAfterDeal,
-        item.hasRent,
-        item.userRentCd,
-        item.locationDescription,
-        item.locationNote,
-        item.locationStatus,
-        item.locationRate,
-        item.locationCode,
-      ],
+      `INSERT INTO \`tb_location\` (\`typeCode\`, \`locationName\`, \`locationLogo\`, \`ownerCode\`, \`locationCode\`, \`minTimeLimit\`, \`maxTimeLimit\`, \`locationPriceStart\`, \`locationPriceEnd\`, \`locationPriceAfterDeal\`, \`locationArea\`, \`hasRent\`, \`userRentCd\`, \`locationDescription\`, \`locationNote\`, \`locationStatus\`, \`locationRate\`)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_location\` WHERE \`locationCode\` = ?)`,
+      [item.typeCode, item.locationName, item.locationLogo, item.ownerCode, item.locationCode, item.minTimeLimit, item.maxTimeLimit, item.locationPriceStart, item.locationPriceEnd, item.locationPriceAfterDeal, item.locationArea, item.hasRent, item.userRentCd, item.locationDescription, item.locationNote, item.locationStatus, item.locationRate, item.locationCode],
     );
   }
 }
@@ -814,138 +325,52 @@ async function seedLocations(items: SeedLocation[]): Promise<void> {
 async function seedAddresses(items: SeedAddress[]): Promise<void> {
   for (const item of items) {
     await dataSource.query(
-      `
-        INSERT INTO \`tb_location-address\`
-          (\`locationCode\`, \`addressCode\`, \`addressName\`, \`fullAddress\`, \`addressWard\`, \`addressDistrict\`, \`addressCity\`, \`addressProvince\`, \`addressCountry\`, \`addressPortal\`, \`addressLat\`, \`addressLong\`, \`addressRegion\`, \`addressStatus\`, \`addressDescription\`, \`addressNote\`, \`addressType\`)
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1 FROM \`tb_location-address\` WHERE \`addressCode\` = ?
-        )
-      `,
-      [
-        item.locationCode,
-        item.addressCode,
-        item.addressName,
-        item.fullAddress,
-        item.addressWard,
-        item.addressDistrict,
-        item.addressCity,
-        item.addressProvince,
-        item.addressCountry,
-        item.addressPortal,
-        item.addressLat,
-        item.addressLong,
-        item.addressRegion,
-        item.addressStatus,
-        item.addressDescription,
-        item.addressNote,
-        item.addressType,
-        item.addressCode,
-      ],
+      `INSERT INTO \`tb_location-address\` (\`locationCode\`, \`addressCode\`, \`addressName\`, \`fullAddress\`, \`addressWard\`, \`addressDistrict\`, \`addressCity\`, \`addressProvince\`, \`addressCountry\`, \`addressPortal\`, \`addressLat\`, \`addressLong\`, \`addressRegion\`, \`addressStatus\`, \`addressDescription\`, \`addressNote\`, \`addressType\`)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-address\` WHERE \`addressCode\` = ?)`,
+      [item.locationCode, item.addressCode, item.addressName, item.fullAddress, item.addressWard, item.addressDistrict, item.addressCity, item.addressProvince, item.addressCountry, item.addressPortal, item.addressLat, item.addressLong, item.addressRegion, item.addressStatus, item.addressDescription, item.addressNote, item.addressType, item.addressCode],
     );
   }
 }
 
-async function seedLocationServices(
-  items: SeedLocationService[],
-  services: SeedService[],
-): Promise<void> {
-  const serviceDescriptionByCode = new Map(
-    services.map((service) => [service.serviceCode, service.serviceDescription]),
-  );
-  const hasServiceNoteColumn = await hasColumn(
-    'tb_location-service',
-    'serviceNote',
-  );
+async function seedLocationServices(items: SeedLocationService[], services: SeedService[]): Promise<void> {
+  const serviceDescriptionByCode = new Map(services.map((service) => [service.serviceCode, service.serviceDescription]));
+  const hasServiceNoteColumn = await hasColumn('tb_location-service', 'serviceNote');
   const hasIsActiveColumn = await hasColumn('tb_location-service', 'isActive');
 
   for (const item of items) {
     for (const serviceCode of item.serviceCodes) {
       if (hasServiceNoteColumn && hasIsActiveColumn) {
         await dataSource.query(
-          `
-            INSERT INTO \`tb_location-service\`
-              (\`locationCode\`, \`serviceCode\`, \`serviceNote\`, \`isActive\`)
-            SELECT ?, ?, ?, ?
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM \`tb_location-service\`
-              WHERE \`locationCode\` = ?
-                AND \`serviceCode\` = ?
-            )
-          `,
-          [
-            item.locationCode,
-            serviceCode,
-            serviceDescriptionByCode.get(serviceCode) ?? '',
-            1,
-            item.locationCode,
-            serviceCode,
-          ],
+          `INSERT INTO \`tb_location-service\` (\`locationCode\`, \`serviceCode\`, \`serviceNote\`, \`isActive\`)
+           SELECT ?, ?, ?, ?
+           WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-service\` WHERE \`locationCode\` = ? AND \`serviceCode\` = ?)`,
+          [item.locationCode, serviceCode, serviceDescriptionByCode.get(serviceCode) ?? '', 1, item.locationCode, serviceCode],
         );
         continue;
       }
-
       if (hasServiceNoteColumn) {
         await dataSource.query(
-          `
-            INSERT INTO \`tb_location-service\`
-              (\`locationCode\`, \`serviceCode\`, \`serviceNote\`)
-            SELECT ?, ?, ?
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM \`tb_location-service\`
-              WHERE \`locationCode\` = ?
-                AND \`serviceCode\` = ?
-            )
-          `,
-          [
-            item.locationCode,
-            serviceCode,
-            serviceDescriptionByCode.get(serviceCode) ?? '',
-            item.locationCode,
-            serviceCode,
-          ],
+          `INSERT INTO \`tb_location-service\` (\`locationCode\`, \`serviceCode\`, \`serviceNote\`)
+           SELECT ?, ?, ?
+           WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-service\` WHERE \`locationCode\` = ? AND \`serviceCode\` = ?)`,
+          [item.locationCode, serviceCode, serviceDescriptionByCode.get(serviceCode) ?? '', item.locationCode, serviceCode],
         );
         continue;
       }
-
       if (hasIsActiveColumn) {
         await dataSource.query(
-          `
-            INSERT INTO \`tb_location-service\`
-              (\`locationCode\`, \`serviceCode\`, \`isActive\`)
-            SELECT ?, ?, ?
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM \`tb_location-service\`
-              WHERE \`locationCode\` = ?
-                AND \`serviceCode\` = ?
-            )
-          `,
-          [
-            item.locationCode,
-            serviceCode,
-            1,
-            item.locationCode,
-            serviceCode,
-          ],
+          `INSERT INTO \`tb_location-service\` (\`locationCode\`, \`serviceCode\`, \`isActive\`)
+           SELECT ?, ?, ?
+           WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-service\` WHERE \`locationCode\` = ? AND \`serviceCode\` = ?)`,
+          [item.locationCode, serviceCode, 1, item.locationCode, serviceCode],
         );
         continue;
       }
-
       await dataSource.query(
-        `
-          INSERT INTO \`tb_location-service\`
-            (\`locationCode\`, \`serviceCode\`)
-          SELECT ?, ?
-          WHERE NOT EXISTS (
-            SELECT 1
-            FROM \`tb_location-service\`
-            WHERE \`locationCode\` = ?
-              AND \`serviceCode\` = ?
-          )
-        `,
+        `INSERT INTO \`tb_location-service\` (\`locationCode\`, \`serviceCode\`)
+         SELECT ?, ?
+         WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-service\` WHERE \`locationCode\` = ? AND \`serviceCode\` = ?)`,
         [item.locationCode, serviceCode, item.locationCode, serviceCode],
       );
     }
@@ -955,23 +380,10 @@ async function seedLocationServices(
 async function seedLocationMedia(items: SeedLocationMedia[]): Promise<void> {
   for (const item of items) {
     await dataSource.query(
-      `
-        INSERT INTO \`tb_location-media\`
-          (\`mediaCode\`, \`locationCode\`, \`mediaUrl\`, \`mediaType\`, \`displayOrder\`, \`isLogo\`)
-        SELECT ?, ?, ?, ?, ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1 FROM \`tb_location-media\` WHERE \`mediaCode\` = ?
-        )
-      `,
-      [
-        item.mediaCode,
-        item.locationCode,
-        item.mediaUrl,
-        item.mediaType,
-        item.displayOrder,
-        item.isLogo,
-        item.mediaCode,
-      ],
+      `INSERT INTO \`tb_location-media\` (\`mediaCode\`, \`locationCode\`, \`mediaUrl\`, \`mediaType\`, \`displayOrder\`, \`isLogo\`)
+       SELECT ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-media\` WHERE \`mediaCode\` = ?)`,
+      [item.mediaCode, item.locationCode, item.mediaUrl, item.mediaType, item.displayOrder, item.isLogo, item.mediaCode],
     );
   }
 }
@@ -982,27 +394,253 @@ async function seedFavorites(items: SeedFavorite[]): Promise<void> {
       'SELECT `ownerCode` FROM `tb_location` WHERE `locationCode` = ? LIMIT 1',
       [item.locationCode],
     )) as Array<{ ownerCode: string }>;
+    if (!ownerRows.length || ownerRows[0].ownerCode === item.userCode) continue;
+    await dataSource.query(
+      `INSERT INTO \`tb_location-favorite\` (\`locationCode\`, \`userCode\`)
+       SELECT ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-favorite\` WHERE \`locationCode\` = ? AND \`userCode\` = ?)`,
+      [item.locationCode, item.userCode, item.locationCode, item.userCode],
+    );
+  }
+}
 
-    if (!ownerRows.length) {
-      throw new Error(`Cannot seed favorite. Missing location: ${item.locationCode}`);
+async function seedConversations(
+  items: SeedConversation[],
+  userIdByCode: Map<string, number>,
+): Promise<Map<string, number>> {
+  const conversationIdBySeedKey = new Map<string, number>();
+
+  for (const item of items) {
+    const createdByUserId = userIdByCode.get(item.createdByUserCode);
+    if (!createdByUserId) {
+      throw new Error(`Cannot seed conversation. Missing user: ${item.createdByUserCode}`);
     }
 
-    if (ownerRows[0].ownerCode === item.userCode) {
+    const existingRows = (await dataSource.query(
+      `SELECT \`id\` FROM \`tb_conversation\`
+       WHERE \`createdByUserId\` = ?
+         AND \`type\` = ?
+         AND \`status\` = ?
+         AND ((\`name\` IS NULL AND ? IS NULL) OR \`name\` = ?)
+       LIMIT 1`,
+      [createdByUserId, item.type, item.status, item.name, item.name],
+    )) as Array<{ id: number }>;
+
+    if (existingRows.length > 0) {
+      conversationIdBySeedKey.set(item.seedKey, Number(existingRows[0].id));
       continue;
     }
 
+    const result = await dataSource.query(
+      `INSERT INTO \`tb_conversation\` (\`type\`, \`name\`, \`avatar\`, \`createdByUserId\`, \`status\`)
+       VALUES (?, ?, ?, ?, ?)`,
+      [item.type, item.name, item.avatar, createdByUserId, item.status],
+    );
+    conversationIdBySeedKey.set(item.seedKey, Number(result.insertId));
+  }
+
+  return conversationIdBySeedKey;
+}
+
+async function seedMessages(
+  items: SeedMessage[],
+  maps: ChatMaps,
+): Promise<Map<string, number>> {
+  const messageIdBySeedKey = new Map<string, number>();
+
+  for (const item of items) {
+    const conversationId = maps.conversationIdBySeedKey.get(item.conversationSeedKey);
+    const senderId = maps.userIdByCode.get(item.senderUserCode);
+    const replyToMessageId = item.replyToMessageSeedKey
+      ? messageIdBySeedKey.get(item.replyToMessageSeedKey) ??
+        maps.messageIdBySeedKey.get(item.replyToMessageSeedKey) ??
+        null
+      : null;
+    const deletedByUserId = item.deletedByUserCode
+      ? maps.userIdByCode.get(item.deletedByUserCode) ?? null
+      : null;
+
+    if (!conversationId) {
+      throw new Error(`Cannot seed message. Missing conversation: ${item.conversationSeedKey}`);
+    }
+    if (!senderId) {
+      throw new Error(`Cannot seed message. Missing sender: ${item.senderUserCode}`);
+    }
+
+    const existingRows = (await dataSource.query(
+      `SELECT \`id\` FROM \`tb_message\`
+       WHERE \`conversationId\` = ?
+         AND \`senderId\` = ?
+         AND \`createdAt\` = ?
+         AND ((\`content\` IS NULL AND ? IS NULL) OR \`content\` = ?)
+       LIMIT 1`,
+      [conversationId, senderId, item.createdAt, item.content, item.content],
+    )) as Array<{ id: number }>;
+
+    if (existingRows.length > 0) {
+      messageIdBySeedKey.set(item.seedKey, Number(existingRows[0].id));
+      continue;
+    }
+
+    const result = await dataSource.query(
+      `INSERT INTO \`tb_message\` (\`conversationId\`, \`senderId\`, \`senderAvatarUrl\`, \`type\`, \`content\`, \`metadata\`, \`replyToMessageId\`, \`status\`, \`editedAt\`, \`deletedAt\`, \`deletedByUserId\`, \`createdAt\`, \`updatedAt\`)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        conversationId,
+        senderId,
+        item.senderAvatarUrl,
+        item.type,
+        item.content,
+        item.metadata ? JSON.stringify(item.metadata) : null,
+        replyToMessageId,
+        item.status,
+        item.editedAt,
+        item.deletedAt,
+        deletedByUserId,
+        item.createdAt,
+        item.updatedAt,
+      ],
+    );
+    messageIdBySeedKey.set(item.seedKey, Number(result.insertId));
+  }
+
+  return messageIdBySeedKey;
+}
+
+async function seedConversationParticipants(
+  items: SeedConversationParticipant[],
+  maps: ChatMaps,
+): Promise<void> {
+  for (const item of items) {
+    const conversationId = maps.conversationIdBySeedKey.get(item.conversationSeedKey);
+    const userId = maps.userIdByCode.get(item.userCode);
+    const lastReadMessageId = item.lastReadMessageSeedKey
+      ? maps.messageIdBySeedKey.get(item.lastReadMessageSeedKey) ?? null
+      : null;
+
+    if (!conversationId) {
+      throw new Error(`Cannot seed participant. Missing conversation: ${item.conversationSeedKey}`);
+    }
+    if (!userId) {
+      throw new Error(`Cannot seed participant. Missing user: ${item.userCode}`);
+    }
+
     await dataSource.query(
-      `
-        INSERT INTO \`tb_location-favorite\` (\`locationCode\`, \`userCode\`)
-        SELECT ?, ?
-        WHERE NOT EXISTS (
-          SELECT 1
-          FROM \`tb_location-favorite\`
-          WHERE \`locationCode\` = ?
-            AND \`userCode\` = ?
-        )
-      `,
-      [item.locationCode, item.userCode, item.locationCode, item.userCode],
+      `INSERT INTO \`tb_conversation_participant\` (\`conversationId\`, \`userId\`, \`unreadCount\`, \`lastReadMessageId\`, \`lastReadAt\`, \`muteUntil\`, \`isPinned\`, \`joinedAt\`, \`deletedAt\`)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_conversation_participant\` WHERE \`conversationId\` = ? AND \`userId\` = ?)`,
+      [
+        conversationId,
+        userId,
+        item.unreadCount,
+        lastReadMessageId,
+        item.lastReadAt,
+        item.muteUntil,
+        item.isPinned ? 1 : 0,
+        item.joinedAt,
+        item.deletedAt,
+        conversationId,
+        userId,
+      ],
+    );
+  }
+}
+
+async function refreshParticipants(
+  items: SeedConversationParticipant[],
+  maps: ChatMaps,
+): Promise<void> {
+  for (const item of items) {
+    const conversationId = maps.conversationIdBySeedKey.get(item.conversationSeedKey);
+    const userId = maps.userIdByCode.get(item.userCode);
+    const lastReadMessageId = item.lastReadMessageSeedKey
+      ? maps.messageIdBySeedKey.get(item.lastReadMessageSeedKey) ?? null
+      : null;
+
+    if (!conversationId || !userId) continue;
+
+    await dataSource.query(
+      `UPDATE \`tb_conversation_participant\`
+       SET \`unreadCount\` = ?, \`lastReadMessageId\` = ?, \`lastReadAt\` = ?, \`muteUntil\` = ?, \`isPinned\` = ?, \`joinedAt\` = ?, \`deletedAt\` = ?
+       WHERE \`conversationId\` = ? AND \`userId\` = ?`,
+      [
+        item.unreadCount,
+        lastReadMessageId,
+        item.lastReadAt,
+        item.muteUntil,
+        item.isPinned ? 1 : 0,
+        item.joinedAt,
+        item.deletedAt,
+        conversationId,
+        userId,
+      ],
+    );
+  }
+}
+
+async function seedMessageAttachments(
+  items: SeedMessageAttachment[],
+  maps: ChatMaps,
+): Promise<void> {
+  for (const item of items) {
+    const messageId = maps.messageIdBySeedKey.get(item.messageSeedKey);
+    if (!messageId) {
+      throw new Error(`Cannot seed attachment. Missing message: ${item.messageSeedKey}`);
+    }
+
+    await dataSource.query(
+      `INSERT INTO \`tb_message_attachment\` (\`messageId\`, \`fileName\`, \`mimeType\`, \`size\`, \`url\`, \`storageKey\`, \`width\`, \`height\`)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_message_attachment\` WHERE \`messageId\` = ? AND \`fileName\` = ? AND \`url\` = ?)`,
+      [
+        messageId,
+        item.fileName,
+        item.mimeType,
+        item.size,
+        item.url,
+        item.storageKey,
+        item.width,
+        item.height,
+        messageId,
+        item.fileName,
+        item.url,
+      ],
+    );
+  }
+}
+
+async function updateConversationCache(
+  conversations: SeedConversation[],
+  messages: SeedMessage[],
+  maps: ChatMaps,
+): Promise<void> {
+  for (const conversation of conversations) {
+    const conversationId = maps.conversationIdBySeedKey.get(conversation.seedKey);
+    if (!conversationId) continue;
+
+    const lastMessage = messages
+      .filter((item) => item.conversationSeedKey === conversation.seedKey)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .at(-1);
+
+    if (!lastMessage) continue;
+
+    const lastMessageId = maps.messageIdBySeedKey.get(lastMessage.seedKey);
+    if (!lastMessageId) continue;
+
+    const preview =
+      lastMessage.content?.trim() ||
+      (lastMessage.type === 'IMAGE'
+        ? '[Image]'
+        : lastMessage.type === 'FILE'
+          ? '[File]'
+          : '[Message]');
+
+    await dataSource.query(
+      `UPDATE \`tb_conversation\`
+       SET \`lastMessageId\` = ?, \`lastMessagePreview\` = ?, \`lastMessageType\` = ?, \`lastMessageAt\` = ?
+       WHERE \`id\` = ?`,
+      [lastMessageId, preview.slice(0, 255), lastMessage.type, lastMessage.createdAt, conversationId],
     );
   }
 }
@@ -1018,22 +656,22 @@ async function showSummary(): Promise<void> {
     'tb_location-service',
     'tb_location-favorite',
     'tb_location-media',
+    'tb_conversation',
+    'tb_conversation_participant',
+    'tb_message',
+    'tb_message_attachment',
   ];
 
   const summary: Array<{ table: string; total: number }> = [];
-
   for (const tableName of tables) {
-    const rows = await dataSource.query(
-      `SELECT COUNT(*) AS total FROM \`${tableName}\``,
-    );
+    const rows = await dataSource.query(`SELECT COUNT(*) AS total FROM \`${tableName}\``);
     summary.push({ table: tableName, total: Number(rows[0].total) });
   }
-
   console.table(summary);
 }
 
 async function seedAll(): Promise<void> {
-  const dataset = loadSeedDataset();
+  const dataset = loadDataset();
   await dataSource.initialize();
 
   try {
@@ -1047,6 +685,23 @@ async function seedAll(): Promise<void> {
     await seedLocationServices(dataset.locationServices, dataset.services);
     await seedLocationMedia(dataset.locationMedia);
     await seedFavorites(dataset.favorites);
+
+    const userIdByCode = await loadUserIdMap();
+    const conversationIdBySeedKey = await seedConversations(
+      dataset.conversations,
+      userIdByCode,
+    );
+    const maps: ChatMaps = {
+      userIdByCode,
+      conversationIdBySeedKey,
+      messageIdBySeedKey: new Map<string, number>(),
+    };
+    maps.messageIdBySeedKey = await seedMessages(dataset.messages, maps);
+    await seedConversationParticipants(dataset.conversationParticipants, maps);
+    await refreshParticipants(dataset.conversationParticipants, maps);
+    await seedMessageAttachments(dataset.messageAttachments, maps);
+    await updateConversationCache(dataset.conversations, dataset.messages, maps);
+
     await showSummary();
     console.log('Seed all completed.');
   } finally {

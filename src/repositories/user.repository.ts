@@ -9,7 +9,7 @@ import {
 import { TbUserDefault } from '../entities/user/user_default.entity';
 import { TbUserProfile } from '../entities/user/user_profile.entity';
 import { ChatRepository } from './chat.repository';
-import { TbConversation } from '../entities/chat/converation.entity';
+import { TbConversation } from '../entities/chat/conversation.entity';
 
 @Injectable()
 export class UserRepository {
@@ -100,6 +100,7 @@ export class UserRepository {
       .createQueryBuilder('TUD')
       .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
       .select([
+        'TUD.id AS id',
         'TUD.userCode AS userCode',
         'TUD.username AS username',
         'TUD.email AS email',
@@ -137,6 +138,7 @@ export class UserRepository {
       .createQueryBuilder('TUD')
       .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
       .select([
+        'TUD.id AS id',
         'TUD.userCode AS userCode',
         'TUD.username AS username',
         'TUD.email AS email',

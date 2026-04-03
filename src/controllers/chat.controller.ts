@@ -9,7 +9,11 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
-import { ContactToUserPayloadDto } from '../dtos/chat/chat.dto';
+import {
+  ContactToUserPayloadDto,
+  MarkConversationReadDto,
+  SendMessageDto,
+} from '../dtos/chat/chat.dto';
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { ChatService } from '../services/chat.service';
 import { User } from '../user.decorator';
@@ -27,10 +31,7 @@ export class ChatController {
     @Body() body: ContactToUserPayloadDto,
     @User() user: UserDecoratorDtoResponse,
   ): Promise<any> {
-    return this.chatService.contactToUser({
-      fromUser: user,
-      toUserId: body.toUserId,
-    });
+    return this.chatService.contactToUser(user, body);
   }
 
   @ApiOperation({ summary: 'Lấy danh sách cuộc trò chuyện của user' })
@@ -47,17 +48,26 @@ export class ChatController {
     @Query('conversationId', ParseIntPipe) conversationId: number,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
+    @User() user: UserDecoratorDtoResponse,
   ): Promise<any> {
-    return this.chatService.getMessages(conversationId, +page, +limit);
+    return this.chatService.getMessages(conversationId, user.id, +page, +limit);
   }
 
   @ApiOperation({ summary: 'Gửi tin nhắn' })
   @Post('send')
   public async sendMessage(
-    @Body('conversationId', ParseIntPipe) conversationId: number,
-    @Body('content') content: string,
+    @Body() body: SendMessageDto,
     @User() user: UserDecoratorDtoResponse,
   ): Promise<any> {
-    return this.chatService.sendMessage(conversationId, user.id, content);
+    return this.chatService.sendMessage(user, body);
+  }
+
+  @ApiOperation({ summary: 'Đánh dấu cuộc trò chuyện đã đọc' })
+  @Post('read')
+  public async markConversationAsRead(
+    @Body() body: MarkConversationReadDto,
+    @User() user: UserDecoratorDtoResponse,
+  ): Promise<any> {
+    return this.chatService.markConversationAsRead(user.id, body);
   }
 }

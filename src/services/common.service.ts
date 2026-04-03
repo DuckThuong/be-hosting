@@ -8,6 +8,7 @@ import {
   CommonMetadataOptionDto,
   LocationFilterDefaultsDto,
   LocationFilterDefaultsResponseDto,
+  NumericMetadataListResponseDto,
   UploadMetadataDto,
   UploadMetadataResponseDto,
 } from '../dtos/common/common.dto';
@@ -17,22 +18,8 @@ import { ServiceService } from './service.service';
 
 @Injectable()
 export class CommonService {
-  private readonly priceRanges = [
-    { key: 'under-300', label: 'Dưới 300k', minValue: 0, maxValue: 300 },
-    { key: '300-500', label: '300k - 500k', minValue: 300, maxValue: 500 },
-    { key: '500-800', label: '500k - 800k', minValue: 500, maxValue: 800 },
-    { key: '800-1200', label: '800k - 1200k', minValue: 800, maxValue: 1200 },
-    { key: '1200-2000', label: '1200k - 2000k', minValue: 1200, maxValue: 2000 },
-    { key: 'over-2000', label: 'Trên 2000k', minValue: 2000, maxValue: null },
-  ];
-
-  private readonly areaRanges = [
-    { key: 'under-20', label: 'Dưới 20m²', minValue: 0, maxValue: 20 },
-    { key: '20-50', label: '20m² - 50m²', minValue: 20, maxValue: 50 },
-    { key: '50-100', label: '50m² - 100m²', minValue: 50, maxValue: 100 },
-    { key: '100-200', label: '100m² - 200m²', minValue: 100, maxValue: 200 },
-    { key: 'over-200', label: 'Trên 200m²', minValue: 200, maxValue: null },
-  ];
+  private readonly defaultPriceMarkers = [0, 250000, 500000, 750000, 1000000];
+  private readonly defaultAreaMarkers = [0, 25, 50, 75, 100];
 
   constructor(
     private readonly locationService: LocationService,
@@ -56,6 +43,44 @@ export class CommonService {
       order,
       ...extra,
     };
+  }
+
+  private normalizeMarkerValue(value: number): number {
+    return Number(value.toFixed(2));
+  }
+
+  private buildMarkers(
+    minValue: number | null,
+    maxValue: number | null,
+    fallback: number[],
+  ): number[] {
+    if (
+      minValue === null ||
+      maxValue === null ||
+      !Number.isFinite(minValue) ||
+      !Number.isFinite(maxValue)
+    ) {
+      return [...fallback];
+    }
+
+    if (minValue > maxValue) {
+      return this.buildMarkers(maxValue, minValue, fallback);
+    }
+
+    if (minValue === maxValue) {
+      const step = Math.max(Math.abs(minValue) * 0.1, 1);
+      const start = Math.max(minValue - step * 2, 0);
+
+      return Array.from({ length: 5 }, (_, index) =>
+        this.normalizeMarkerValue(start + step * index),
+      );
+    }
+
+    const step = (maxValue - minValue) / 4;
+
+    return Array.from({ length: 5 }, (_, index) =>
+      this.normalizeMarkerValue(minValue + step * index),
+    );
   }
 
   public async GetLocationFilterTypesData(): Promise<CommonMetadataOptionDto[]> {
@@ -90,7 +115,12 @@ export class CommonService {
 
   public GetLocationFilterRentStatusesData(): CommonMetadataOptionDto[] {
     return [
-      this.mapOption('ready', 'Sẵn sàng cho thuê', LOCATION_RENT_STATUS.READY, 1),
+      this.mapOption(
+        'ready',
+        'Sẵn sàng cho thuê',
+        LOCATION_RENT_STATUS.READY,
+        1,
+      ),
       this.mapOption(
         'has_rent',
         'Đang được thuê',
@@ -125,24 +155,6 @@ export class CommonService {
     ];
   }
 
-  public GetLocationFilterPriceRangesData(): CommonMetadataOptionDto[] {
-    return this.priceRanges.map((item, index) =>
-      this.mapOption(item.key, item.label, item.key, index + 1, false, {
-        minValue: item.minValue,
-        maxValue: item.maxValue,
-      }),
-    );
-  }
-
-  public GetLocationFilterAreaRangesData(): CommonMetadataOptionDto[] {
-    return this.areaRanges.map((item, index) =>
-      this.mapOption(item.key, item.label, item.key, index + 1, false, {
-        minValue: item.minValue,
-        maxValue: item.maxValue,
-      }),
-    );
-  }
-
   public GetLocationFilterDefaultsData(): LocationFilterDefaultsDto {
     return {
       selectedTypeCodes: [],
@@ -165,7 +177,13 @@ export class CommonService {
   public GetUploadMetadataData(): UploadMetadataDto {
     return {
       resourceTypes: [
-        this.mapOption(RESOURCE_TYPE, 'Tự động nhận diện', RESOURCE_TYPE, 1, true),
+        this.mapOption(
+          RESOURCE_TYPE,
+          'Tự động nhận diện',
+          RESOURCE_TYPE,
+          1,
+          true,
+        ),
       ],
     };
   }
@@ -198,17 +216,27 @@ export class CommonService {
     };
   }
 
-  public GetLocationFilterPriceRanges(): CommonMetadataListResponseDto {
+  public async GetLocationFilterPriceRanges(): Promise<NumericMetadataListResponseDto> {
+    const { minValue, maxValue } =
+      await this.locationService.GetLocationPriceRangeBounds();
+
     return {
       message: 'Lấy metadata khoảng giá thành công.',
-      data: this.GetLocationFilterPriceRangesData(),
+      data: this.buildMarkers(
+        minValue,
+        maxValue,
+        this.defaultPriceMarkers,
+      ),
     };
   }
 
-  public GetLocationFilterAreaRanges(): CommonMetadataListResponseDto {
+  public async GetLocationFilterAreaRanges(): Promise<NumericMetadataListResponseDto> {
+    const { minValue, maxValue } =
+      await this.locationService.GetLocationAreaRangeBounds();
+
     return {
       message: 'Lấy metadata khoảng diện tích thành công.',
-      data: this.GetLocationFilterAreaRangesData(),
+      data: this.buildMarkers(minValue, maxValue, this.defaultAreaMarkers),
     };
   }
 

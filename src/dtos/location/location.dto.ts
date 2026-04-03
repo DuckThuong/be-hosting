@@ -120,6 +120,15 @@ export class CreateLocationDto {
   locationPriceAfterDeal?: number;
 
   @ApiProperty({
+    description: 'Diện tích khu vực',
+    example: 35.5,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  locationArea?: number;
+
+  @ApiProperty({
     description: 'Trạng thái cho thuê (0: Không, 1: Có)',
     example: 1,
     required: false,
@@ -242,6 +251,15 @@ export class UpdateLocationDto {
   })
   @IsInt()
   locationPriceAfterDeal?: number;
+
+  @ApiProperty({
+    description: 'Diện tích khu vực',
+    example: 35.5,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  locationArea?: number;
 
   @ApiProperty({
     description: 'Giới hạn thời gian tối thiểu ',
@@ -567,6 +585,39 @@ export class LocationListDto {
   locationNote?: string;
 
   @ApiProperty({
+    description: 'Logo địa điểm',
+    example: 'https://cdn.example.com/location-logo.png',
+    required: false,
+  })
+  locationLogo?: string;
+
+  @ApiProperty({
+    description: 'Giá thuê bắt đầu',
+    example: 100000,
+  })
+  locationPriceStart: number;
+
+  @ApiProperty({
+    description: 'Giá thuê kết thúc',
+    example: 500000,
+  })
+  locationPriceEnd: number;
+
+  @ApiProperty({
+    description: 'Giá thuê sau khi thỏa thuận',
+    example: 450000,
+    required: false,
+  })
+  locationPriceAfterDeal?: number;
+
+  @ApiProperty({
+    description: 'Diện tích khu vực',
+    example: 35.5,
+    required: false,
+  })
+  locationArea?: number;
+
+  @ApiProperty({
     description: 'Thời gian thuê tối thiểu (giờ)',
     example: 1,
   })
@@ -850,6 +901,13 @@ export class FavoriteLocationSummaryDto {
     required: false,
   })
   locationPriceEnd?: number;
+
+  @ApiProperty({
+    description: 'Diện tích khu vực',
+    example: 35.5,
+    required: false,
+  })
+  locationArea?: number;
 
   @ApiProperty({
     description: 'Mã loại phòng',
@@ -1153,6 +1211,13 @@ export class GetLocationAddressByLocationCodeResponseDto {
 }
 
 export class GetLocationByFillterDto {
+  @ApiProperty({
+    description: 'searchValue',
+    example: '',
+    required: false,
+  })
+  searchValue?: string;
+
   @ApiProperty({
     description: 'locationName',
     example: '',

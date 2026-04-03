@@ -4,9 +4,12 @@ import { Public } from '../common/jwt/public.decorator';
 import {
   CommonMetadataListResponseDto,
   LocationFilterDefaultsResponseDto,
+  NumericMetadataListResponseDto,
   UploadMetadataResponseDto,
 } from '../dtos/common/common.dto';
 import { CommonService } from '../services/common.service';
+
+
 
 @ApiTags('Common')
 @Controller('common')
@@ -44,15 +47,15 @@ export class CommonController {
   @Public()
   @Get('location-filter-price-ranges')
   @ApiOperation({ summary: 'Lấy metadata khoảng giá' })
-  public getLocationFilterPriceRanges(): CommonMetadataListResponseDto {
-    return this.commonService.GetLocationFilterPriceRanges();
+  public async getLocationFilterPriceRanges(): Promise<NumericMetadataListResponseDto> {
+    return await this.commonService.GetLocationFilterPriceRanges();
   }
 
   @Public()
   @Get('location-filter-area-ranges')
   @ApiOperation({ summary: 'Lấy metadata khoảng diện tích' })
-  public getLocationFilterAreaRanges(): CommonMetadataListResponseDto {
-    return this.commonService.GetLocationFilterAreaRanges();
+  public async getLocationFilterAreaRanges(): Promise<NumericMetadataListResponseDto> {
+    return await this.commonService.GetLocationFilterAreaRanges();
   }
 
   @Public()
