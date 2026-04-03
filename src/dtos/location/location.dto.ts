@@ -773,6 +773,13 @@ export class GetLocationAddressByLocationCodeResponseDto {
 
 export class GetLocationByFillterDto {
   @ApiProperty({
+    description: 'searchValue',
+    example: '',
+    required: false,
+  })
+  searchValue?: string;
+
+  @ApiProperty({
     description: 'locationName',
     example: '',
     required: false,

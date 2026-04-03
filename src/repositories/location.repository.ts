@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Like, Repository } from 'typeorm';
+import { Brackets, Like, Repository } from 'typeorm';
 import {
   ADDRESS_STATUS,
   ADDRESS_TYPE,
@@ -924,6 +924,36 @@ export class LocationRepository {
       qb.andWhere('TL.locationCode IN (:...locationCodes)', {
         locationCodes,
       });
+    }
+
+    if (validString(payload.searchValue)) {
+      const sv = `%${payload.searchValue}%`;
+
+      const addressMatchedCodes = await this.getLocationCodesByAddress({
+        ...payload,
+        fullAddress: payload.searchValue,
+      });
+
+      if (addressMatchedCodes && addressMatchedCodes.length > 0) {
+        qb.andWhere(
+          new Brackets((qb2) => {
+            qb2
+              .where('TL.locationName LIKE :sv', { sv })
+              .orWhere('TLT.typeName LIKE :sv', { sv })
+              .orWhere('TL.locationCode IN (:...addressMatchedCodes)', {
+                addressMatchedCodes,
+              });
+          }),
+        );
+      } else {
+        qb.andWhere(
+          new Brackets((qb2) => {
+            qb2
+              .where('TL.locationName LIKE :sv', { sv })
+              .orWhere('TLT.typeName LIKE :sv', { sv });
+          }),
+        );
+      }
     }
 
     qb.andWhere('TL.ownerCode NOT LIKE :ownerCodeLogin', {
