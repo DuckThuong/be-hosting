@@ -10,6 +10,7 @@ import {
   GetLocationByFillterDto,
   LocationListDto,
   LocationResponseDto,
+  PaginatedLocationListDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
@@ -970,8 +971,9 @@ export class LocationService {
   }
 
   public async GetLocationByFilter(
+    user: UserDecoratorDtoResponse,
     payload: GetLocationByFillterDto,
-  ): Promise<LocationListDto[]> {
+  ): Promise<PaginatedLocationListDto> {
     if (payload.locationName && payload.locationName.length > 200) {
       throw new HttpException(
         ErrorLocationMessage.LOCATION_NAME_INVALID.toString(),
@@ -1120,8 +1122,8 @@ export class LocationService {
     }
 
     try {
-      const result = await this.locationRepo.GetLocationByFilter(payload);
-      for (const item of result) {
+      const result = await this.locationRepo.GetLocationByFilter(user, payload);
+      for (const item of result.data) {
         if (item.locationCode) {
           const service = await this.locationRepo.GetLocationServices(
             item.locationCode,
@@ -1136,6 +1138,7 @@ export class LocationService {
           item.address = address.data;
         }
       }
+
       return result;
     } catch (error) {
       if (error instanceof HttpException) {

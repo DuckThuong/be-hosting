@@ -24,7 +24,6 @@ export class UserService {
       if (error instanceof HttpException) {
         throw error;
       }
-      console.log(error);
       throw new HttpException(
         ErrorUserMessage.CATCH_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -44,7 +43,6 @@ export class UserService {
       if (error instanceof HttpException) {
         throw error;
       }
-      console.log(error);
       throw new HttpException(
         ErrorUserMessage.CATCH_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,

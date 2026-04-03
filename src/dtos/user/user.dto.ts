@@ -206,6 +206,13 @@ export class UserProfileInformationDto {
 
 export class UserResponseDto {
   @ApiProperty({
+    description: 'id',
+    example: '',
+    required: false,
+  })
+  id?: number;
+
+  @ApiProperty({
     description: 'userName',
     example: '',
     required: false,

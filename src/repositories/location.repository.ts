@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Like, Repository } from 'typeorm';
+import { Brackets, Like, Repository } from 'typeorm';
 import {
   ADDRESS_STATUS,
   ADDRESS_TYPE,
@@ -22,6 +22,7 @@ import {
   LocationListDto,
   LocationResponseDto,
   LocationServiceDto,
+  PaginatedLocationListDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
@@ -802,8 +803,9 @@ export class LocationRepository {
   }
 
   public async GetLocationByFilter(
+    user: UserDecoratorDtoResponse,
     payload: GetLocationByFillterDto,
-  ): Promise<LocationListDto[]> {
+  ): Promise<PaginatedLocationListDto> {
     const qb = this.location
       .createQueryBuilder('TL')
       .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
@@ -923,7 +925,60 @@ export class LocationRepository {
         locationCodes,
       });
     }
-    return qb.getRawMany<LocationListDto>();
+
+    if (validString(payload.searchValue)) {
+      const sv = `%${payload.searchValue}%`;
+
+      const addressMatchedCodes = await this.getLocationCodesByAddress({
+        ...payload,
+        fullAddress: payload.searchValue,
+      });
+
+      if (addressMatchedCodes && addressMatchedCodes.length > 0) {
+        qb.andWhere(
+          new Brackets((qb2) => {
+            qb2
+              .where('TL.locationName LIKE :sv', { sv })
+              .orWhere('TLT.typeName LIKE :sv', { sv })
+              .orWhere('TL.locationCode IN (:...addressMatchedCodes)', {
+                addressMatchedCodes,
+              });
+          }),
+        );
+      } else {
+        qb.andWhere(
+          new Brackets((qb2) => {
+            qb2
+              .where('TL.locationName LIKE :sv', { sv })
+              .orWhere('TLT.typeName LIKE :sv', { sv });
+          }),
+        );
+      }
+    }
+
+    qb.andWhere('TL.ownerCode NOT LIKE :ownerCodeLogin', {
+      ownerCodeLogin: `%${user.userCode}%`,
+    });
+
+    const page = Number(payload.page) || 1;
+    const limit = Number(payload.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const total = await qb.clone().getCount();
+
+    const data = await qb
+      .orderBy('TL.locationCode', 'ASC')
+      .offset(offset)
+      .limit(limit)
+      .getRawMany<LocationListDto>();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   private async getLocationCodesByAddress(

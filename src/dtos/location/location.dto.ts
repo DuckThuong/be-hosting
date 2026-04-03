@@ -545,6 +545,32 @@ export class LocationListDto {
   locationNote?: string;
 
   @ApiProperty({
+    description: 'Logo địa điểm',
+    example: 'https://cdn.example.com/location-logo.png',
+    required: false,
+  })
+  locationLogo?: string;
+
+  @ApiProperty({
+    description: 'Giá thuê bắt đầu',
+    example: 100000,
+  })
+  locationPriceStart: number;
+
+  @ApiProperty({
+    description: 'Giá thuê kết thúc',
+    example: 500000,
+  })
+  locationPriceEnd: number;
+
+  @ApiProperty({
+    description: 'Giá thuê sau khi thỏa thuận',
+    example: 450000,
+    required: false,
+  })
+  locationPriceAfterDeal?: number;
+
+  @ApiProperty({
     description: 'Thời gian thuê tối thiểu (giờ)',
     example: 1,
   })
@@ -747,6 +773,13 @@ export class GetLocationAddressByLocationCodeResponseDto {
 
 export class GetLocationByFillterDto {
   @ApiProperty({
+    description: 'searchValue',
+    example: '',
+    required: false,
+  })
+  searchValue?: string;
+
+  @ApiProperty({
     description: 'locationName',
     example: '',
     required: false,
@@ -885,4 +918,26 @@ export class GetLocationByFillterDto {
     required: false,
   })
   addressType?: string;
+
+  @ApiProperty({
+    description: 'addressType',
+    example: '',
+    required: false,
+  })
+  page?: string;
+
+  @ApiProperty({
+    description: 'addressType',
+    example: '',
+    required: false,
+  })
+  limit?: string;
+}
+
+export class PaginatedLocationListDto {
+  data: LocationListDto[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }

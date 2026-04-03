@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
@@ -8,6 +8,8 @@ import {
 } from '../dtos/user/user.dto';
 import { TbUserDefault } from '../entities/user/user_default.entity';
 import { TbUserProfile } from '../entities/user/user_profile.entity';
+import { ChatRepository } from './chat.repository';
+import { TbConversation } from '../entities/chat/converation.entity';
 
 @Injectable()
 export class UserRepository {
@@ -17,6 +19,12 @@ export class UserRepository {
 
     @InjectRepository(TbUserProfile)
     private readonly userProfile: Repository<TbUserProfile>,
+
+    @InjectRepository(TbConversation)
+    private readonly conversationRepository: Repository<TbConversation>,
+
+    @Inject(forwardRef(() => ChatRepository))
+    private readonly chatRepo: ChatRepository,
   ) {}
 
   public async UpdateUserProfile(
@@ -64,6 +72,20 @@ export class UserRepository {
       dateOfBirth: payload.dateOfBirth || userProfileData?.dateOfBirth,
     });
 
+    if (userMergeData.avatarUrl) {
+      const conversations = await this.chatRepo.getConversations(
+        updatedData.id,
+      );
+
+      if (conversations?.length) {
+        conversations.forEach((c) => {
+          c.avatar = userMergeData.avatarUrl;
+        });
+
+        await this.conversationRepository.save(conversations);
+      }
+    }
+
     const updatedProfileData = await this.userProfile.save(userMergeData);
 
     const rawData = {
@@ -78,6 +100,7 @@ export class UserRepository {
       .createQueryBuilder('TUD')
       .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
       .select([
+        'TUD.id AS id',
         'TUD.userCode AS userCode',
         'TUD.username AS username',
         'TUD.email AS email',
@@ -106,5 +129,81 @@ export class UserRepository {
       .getRawOne<UserResponseDto>();
 
     return user as UserResponseDto;
+  }
+
+  public async getUserProfileByUserId(
+    userId: number,
+  ): Promise<UserResponseDto> {
+    const user = await this.userDefault
+      .createQueryBuilder('TUD')
+      .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
+      .select([
+        'TUD.id AS id',
+        'TUD.userCode AS userCode',
+        'TUD.username AS username',
+        'TUD.email AS email',
+        'TUD.fullName AS fullName',
+        'TUD.role AS role',
+        'TUD.isEmailVerified AS isEmailVerified',
+
+        'TUP.dateOfBirth AS dateOfBirth',
+        'TUP.avatarUrl AS avatarUrl',
+        'TUP.coverUrl AS coverUrl',
+        'TUP.BIO AS bio',
+        'TUP.PHONE AS phone',
+        'TUP.fullAddress AS fullAddress',
+        'TUP.userWard AS userWard',
+        'TUP.userDistrict AS userDistrict',
+        'TUP.userCity AS userCity',
+        'TUP.userProvince AS userProvince',
+        'TUP.userCountry AS userCountry',
+        'TUP.userPortal AS userPortal',
+        'TUP.userLat AS userLat',
+        'TUP.userLONG AS userLong',
+        'TUP.userDescription AS userDescription',
+        'TUP.userNote AS userNote',
+      ])
+      .where('TUD.id = :userId', { userId })
+      .getRawOne<UserResponseDto>();
+
+    return user as UserResponseDto;
+  }
+
+  public async getUserProfilesByUserIds(
+    userIds: number[],
+  ): Promise<UserResponseDto[]> {
+    console.log('userIds', userIds);
+    if (userIds.length === 0) return [];
+
+    return await this.userDefault
+      .createQueryBuilder('TUD')
+      .leftJoin('tb_user_profile', 'TUP', 'TUD.id = TUP.user_id')
+      .select([
+        'TUD.id AS id',
+        'TUD.userCode AS userCode',
+        'TUD.username AS username',
+        'TUD.email AS email',
+        'TUD.fullName AS fullName',
+        'TUD.role AS role',
+        'TUD.isEmailVerified AS isEmailVerified',
+        'TUP.dateOfBirth AS dateOfBirth',
+        'TUP.avatarUrl AS avatarUrl',
+        'TUP.coverUrl AS coverUrl',
+        'TUP.BIO AS bio',
+        'TUP.PHONE AS phone',
+        'TUP.fullAddress AS fullAddress',
+        'TUP.userWard AS userWard',
+        'TUP.userDistrict AS userDistrict',
+        'TUP.userCity AS userCity',
+        'TUP.userProvince AS userProvince',
+        'TUP.userCountry AS userCountry',
+        'TUP.userPortal AS userPortal',
+        'TUP.userLat AS userLat',
+        'TUP.userLONG AS userLong',
+        'TUP.userDescription AS userDescription',
+        'TUP.userNote AS userNote',
+      ])
+      .where('TUD.id IN (:...userIds)', { userIds })
+      .getRawMany<UserResponseDto>();
   }
 }
