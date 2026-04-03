@@ -1,7 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  ConversationStatus,
-  } from '../../entities/chat/conversation.entity';
+import { ConversationStatus } from '../../entities/chat/conversation.entity';
 import { MessageType } from '../../entities/chat/message.entity';
 import { UserResponseDto } from '../user/user.dto';
 import { MessageAttachmentPayloadDto } from './message.dto';
@@ -10,6 +8,14 @@ export enum PublicConversationType {
   RENT = 'RENT',
   CONTACT = 'CONTACT',
   NORMAL = 'NORMAL',
+}
+
+export enum MuteConversationPreset {
+  FIFTEEN_MINUTES = '15m',
+  ONE_HOUR = '1h',
+  EIGHT_HOURS = '8h',
+  TWENTY_FOUR_HOURS = '24h',
+  NO_END_TIME_YET = 'no end time yet',
 }
 
 export class ContactToUserPayloadDto {
@@ -72,7 +78,10 @@ export class SendMessageDto {
   @ApiProperty({ description: 'ID cuộc trò chuyện', example: 1 })
   conversationId: number;
 
-  @ApiPropertyOptional({ description: 'Nội dung tin nhắn', example: 'Xin chào!' })
+  @ApiPropertyOptional({
+    description: 'Nội dung tin nhắn',
+    example: 'Xin chào!',
+  })
   content?: string;
 
   @ApiPropertyOptional({ enum: MessageType, example: MessageType.TEXT })
@@ -93,10 +102,45 @@ export class MarkConversationReadDto {
   conversationId: number;
 
   @ApiPropertyOptional({
-    description: 'ID tin nhắn cuối đã đọc, mặc định lấy tin mới nhất của cuộc trò chuyện',
+    description:
+      'ID tin nhắn cuối đã đọc, mặc định lấy tin mới nhất của cuộc trò chuyện',
     example: 99,
   })
   messageId?: number;
+}
+
+export class SetConversationNicknameDto {
+  @ApiProperty({ description: 'ID cuộc trò chuyện', example: 1 })
+  conversationId: number;
+
+  @ApiPropertyOptional({
+    description: 'Biệt danh cuộc trò chuyện theo user hiện tại',
+    example: 'Chủ trọ quận 7',
+    nullable: true,
+  })
+  nickname?: string | null;
+}
+
+export class PinConversationDto {
+  @ApiProperty({ description: 'ID cuộc trò chuyện', example: 1 })
+  conversationId: number;
+
+  @ApiProperty({
+    description: 'Trạng thái ghim cuộc trò chuyện',
+    example: true,
+  })
+  isPinned: boolean;
+}
+
+export class MuteConversationDto {
+  @ApiProperty({ description: 'ID cuộc trò chuyện', example: 1 })
+  conversationId: number;
+
+  @ApiProperty({
+    enum: MuteConversationPreset,
+    example: MuteConversationPreset.EIGHT_HOURS,
+  })
+  preset: MuteConversationPreset;
 }
 
 export class ChatResponseDto {
@@ -178,6 +222,7 @@ export class ParticipantDto {
   lastReadAt: Date | null;
   muteUntil: Date | null;
   isPinned: boolean;
+  nickname?: string | null;
   deletedAt: Date | null;
   joinedAt: Date;
 }

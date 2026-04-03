@@ -9,7 +9,11 @@ import {
   ContactToUserDto,
   ContactToUserPayloadDto,
   MarkConversationReadDto,
+  MuteConversationDto,
+  MuteConversationPreset,
+  PinConversationDto,
   SendMessageDto,
+  SetConversationNicknameDto,
 } from '../dtos/chat/chat.dto';
 import { ChatRepository } from '../repositories/chat.repository';
 import { UserRepository } from '../repositories/user.repository';
@@ -24,6 +28,46 @@ export class ChatService {
     private readonly chatRepository: ChatRepository,
     private readonly userRepository: UserRepository,
   ) {}
+
+  private async validateParticipantAccess(
+    conversationId: number,
+    userId: number,
+  ) {
+    const conversation =
+      await this.chatRepository.findConversationById(conversationId);
+    if (!conversation) {
+      throw new NotFoundException(ErrorChatMessage.CONVERSATION_NOT_FOUND);
+    }
+
+    const participant = await this.chatRepository.findParticipant(
+      conversationId,
+      userId,
+    );
+    if (!participant) {
+      throw new ForbiddenException(ErrorChatMessage.NOT_A_PARTICIPANT);
+    }
+
+    return participant;
+  }
+
+  private resolveMuteUntil(preset: MuteConversationPreset): Date {
+    const now = new Date();
+
+    switch (preset) {
+      case MuteConversationPreset.FIFTEEN_MINUTES:
+        return new Date(now.getTime() + 15 * 60 * 1000);
+      case MuteConversationPreset.ONE_HOUR:
+        return new Date(now.getTime() + 60 * 60 * 1000);
+      case MuteConversationPreset.EIGHT_HOURS:
+        return new Date(now.getTime() + 8 * 60 * 60 * 1000);
+      case MuteConversationPreset.TWENTY_FOUR_HOURS:
+        return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      case MuteConversationPreset.NO_END_TIME_YET:
+        return new Date('2099-12-31T23:59:59.999Z');
+      default:
+        throw new BadRequestException(ErrorChatMessage.MUTE_PRESET_INVALID);
+    }
+  }
 
   public async contactToUser(
     user: UserDecoratorDtoResponse,
@@ -85,19 +129,7 @@ export class ChatService {
       throw new BadRequestException(ErrorChatMessage.LIMIT_INVALID);
     }
 
-    const conversation =
-      await this.chatRepository.findConversationById(conversationId);
-    if (!conversation) {
-      throw new NotFoundException(ErrorChatMessage.CONVERSATION_NOT_FOUND);
-    }
-
-    const isMember = await this.chatRepository.isParticipant(
-      conversationId,
-      userId,
-    );
-    if (!isMember) {
-      throw new ForbiddenException(ErrorChatMessage.NOT_A_PARTICIPANT);
-    }
+    await this.validateParticipantAccess(conversationId, userId);
 
     return this.chatRepository.getMessages(conversationId, page, limit);
   }
@@ -148,25 +180,56 @@ export class ChatService {
     userId: number,
     dto: MarkConversationReadDto,
   ): Promise<any> {
-    const conversation = await this.chatRepository.findConversationById(
-      dto.conversationId,
-    );
-    if (!conversation) {
-      throw new NotFoundException(ErrorChatMessage.CONVERSATION_NOT_FOUND);
-    }
-
-    const isMember = await this.chatRepository.isParticipant(
-      dto.conversationId,
-      userId,
-    );
-    if (!isMember) {
-      throw new ForbiddenException(ErrorChatMessage.NOT_A_PARTICIPANT);
-    }
+    await this.validateParticipantAccess(dto.conversationId, userId);
 
     return this.chatRepository.markConversationAsRead(
       dto.conversationId,
       userId,
       dto.messageId,
+    );
+  }
+
+  public async setConversationNickname(
+    userId: number,
+    dto: SetConversationNicknameDto,
+  ): Promise<any> {
+    await this.validateParticipantAccess(dto.conversationId, userId);
+
+    const nickname = dto.nickname?.trim() || null;
+    if (nickname && nickname.length > 255) {
+      throw new BadRequestException(ErrorChatMessage.NICKNAME_TOO_LONG);
+    }
+
+    return this.chatRepository.updateConversationNickname(
+      dto.conversationId,
+      userId,
+      nickname,
+    );
+  }
+
+  public async pinConversation(
+    userId: number,
+    dto: PinConversationDto,
+  ): Promise<any> {
+    await this.validateParticipantAccess(dto.conversationId, userId);
+
+    return this.chatRepository.updateConversationPinState(
+      dto.conversationId,
+      userId,
+      dto.isPinned,
+    );
+  }
+
+  public async muteConversation(
+    userId: number,
+    dto: MuteConversationDto,
+  ): Promise<any> {
+    await this.validateParticipantAccess(dto.conversationId, userId);
+
+    return this.chatRepository.updateConversationMuteState(
+      dto.conversationId,
+      userId,
+      this.resolveMuteUntil(dto.preset),
     );
   }
 }

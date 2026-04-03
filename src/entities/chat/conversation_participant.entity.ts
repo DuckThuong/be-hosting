@@ -58,6 +58,14 @@ export class TbConversationParticipant {
   })
   isPinned: boolean;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    comment: 'Biệt danh cuộc trò chuyện theo từng người dùng',
+  })
+  nickname?: string | null;
+
   @CreateDateColumn({
     type: 'timestamp',
     comment: 'Thời điểm tham gia cuộc trò chuyện',

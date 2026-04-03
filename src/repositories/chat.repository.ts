@@ -259,6 +259,15 @@ export class ChatRepository {
     return !!result;
   }
 
+  public async findParticipant(
+    conversationId: number,
+    userId: number,
+  ): Promise<TbConversationParticipant | null> {
+    return await this.conversationParticipant.findOne({
+      where: { conversationId, userId, deletedAt: IsNull() },
+    });
+  }
+
   public async contactToUser(payload: ContactToUserDto): Promise<TbConversation> {
     const conversationType = this.resolveConversationType(payload.type);
     const conversation = await this.checkConversationExistence(
@@ -407,6 +416,63 @@ export class ChatRepository {
     return await this.conversationParticipant.findOne({
       where: { conversationId, userId, deletedAt: IsNull() },
     });
+  }
+
+  public async updateConversationNickname(
+    conversationId: number,
+    userId: number,
+    nickname: string | null,
+  ): Promise<TbConversationParticipant | null> {
+    await this.conversationParticipant.update(
+      { conversationId, userId, deletedAt: IsNull() },
+      { nickname },
+    );
+
+    return await this.findParticipant(conversationId, userId);
+  }
+
+  public async updateConversationPinState(
+    conversationId: number,
+    userId: number,
+    isPinned: boolean,
+  ): Promise<TbConversationParticipant | null> {
+    return await this.conversationParticipant.manager.transaction(
+      async (manager) => {
+        const participantRepo = manager.getRepository(TbConversationParticipant);
+
+        if (isPinned) {
+          await participantRepo
+            .createQueryBuilder()
+            .update(TbConversationParticipant)
+            .set({ isPinned: false })
+            .where('userId = :userId', { userId })
+            .andWhere('deletedAt IS NULL')
+            .execute();
+        }
+
+        await participantRepo.update(
+          { conversationId, userId, deletedAt: IsNull() },
+          { isPinned },
+        );
+
+        return await participantRepo.findOne({
+          where: { conversationId, userId, deletedAt: IsNull() },
+        });
+      },
+    );
+  }
+
+  public async updateConversationMuteState(
+    conversationId: number,
+    userId: number,
+    muteUntil: Date,
+  ): Promise<TbConversationParticipant | null> {
+    await this.conversationParticipant.update(
+      { conversationId, userId, deletedAt: IsNull() },
+      { muteUntil },
+    );
+
+    return await this.findParticipant(conversationId, userId);
   }
 
   public async getAllConversations(

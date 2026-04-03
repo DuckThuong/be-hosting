@@ -5,6 +5,11 @@ export class SuccessChatMessage {
     'Lấy danh sách cuộc trò chuyện thành công.';
   static readonly GET_MESSAGES_SUCCESS = 'Lấy danh sách tin nhắn thành công.';
   static readonly MARK_AS_READ_SUCCESS = 'Đánh dấu đã đọc thành công.';
+  static readonly SET_NICKNAME_SUCCESS = 'Cập nhật biệt danh thành công.';
+  static readonly PIN_CONVERSATION_SUCCESS =
+    'Cập nhật ghim cuộc trò chuyện thành công.';
+  static readonly MUTE_CONVERSATION_SUCCESS =
+    'Cập nhật tắt thông báo thành công.';
 }
 
 export class ErrorChatMessage {
@@ -26,6 +31,10 @@ export class ErrorChatMessage {
 
   static readonly PAGE_INVALID = 'Page phải lớn hơn 0.';
   static readonly LIMIT_INVALID = 'Limit phải từ 1 đến 100.';
+  static readonly NICKNAME_TOO_LONG =
+    'Biệt danh không được vượt quá 255 ký tự.';
+  static readonly MUTE_PRESET_INVALID =
+    'Thiết lập tắt thông báo không hợp lệ.';
 
   static readonly CATCH_ERROR = 'Đã xảy ra lỗi!';
 }
