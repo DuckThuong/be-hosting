@@ -971,6 +971,7 @@ export class LocationService {
   }
 
   public async GetLocationByFilter(
+    user: UserDecoratorDtoResponse,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     if (payload.locationName && payload.locationName.length > 200) {
@@ -1121,7 +1122,7 @@ export class LocationService {
     }
 
     try {
-      const result = await this.locationRepo.GetLocationByFilter(payload);
+      const result = await this.locationRepo.GetLocationByFilter(user, payload);
       console.log('result', result);
       for (const item of result.data) {
         if (item.locationCode) {

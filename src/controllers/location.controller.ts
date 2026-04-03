@@ -147,7 +147,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Lấy toàn bộ địa điểm' })
-  @Get('get-all-location')
+  @Get('get-all-location-renter')
   public async getAllLocationOnRenter(
     @User() user,
   ): Promise<LocationListDto[]> {
@@ -167,8 +167,9 @@ export class LocationController {
   @ApiOperation({ summary: 'Lấy địa điểm theo điều kiện' })
   @Get('get-location-by-filter')
   public async getLocationByFilter(
+    @User() user: UserDecoratorDtoResponse,
     @Query() payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
-    return this.locationService.GetLocationByFilter(payload);
+    return this.locationService.GetLocationByFilter(user, payload);
   }
 }

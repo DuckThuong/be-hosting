@@ -803,6 +803,7 @@ export class LocationRepository {
   }
 
   public async GetLocationByFilter(
+    user: UserDecoratorDtoResponse,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     const qb = this.location
@@ -925,17 +926,20 @@ export class LocationRepository {
       });
     }
 
+    qb.andWhere('TL.ownerCode NOT LIKE :ownerCodeLogin', {
+      ownerCodeLogin: `%${user.userCode}%`,
+    });
+
     const page = Number(payload.page) || 1;
     const limit = Number(payload.limit) || 10;
     const offset = (page - 1) * limit;
 
-    // ✅ Clone trước khi getCount để tránh ảnh hưởng state của qb
     const total = await qb.clone().getCount();
 
     const data = await qb
       .orderBy('TL.locationCode', 'ASC')
-      .offset(offset) // ✅ thay skip()
-      .limit(limit) // ✅ thay take()
+      .offset(offset)
+      .limit(limit)
       .getRawMany<LocationListDto>();
 
     return {
