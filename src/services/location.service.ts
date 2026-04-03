@@ -1123,7 +1123,6 @@ export class LocationService {
 
     try {
       const result = await this.locationRepo.GetLocationByFilter(user, payload);
-      console.log('result', result);
       for (const item of result.data) {
         if (item.locationCode) {
           const service = await this.locationRepo.GetLocationServices(
