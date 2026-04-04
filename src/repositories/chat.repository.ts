@@ -268,6 +268,17 @@ export class ChatRepository {
     });
   }
 
+  public async getConversationParticipantIds(
+    conversationId: number,
+  ): Promise<number[]> {
+    const participants = await this.conversationParticipant.find({
+      where: { conversationId, deletedAt: IsNull() },
+      select: { userId: true },
+    });
+
+    return participants.map((participant) => participant.userId);
+  }
+
   public async contactToUser(payload: ContactToUserDto): Promise<TbConversation> {
     const conversationType = this.resolveConversationType(payload.type);
     const conversation = await this.checkConversationExistence(
@@ -378,6 +389,26 @@ export class ChatRepository {
     });
   }
 
+  public async updateMessageStatus(
+    messageId: number,
+    status: MessageStatus,
+  ): Promise<TbMessage | null> {
+    await this.message.update({ id: messageId }, { status });
+
+    return this.message.findOne({
+      where: { id: messageId, deletedAt: IsNull() },
+    });
+  }
+
+  public async findLatestMessage(
+    conversationId: number,
+  ): Promise<TbMessage | null> {
+    return this.message.findOne({
+      where: { conversationId, deletedAt: IsNull() },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   public async markConversationAsRead(
     conversationId: number,
     userId: number,
@@ -415,6 +446,41 @@ export class ChatRepository {
 
     return await this.conversationParticipant.findOne({
       where: { conversationId, userId, deletedAt: IsNull() },
+    });
+  }
+
+  public async markConversationAsReadAndReturnMessage(
+    conversationId: number,
+    userId: number,
+    messageId?: number,
+  ): Promise<TbMessage | null> {
+    const lastMessage =
+      messageId != null
+        ? await this.message.findOne({
+            where: { id: messageId, conversationId, deletedAt: IsNull() },
+          })
+        : await this.findLatestMessage(conversationId);
+
+    if (!lastMessage) {
+      return null;
+    }
+
+    await this.conversationParticipant.update(
+      { conversationId, userId, deletedAt: IsNull() },
+      {
+        lastReadMessageId: lastMessage.id,
+        lastReadAt: new Date(),
+        unreadCount: 0,
+      },
+    );
+
+    await this.message.update(
+      { id: lastMessage.id },
+      { status: MessageStatus.READ },
+    );
+
+    return this.message.findOne({
+      where: { id: lastMessage.id, deletedAt: IsNull() },
     });
   }
 
@@ -534,5 +600,17 @@ export class ChatRepository {
         toUser,
       } as ConversationResponseDto;
     });
+  }
+
+  public async getConversationResponseForUser(
+    userId: number,
+    conversationId: number,
+  ): Promise<ConversationResponseDto | null> {
+    const conversations = await this.getAllConversations(userId);
+    return (
+      conversations.find(
+        (conversation) => conversation.conversationId === conversationId,
+      ) ?? null
+    );
   }
 }

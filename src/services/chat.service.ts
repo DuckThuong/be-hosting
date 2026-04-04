@@ -15,18 +15,23 @@ import {
   SendMessageDto,
   SetConversationNicknameDto,
 } from '../dtos/chat/chat.dto';
+import { MarkMessageReadSocketPayloadDto } from '../dtos/chat/chat-realtime.dto';
+import { MessageStatus } from '../entities/chat/message.entity';
 import { ChatRepository } from '../repositories/chat.repository';
 import { UserRepository } from '../repositories/user.repository';
 import {
   UserDecoratorDtoResponse,
   UserResponseDto,
 } from '../dtos/user/user.dto';
+import { ChatRealtimeService } from './chat-realtime.service';
+import { MessageResponseDto } from '../dtos/chat/message-response.dto';
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly chatRepository: ChatRepository,
     private readonly userRepository: UserRepository,
+    private readonly chatRealtimeService: ChatRealtimeService,
   ) {}
 
   private async validateParticipantAccess(
@@ -48,6 +53,10 @@ export class ChatService {
     }
 
     return participant;
+  }
+
+  public async ensureParticipantAccess(conversationId: number, userId: number) {
+    return this.validateParticipantAccess(conversationId, userId);
   }
 
   private resolveMuteUntil(preset: MuteConversationPreset): Date {
@@ -137,6 +146,7 @@ export class ChatService {
   public async sendMessage(
     user: UserDecoratorDtoResponse,
     dto: SendMessageDto,
+    requestId?: string,
   ): Promise<any> {
     const hasContent = !!dto.content?.trim();
     const hasAttachments = !!dto.attachments?.length;
@@ -166,7 +176,7 @@ export class ChatService {
 
     const sender = await this.userRepository.getUserProfileByUserId(user.id);
 
-    return this.chatRepository.sendMessage(
+    const savedMessage = await this.chatRepository.sendMessage(
       user.id,
       {
         ...dto,
@@ -174,6 +184,118 @@ export class ChatService {
       },
       sender?.avatarUrl,
     );
+
+    const participantIds = await this.chatRepository.getConversationParticipantIds(
+      dto.conversationId,
+    );
+    const recipientIds = participantIds.filter((participantId) => participantId !== user.id);
+    let latestStatus = savedMessage.status;
+
+    for (const recipientId of recipientIds) {
+      if (!this.chatRealtimeService.isUserOnline(recipientId)) continue;
+
+      const deliveredMessage = await this.chatRepository.updateMessageStatus(
+        savedMessage.id,
+        MessageStatus.DELIVERED,
+      );
+      if (deliveredMessage) {
+        savedMessage.status = deliveredMessage.status;
+        latestStatus = deliveredMessage.status;
+      }
+      break;
+    }
+
+    this.chatRealtimeService.publishMessageSent(
+      MessageResponseDto.fromEntity(savedMessage),
+      requestId,
+    );
+
+    if (latestStatus !== MessageStatus.SENT) {
+      this.chatRealtimeService.publishMessageStatusUpdated(
+        {
+          conversationId: savedMessage.conversationId,
+          messageId: savedMessage.id,
+          status: latestStatus,
+          updatedAt: new Date().toISOString(),
+          actorUserId: user.id,
+        },
+        requestId,
+      );
+    }
+
+    const conversations = await Promise.all(
+      participantIds.map(async (participantId) => ({
+        userId: participantId,
+        conversation: await this.chatRepository.getConversationResponseForUser(
+          participantId,
+          dto.conversationId,
+        ),
+      })),
+    );
+
+    conversations.forEach(({ userId, conversation }) => {
+      if (!conversation) return;
+      this.chatRealtimeService.publishConversationUpdated(
+        userId,
+        conversation,
+        requestId,
+      );
+    });
+
+    return savedMessage;
+  }
+
+  public async markConversationAsReadViaSocket(
+    userId: number,
+    dto: MarkMessageReadSocketPayloadDto,
+    requestId?: string,
+  ): Promise<void> {
+    await this.validateParticipantAccess(dto.conversationId, userId);
+
+    const updatedMessage =
+      await this.chatRepository.markConversationAsReadAndReturnMessage(
+        dto.conversationId,
+        userId,
+        dto.messageId,
+      );
+
+    if (!updatedMessage) {
+      return;
+    }
+
+    this.chatRealtimeService.publishMessageStatusUpdated(
+      {
+        conversationId: updatedMessage.conversationId,
+        messageId: updatedMessage.id,
+        status: MessageStatus.READ,
+        updatedAt: new Date().toISOString(),
+        actorUserId: userId,
+      },
+      requestId,
+    );
+
+    const participantIds = await this.chatRepository.getConversationParticipantIds(
+      dto.conversationId,
+    );
+    const conversations = await Promise.all(
+      participantIds.map(async (participantId) => ({
+        userId: participantId,
+        conversation: await this.chatRepository.getConversationResponseForUser(
+          participantId,
+          dto.conversationId,
+        ),
+      })),
+    );
+
+    conversations.forEach(({ userId: participantId, conversation }) => {
+      if (!conversation) return;
+
+      this.chatRealtimeService.publishConversationUpdated(
+        participantId,
+        conversation,
+        requestId,
+      );
+    });
   }
 
   public async markConversationAsRead(

@@ -17,9 +17,13 @@ import { TbLocationFavorite } from '../entities/location/locationFavorite.entity
 import { TbLocationMedia } from '../entities/location/locationMedia.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
+import { ChatGateway } from '../gateways/chat.gateway';
+import { ChatRealtimeService } from '../services/chat-realtime.service';
+import { AuthModule } from './auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     TypeOrmModule.forFeature([
       TbConversation,
       TbConversationParticipant,
@@ -35,7 +39,14 @@ import { TbLocationType } from '../entities/location/locationType.entity';
       TbLocationType,
     ]),
   ],
-  providers: [ChatService, ChatRepository, UserRepository, LocationRepository],
+  providers: [
+    ChatService,
+    ChatRepository,
+    UserRepository,
+    LocationRepository,
+    ChatGateway,
+    ChatRealtimeService,
+  ],
   controllers: [ChatController],
   exports: [ChatService],
 })
