@@ -57,15 +57,16 @@ export class LocationCommentRepository {
     const [comments, total]: [RawCommentDto[], number] = await Promise.all([
       this.comment
         .createQueryBuilder('comment')
-        .leftJoin('tb_user', 'user', 'user.userCode = comment.userCode')
+        .leftJoin('tb_user_default', 'user', 'user.userCode = comment.userCode')
+        .leftJoin('tb_user_profile', 'profile', 'profile.user_id = user.id')
         .select([
-          'comment.id           AS id',
-          'comment.content      AS content',
-          'comment.rate         AS rate',
-          'comment.createdAt    AS createdAt',
-          'comment.userCode     AS userCode',
-          'user.fullName        AS userName',
-          'user.avatar          AS userAvatar',
+          'comment.id            AS id',
+          'comment.content       AS content',
+          'comment.rate          AS rate',
+          'comment.createdAt     AS createdAt',
+          'comment.userCode      AS userCode',
+          'user.fullName         AS userName',
+          'profile.avatarUrl     AS userAvatar',
         ])
         .where('comment.locationCode = :locationCode', { locationCode })
         .orderBy('comment.createdAt', 'DESC')
@@ -90,7 +91,8 @@ export class LocationCommentRepository {
 
     const replies: RawCommentReplyDto[] = await this.reply
       .createQueryBuilder('reply')
-      .leftJoin('tb_user', 'user', 'user.userCode = reply.userCode')
+      .leftJoin('tb_user_default', 'user', 'user.userCode = reply.userCode')
+      .leftJoin('tb_user_profile', 'profile', 'profile.user_id = user.id')
       .select([
         'reply.id            AS id',
         'reply.preCommentId  AS preCommentId',
@@ -98,8 +100,8 @@ export class LocationCommentRepository {
         'reply.rate          AS rate',
         'reply.createdAt     AS createdAt',
         'reply.userCode      AS userCode',
-        'user.fullName       AS userName',
-        'user.avatar         AS userAvatar',
+        'user.fullName         AS userName',
+        'profile.avatarUrl     AS userAvatar',
       ])
       .where('reply.preCommentId IN (:...ids)', { ids: commentIds })
       .orderBy('reply.createdAt', 'ASC')
