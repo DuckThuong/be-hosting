@@ -8,6 +8,7 @@ export interface FormattedReply {
   id: number;
   content: string;
   rate: number;
+  metaData: string;
   type: 'REPLY';
   createdAt: Date;
   user: CommentUser;
@@ -16,8 +17,9 @@ export interface FormattedReply {
 export interface FormattedComment {
   id: number;
   content: string;
-  rate: number;
   type: 'REVIEW';
+  rate: number;
+  metaData: string;
   createdAt: Date;
   user: CommentUser;
   replies: FormattedReply[];
@@ -28,6 +30,7 @@ export class RawCommentDto {
   id: number;
   content: string;
   rate: number;
+  metaData: string;
   createdAt: Date;
   userCode: string;
   userName: string;
@@ -39,6 +42,7 @@ export class RawCommentReplyDto {
   preCommentId: number;
   content: string;
   rate: number;
+  metaData: string;
   createdAt: Date;
   userCode: string;
   userName: string;
@@ -49,6 +53,7 @@ export function formatReply(raw: RawCommentReplyDto): FormattedReply {
   return {
     id: raw.id,
     content: raw.content,
+    metaData: raw.metaData,
     rate: raw.rate,
     type: 'REPLY',
     createdAt: raw.createdAt,
@@ -68,6 +73,7 @@ export function formatComment(
     id: raw.id,
     content: raw.content,
     rate: raw.rate,
+    metaData: raw.metaData,
     type: 'REVIEW',
     createdAt: raw.createdAt,
     user: {

@@ -114,6 +114,9 @@ export class CommentReplyResponseDto {
   @ApiProperty({ example: 'REPLY' })
   type: string;
 
+  @ApiProperty({ example: 'REPLY' })
+  metaData: string;
+
   @ApiProperty({ example: '2026-04-03T10:20:00Z' })
   createdAt: Date;
 

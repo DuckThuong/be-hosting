@@ -36,7 +36,6 @@ export class LocationCommentRepository {
   ): Promise<any> {
     if (payload.type === COMMENT_TYPE.COMMENT) {
       await this.createNewComment(userCode, payload);
-
       return {
         message: SuccessLocationMessage.CREATE_SUCCESS,
       };
@@ -63,6 +62,7 @@ export class LocationCommentRepository {
           'comment.id            AS id',
           'comment.content       AS content',
           'comment.rate          AS rate',
+          'comment.metaData      AS metaData',
           'comment.createdAt     AS createdAt',
           'comment.userCode      AS userCode',
           'user.fullName         AS userName',
@@ -97,7 +97,7 @@ export class LocationCommentRepository {
         'reply.id            AS id',
         'reply.preCommentId  AS preCommentId',
         'reply.content       AS content',
-        'reply.rate          AS rate',
+        'reply.metaData          AS metaData',
         'reply.createdAt     AS createdAt',
         'reply.userCode      AS userCode',
         'user.fullName         AS userName',

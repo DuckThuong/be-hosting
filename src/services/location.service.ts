@@ -1183,7 +1183,11 @@ export class LocationService {
       );
     }
 
-    if (payload.commentId !== null) {
+    if (payload.content.ratevalue && payload.content.ratevalue === null) {
+      payload.content.ratevalue = 0;
+    }
+
+    if (payload.commentId) {
       payload.type = COMMENT_TYPE.REPLY;
     } else {
       payload.type = COMMENT_TYPE.COMMENT;
