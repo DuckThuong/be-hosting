@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TbMessageAttachment } from './message_attachment.entity';
 
 export enum MessageType {
   TEXT = 'TEXT',
@@ -100,6 +102,9 @@ export class TbMessage {
     comment: 'Người thực hiện xóa mềm tin nhắn',
   })
   deletedByUserId?: number;
+
+  @OneToMany(() => TbMessageAttachment, (attachment) => attachment.message)
+  attachments?: TbMessageAttachment[];
 
   @CreateDateColumn({
     type: 'timestamp',

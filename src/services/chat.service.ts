@@ -140,7 +140,13 @@ export class ChatService {
 
     await this.validateParticipantAccess(conversationId, userId);
 
-    return this.chatRepository.getMessages(conversationId, page, limit);
+    const messages = await this.chatRepository.getMessages(
+      conversationId,
+      page,
+      limit,
+    );
+
+    return messages.map((message) => MessageResponseDto.fromEntity(message));
   }
 
   public async sendMessage(
@@ -185,10 +191,13 @@ export class ChatService {
       sender?.avatarUrl,
     );
 
-    const participantIds = await this.chatRepository.getConversationParticipantIds(
-      dto.conversationId,
+    const participantIds =
+      await this.chatRepository.getConversationParticipantIds(
+        dto.conversationId,
+      );
+    const recipientIds = participantIds.filter(
+      (participantId) => participantId !== user.id,
     );
-    const recipientIds = participantIds.filter((participantId) => participantId !== user.id);
     let latestStatus = savedMessage.status;
 
     for (const recipientId of recipientIds) {
@@ -274,9 +283,10 @@ export class ChatService {
       requestId,
     );
 
-    const participantIds = await this.chatRepository.getConversationParticipantIds(
-      dto.conversationId,
-    );
+    const participantIds =
+      await this.chatRepository.getConversationParticipantIds(
+        dto.conversationId,
+      );
     const conversations = await Promise.all(
       participantIds.map(async (participantId) => ({
         userId: participantId,

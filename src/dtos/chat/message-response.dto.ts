@@ -1,5 +1,18 @@
 import { TbMessage } from '../../entities/chat/message.entity';
 
+export interface MessageAttachmentResponseDto {
+  id: number;
+  messageId: number;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  storageKey?: string;
+  width?: number;
+  height?: number;
+  createdAt: Date;
+}
+
 export class MessageResponseDto {
   id: number;
   conversationId: number;
@@ -9,6 +22,7 @@ export class MessageResponseDto {
   content?: string | null;
   status?: string;
   replyToMessageId?: number | null;
+  attachments?: MessageAttachmentResponseDto[];
   metadata?: Record<string, unknown> | null;
   editedAt?: Date | null;
   deletedAt?: Date | null;
@@ -26,6 +40,19 @@ export class MessageResponseDto {
       content: message.content ?? null,
       status: message.status,
       replyToMessageId: message.replyToMessageId ?? null,
+      attachments:
+        message.attachments?.map((attachment) => ({
+          id: attachment.id,
+          messageId: attachment.messageId,
+          fileName: attachment.fileName,
+          mimeType: attachment.mimeType,
+          size: attachment.size,
+          url: attachment.url,
+          storageKey: attachment.storageKey,
+          width: attachment.width,
+          height: attachment.height,
+          createdAt: attachment.createdAt,
+        })) ?? [],
       metadata: message.metadata ?? null,
       editedAt: message.editedAt ?? null,
       deletedAt: message.deletedAt ?? null,

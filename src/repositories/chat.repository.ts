@@ -4,6 +4,7 @@ import { IsNull, Repository } from 'typeorm';
 import {
   ContactToUserDto,
   ConversationResponseDto,
+  PublicConversationType,
   SendMessageDto,
 } from '../dtos/chat/chat.dto';
 import { UserResponseDto } from '../dtos/user/user.dto';
@@ -12,12 +13,19 @@ import {
   ConversationType,
   TbConversation,
 } from '../entities/chat/conversation.entity';
-import { PublicConversationType } from '../dtos/chat/chat.dto';
 import { TbConversationParticipant } from '../entities/chat/conversation_participant.entity';
 import { TbMessageAttachment } from '../entities/chat/message_attachment.entity';
-import { MessageStatus, MessageType, TbMessage } from '../entities/chat/message.entity';
+import {
+  MessageStatus,
+  MessageType,
+  TbMessage,
+} from '../entities/chat/message.entity';
 import { UserRepository } from './user.repository';
-import { MessageAttachmentPayloadDto, MessagePayloadDto, MessageTypeEnum } from '../dtos/chat/message.dto';
+import {
+  MessageAttachmentPayloadDto,
+  MessagePayloadDto,
+  MessageTypeEnum,
+} from '../dtos/chat/message.dto';
 import {
   ContactMessageTemplate,
   RentLocationMessageTemplate,
@@ -71,7 +79,9 @@ export class ChatRepository {
     }
 
     if (attachments?.length) {
-      return attachments[0].mimeType.startsWith('image/') ? '[Image]' : '[File]';
+      return attachments[0].mimeType.startsWith('image/')
+        ? '[Image]'
+        : '[File]';
     }
 
     return '[Message]';
@@ -120,8 +130,16 @@ export class ChatRepository {
     const savedConversation = await this.conversation.save(newConversation);
 
     const participants = this.conversationParticipant.create([
-      { conversationId: savedConversation.id, userId: user.id!, unreadCount: 0 },
-      { conversationId: savedConversation.id, userId: contactId, unreadCount: 0 },
+      {
+        conversationId: savedConversation.id,
+        userId: user.id!,
+        unreadCount: 0,
+      },
+      {
+        conversationId: savedConversation.id,
+        userId: contactId,
+        unreadCount: 0,
+      },
     ]);
 
     await this.conversationParticipant.save(participants);
@@ -169,9 +187,7 @@ export class ChatRepository {
     return result;
   }
 
-  private async persistMessage(
-    payload: MessagePayloadDto,
-  ): Promise<TbMessage> {
+  private async persistMessage(payload: MessagePayloadDto): Promise<TbMessage> {
     return this.message.manager.transaction(async (manager) => {
       const messageRepo = manager.getRepository(TbMessage);
       const conversationRepo = manager.getRepository(TbConversation);
@@ -279,7 +295,9 @@ export class ChatRepository {
     return participants.map((participant) => participant.userId);
   }
 
-  public async contactToUser(payload: ContactToUserDto): Promise<TbConversation> {
+  public async contactToUser(
+    payload: ContactToUserDto,
+  ): Promise<TbConversation> {
     const conversationType = this.resolveConversationType(payload.type);
     const conversation = await this.checkConversationExistence(
       payload.fromUser,
@@ -359,6 +377,7 @@ export class ChatRepository {
   ): Promise<TbMessage[]> {
     return await this.message.find({
       where: { conversationId, deletedAt: IsNull() },
+      relations: { attachments: true },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -370,15 +389,19 @@ export class ChatRepository {
     dto: SendMessageDto,
     senderAvatarUrl?: string,
   ): Promise<TbMessage> {
-    const type =
-      dto.type ??
-      (dto.attachments?.[0]?.mimeType?.startsWith('image/')
-        ? MessageType.IMAGE
-        : dto.attachments?.length
-          ? MessageType.FILE
-          : MessageType.TEXT);
+    let type = dto.type;
 
-    return await this.persistMessage({
+    if (!type) {
+      if (dto.attachments?.[0]?.mimeType?.startsWith('image/')) {
+        type = MessageType.IMAGE;
+      } else if (dto.attachments?.length) {
+        type = MessageType.FILE;
+      } else {
+        type = MessageType.TEXT;
+      }
+    }
+
+    const savedMessage = await this.persistMessage({
       conversationId: dto.conversationId,
       senderId,
       senderAvatarUrl,
@@ -386,6 +409,11 @@ export class ChatRepository {
       type,
       replyToMessageId: dto.replyToMessageId,
       attachments: dto.attachments,
+    });
+
+    return await this.message.findOneOrFail({
+      where: { id: savedMessage.id, deletedAt: IsNull() },
+      relations: { attachments: true },
     });
   }
 
@@ -415,13 +443,13 @@ export class ChatRepository {
     messageId?: number,
   ): Promise<TbConversationParticipant | null> {
     const lastMessage =
-      messageId != null
+      messageId == null
         ? await this.message.findOne({
-            where: { id: messageId, conversationId, deletedAt: IsNull() },
-          })
-        : await this.message.findOne({
             where: { conversationId, deletedAt: IsNull() },
             order: { createdAt: 'DESC' },
+          })
+        : await this.message.findOne({
+            where: { id: messageId, conversationId, deletedAt: IsNull() },
           });
 
     if (!lastMessage) {
@@ -455,11 +483,11 @@ export class ChatRepository {
     messageId?: number,
   ): Promise<TbMessage | null> {
     const lastMessage =
-      messageId != null
-        ? await this.message.findOne({
+      messageId == null
+        ? await this.findLatestMessage(conversationId)
+        : await this.message.findOne({
             where: { id: messageId, conversationId, deletedAt: IsNull() },
-          })
-        : await this.findLatestMessage(conversationId);
+          });
 
     if (!lastMessage) {
       return null;
@@ -504,7 +532,9 @@ export class ChatRepository {
   ): Promise<TbConversationParticipant | null> {
     return await this.conversationParticipant.manager.transaction(
       async (manager) => {
-        const participantRepo = manager.getRepository(TbConversationParticipant);
+        const participantRepo = manager.getRepository(
+          TbConversationParticipant,
+        );
 
         if (isPinned) {
           await participantRepo

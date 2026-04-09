@@ -3,8 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { TbMessage } from './message.entity';
 
 @Entity('tb_message_attachment')
 @Index(['messageId'])
@@ -18,6 +21,12 @@ export class TbMessageAttachment {
     comment: 'ID tin nhắn sở hữu file đính kèm',
   })
   messageId: number;
+
+  @ManyToOne(() => TbMessage, (message) => message.attachments, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'messageId' })
+  message: TbMessage;
 
   @Column({
     comment: 'Tên file hiển thị',
