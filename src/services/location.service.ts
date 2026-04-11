@@ -67,7 +67,9 @@ export class LocationService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  private async enrichLocationDetails(location: LocationListDto): Promise<void> {
+  private async enrichLocationDetails(
+    location: LocationListDto,
+  ): Promise<void> {
     if (!location.locationCode) {
       return;
     }
@@ -82,7 +84,9 @@ export class LocationService {
     );
     location.address = address.data;
 
-    const media = await this.locationRepo.GetLocationMedia(location.locationCode);
+    const media = await this.locationRepo.GetLocationMedia(
+      location.locationCode,
+    );
     location.media = media;
   }
 
@@ -1122,7 +1126,7 @@ export class LocationService {
   }
 
   public async GetLocationByFilter(
-    user: UserDecoratorDtoResponse,
+    user: UserDecoratorDtoResponse | undefined,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     if (payload.locationName && payload.locationName.length > 200) {
@@ -1341,9 +1345,7 @@ export class LocationService {
   ): Promise<FavoriteLocationListResponseDto> {
     try {
       const locations: FavoriteLocationSummaryDto[] =
-        await this.locationRepo.GetMyFavoriteLocation(
-          user.userCode,
-        );
+        await this.locationRepo.GetMyFavoriteLocation(user.userCode);
 
       return {
         message: SuccessLocationMessage.GET_FAVORITE_LIST_SUCCESS,
@@ -1603,7 +1605,10 @@ export class LocationService {
 
     const nextMediaType =
       this.parseMediaType(payload.mediaType) ?? existingMedia.mediaType;
-    if (payload.mediaType !== undefined && !this.parseMediaType(payload.mediaType)) {
+    if (
+      payload.mediaType !== undefined &&
+      !this.parseMediaType(payload.mediaType)
+    ) {
       throw new HttpException(
         ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
@@ -1814,10 +1819,10 @@ export class LocationService {
       this.configService.get<string>('FRONTEND_BASE_URL') ||
       this.configService.get<string>('LOCAL_DOMAIN') ||
       'http://localhost:3001';
-    const baseUrl = rawBaseUrl.trim().replace(/^["']|["']$/g, '').replace(
-      /\/+$/,
-      '',
-    );
+    const baseUrl = rawBaseUrl
+      .trim()
+      .replace(/^["']|["']$/g, '')
+      .replace(/\/+$/, '');
 
     return {
       message: SuccessLocationMessage.GET_SHARE_LINK_SUCCESS,
@@ -1825,5 +1830,4 @@ export class LocationService {
       shareUrl: `${baseUrl}/room-detail?locationCode=${encodeURIComponent(payload.locationCode)}`,
     };
   }
-  
 }

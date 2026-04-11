@@ -891,7 +891,7 @@ export class LocationRepository {
   }
 
   public async GetLocationByFilter(
-    user: UserDecoratorDtoResponse,
+    user: UserDecoratorDtoResponse | undefined,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     const qb = this.location
@@ -1045,9 +1045,11 @@ export class LocationRepository {
       }
     }
 
-    qb.andWhere('TL.ownerCode NOT LIKE :ownerCodeLogin', {
-      ownerCodeLogin: `%${user.userCode}%`,
-    });
+    if (user?.userCode) {
+      qb.andWhere('TL.ownerCode NOT LIKE :ownerCodeLogin', {
+        ownerCodeLogin: `%${user.userCode}%`,
+      });
+    }
 
     const page = Number(payload.page) || 1;
     const limit = Number(payload.limit) || 10;
