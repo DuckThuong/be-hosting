@@ -1,0 +1,44 @@
+[
+  {
+    "typeCode": "ROOM",
+    "typeName": "Phòng trọ",
+    "typeDescription": "Phòng trọ cho thuê giá rẻ, phù hợp sinh viên và người đi làm.",
+    "typeLogo": "https://res.cloudinary.com/devclound/image/upload/v1770531521/file/bxab1now0w3nglnsuynp.png",
+    "typeBackGround": "https://res.cloudinary.com/devclound/image/upload/v1770531594/phongtroback_x8on4b.jpg"
+  },
+  {
+    "typeCode": "APARTMENT",
+    "typeName": "Căn hộ",
+    "typeDescription": "Căn hộ đầy đủ tiện nghi, phù hợp gia đình hoặc cá nhân.",
+    "typeLogo": "https://res.cloudinary.com/devclound/image/upload/v1770531585/canho_wovqil.jpg",
+    "typeBackGround": "https://res.cloudinary.com/devclound/image/upload/v1770531586/canhoback_w26gna.jpg"
+  },
+  {
+    "typeCode": "HOUSE",
+    "typeName": "Nhà nguyên căn",
+    "typeDescription": "Nhà nguyên căn cho thuê dài hạn.",
+    "typeLogo": "https://res.cloudinary.com/devclound/image/upload/v1770531585/nhachothue_uo1nsk.png",
+    "typeBackGround": "https://res.cloudinary.com/devclound/image/upload/v1770531585/nhachothueback_lsoxw7.jpg"
+  },
+  {
+    "typeCode": "DORM",
+    "typeName": "Ký túc xá",
+    "typeDescription": "Ký túc xá dành cho sinh viên hoặc người lao động.",
+    "typeLogo": "https://res.cloudinary.com/devclound/image/upload/v1770531585/kytucxalogo_ek5ysd.png",
+    "typeBackGround": "https://res.cloudinary.com/devclound/image/upload/v1770531585/kytucxaback_chrefe.jpg"
+  },
+  {
+    "typeCode": "OFFICE",
+    "typeName": "Văn phòng",
+    "typeDescription": "Văn phòng cho thuê phục vụ kinh doanh.",
+    "typeLogo": "https://res.cloudinary.com/devclound/image/upload/v1770531585/background_van_phong_wu9djd.jpg",
+    "typeBackGround": "https://res.cloudinary.com/devclound/image/upload/v1770531585/background_van_phong_wu9djd.jpg"
+  },
+  {
+    "typeCode": "SHOP",
+    "typeName": "Mặt bằng kinh doanh",
+    "typeDescription": "Mặt bằng cho thuê để mở cửa hàng hoặc kinh doanh.",
+    "typeLogo": "https://res.cloudinary.com/devclound/image/upload/v1770531584/matbanglogo_n3uc08.jpg",
+    "typeBackGround": "https://res.cloudinary.com/devclound/image/upload/v1770531585/mat_bang_back_wxeahw.avif"
+  }
+]

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MailService } from '../services/mail.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OtpStorageModule } from './otp.module';
 import { AuthRepository } from '../repositories/auth.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -14,11 +14,15 @@ import { JwtModule } from '@nestjs/jwt';
     ConfigModule,
     OtpStorageModule,
 
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'duckthuong-28072003-secretkey',
-      signOptions: {
-        expiresIn: '1d',
-      },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '1d',
+        },
+      }),
     }),
   ],
   providers: [MailService, AuthRepository, JwtStrategy],

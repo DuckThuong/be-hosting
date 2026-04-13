@@ -24,18 +24,6 @@ export class LocationServiceData {
     required: true,
   })
   serviceCode: string;
-  @ApiProperty({
-    description: 'isActive',
-    example: '......',
-    required: true,
-  })
-  isActive: boolean;
-  @ApiProperty({
-    description: 'note',
-    example: '......',
-    required: false,
-  })
-  note?: string;
 }
 
 export class LocationServiceResponse {

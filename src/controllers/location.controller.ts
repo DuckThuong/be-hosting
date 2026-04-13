@@ -8,7 +8,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
 import {
   CreateLocationDto,
@@ -34,18 +34,17 @@ import {
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
+import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
 import { User } from '../user.decorator';
-import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 
 @Controller('location')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth('JWT-auth')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
 
   @ApiOperation({ summary: 'Thêm mới phân loại địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Post('create-location-type')
   public async createLocationType(
     @Body() payload: CreateLocationTypePayloadDto,
@@ -54,6 +53,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Cập nhật phân loại địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Put('update-location-type')
   public async updateLocationType(
     @Body() payload: UpdateLocationTypePayloadDto,
@@ -68,6 +68,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Thêm mới dịch vụ cho địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Post('add-new-location-service')
   public async addNewLocationService(
     @Body() payload: AddLocationServicePayload,
@@ -76,6 +77,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Tạm dừng cung cấp dịch vụ' })
+  @UseGuards(JwtAuthGuard)
   @Put('pause-location-service')
   public async pauseLocationService(
     @Body() payload: AddLocationServicePayload,
@@ -84,6 +86,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Gỡ bỏ dịch vụ khỏi địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Delete('remove-location-service')
   public async removeLocationService(
     @Body() payload: AddLocationServicePayload,
@@ -92,6 +95,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Tạo mới địa điểm cho thuê' })
+  @UseGuards(JwtAuthGuard)
   @Post('create-location')
   public async createLocation(
     @User() user: UserDecoratorDtoResponse,
@@ -101,6 +105,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Cập nhật thông tin địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Put('update-location')
   public async updateLocation(
     @Body() payload: UpdatelocationPayloadDto,
@@ -109,6 +114,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Xóa địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Delete('delete-location')
   public async deleteLocation(
     @Body() payload: DeleteLocationDto,
@@ -117,6 +123,7 @@ export class LocationController {
   }
 
   @ApiOperation({ summary: 'Cập nhật trạng thái cho thuê địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Put('update-rent-status')
   public async updateRentStatus(
     @Body() payload: UpdateRentStatusDto,
@@ -124,7 +131,8 @@ export class LocationController {
     return this.locationService.UpdateRentStatus(payload);
   }
 
-  @ApiOperation({ summary: 'Xóa địa điểm' })
+  @ApiOperation({ summary: 'Xóa địa chỉ địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Delete('delete-location-address')
   public async deleteLocationAdress(
     @Body() payload: DeleteLocationAddressesDto,
@@ -138,22 +146,22 @@ export class LocationController {
     return this.locationService.GetAllLocation();
   }
 
-  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm' })
+  @ApiOperation({ summary: 'Lấy toàn bộ địa điểm của owner' })
+  @UseGuards(JwtAuthGuard)
   @Get('get-all-location-on-owner')
-  public async getAllLocationOnOwner(@User() user): Promise<LocationListDto[]> {
-    return this.locationService.GetAllLocationOnOwner(
-      user as UserDecoratorDtoResponse,
-    );
+  public async getAllLocationOnOwner(
+    @User() user: UserDecoratorDtoResponse,
+  ): Promise<LocationListDto[]> {
+    return this.locationService.GetAllLocationOnOwner(user);
   }
 
   @ApiOperation({ summary: 'Lấy toàn bộ địa điểm' })
+  @UseGuards(JwtAuthGuard)
   @Get('get-all-location-renter')
   public async getAllLocationOnRenter(
-    @User() user,
+    @User() user: UserDecoratorDtoResponse,
   ): Promise<LocationListDto[]> {
-    return this.locationService.GetAllLocationOnRenter(
-      user as UserDecoratorDtoResponse,
-    );
+    return this.locationService.GetAllLocationOnRenter(user);
   }
 
   @ApiOperation({ summary: 'Lấy địa điểm theo code' })
@@ -167,7 +175,7 @@ export class LocationController {
   @ApiOperation({ summary: 'Lấy địa điểm theo điều kiện' })
   @Get('get-location-by-filter')
   public async getLocationByFilter(
-    @User() user: UserDecoratorDtoResponse,
+    @User() user: UserDecoratorDtoResponse | undefined,
     @Query() payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     return this.locationService.GetLocationByFilter(user, payload);

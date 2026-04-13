@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đặc Tả API Favorite/Share Cho Location</title>
+    <style>
+      :root {
+        --ink: #172033;
+        --muted: #5b6577;
+        --line: #d8deea;
+        --panel: #f6f8fc;
+        --accent: #0f766e;
+        --accent-soft: #dff5f1;
+        --code: #fff7e8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        color: var(--ink);
+        background: white;
+        line-height: 1.55;
+        font-size: 14px;
+      }
+
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 18mm 16mm;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        margin: 0 0 10px;
+        line-height: 1.25;
+      }
+
+      h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        font-size: 20px;
+        margin-top: 28px;
+        padding-bottom: 6px;
+        border-bottom: 2px solid var(--line);
+      }
+
+      h3 {
+        font-size: 16px;
+        margin-top: 22px;
+        color: var(--accent);
+      }
+
+      h4 {
+        font-size: 14px;
+        margin-top: 14px;
+      }
+
+      p {
+        margin: 0 0 10px;
+      }
+
+      ul {
+        margin: 8px 0 12px 18px;
+        padding: 0;
+      }
+
+      li {
+        margin: 4px 0;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #effcf8 0%, #eef4ff 100%);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 20px;
+      }
+
+      .hero p {
+        margin: 6px 0 0;
+        color: var(--muted);
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .meta-box {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      .meta-box strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0 16px;
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 8px 10px;
+        vertical-align: top;
+      }
+
+      th {
+        background: var(--panel);
+        text-align: left;
+      }
+
+      .endpoint {
+        background: var(--panel);
+        border-left: 4px solid var(--accent);
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-family: Consolas, "Courier New", monospace;
+        margin: 8px 0 12px;
+        white-space: pre-wrap;
+      }
+
+      pre {
+        background: var(--code);
+        border: 1px solid #ecd9ab;
+        border-radius: 8px;
+        padding: 12px;
+        overflow: hidden;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      code {
+        font-family: Consolas, "Courier New", monospace;
+      }
+
+      .section-note {
+        background: var(--accent-soft);
+        border: 1px solid #bde7df;
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+
+      .small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="hero">
+        <h1>Đặc Tả API Favorite/Share Cho Location</h1>
+        <p>
+          Tài liệu đặc tả nghiệp vụ và hợp đồng API cho luồng
+          <code>favorite</code> và <code>share</code> áp dụng cho
+          <code>location</code> trong hệ thống Hosting.
+        </p>
+        <div class="meta">
+          <div class="meta-box">
+            <strong>Phạm vi</strong>
+            Chỉ áp dụng cho <code>location</code>, chưa mở rộng sang resource
+            khác.
+          </div>
+          <div class="meta-box">
+            <strong>Xác thực</strong>
+            Tất cả API yêu cầu JWT theo chuẩn module <code>location</code>.
+          </div>
+        </div>
+      </section>
+
+      <h2>1. Tổng quan</h2>
+      <h3>1.1. Mục tiêu</h3>
+      <p>
+        Bổ sung tài liệu đặc tả cho 3 API phục vụ frontend/mobile triển khai
+        luồng yêu thích và chia sẻ location.
+      </p>
+
+      <h3>1.2. Quy ước dữ liệu</h3>
+      <ul>
+        <li>Định danh public dùng <code>locationCode</code>.</li>
+        <li>Không dùng numeric <code>id</code> trong request/response public.</li>
+        <li>
+          Link chia sẻ phải chứa <code>locationCode</code> để frontend mở màn
+          chi tiết.
+        </li>
+        <li>
+          <code>favorite</code> là dữ liệu persisted theo user; <code>share</code>
+          không lưu DB ở v1.
+        </li>
+        <li>
+          Nếu cần domain frontend đầy đủ thì backend dùng biến cấu hình
+          <code>FRONTEND_BASE_URL</code>.
+        </li>
+      </ul>
+
+      <h2>2. Danh sách API</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>API</th>
+            <th>Method</th>
+            <th>Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Toggle favorite location</td>
+            <td><code>POST</code></td>
+            <td><code>/location/toggle-favorite</code></td>
+          </tr>
+          <tr>
+            <td>Lấy danh sách location đã favorite</td>
+            <td><code>GET</code></td>
+            <td><code>/location/get-my-favorite-location</code></td>
+          </tr>
+          <tr>
+            <td>Tạo link share location</td>
+            <td><code>GET</code></td>
+            <td><code>/location/get-share-link</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. Đặc tả chi tiết</h2>
+
+      <h3>3.1. Toggle favorite location</h3>
+      <p>
+        Cho phép user đang đăng nhập thêm hoặc bỏ yêu thích một
+        <code>location</code> bằng đúng một API.
+      </p>
+      <div class="endpoint">POST /location/toggle-favorite</div>
+
+      <h4>Auth</h4>
+      <ul>
+        <li>Bắt buộc JWT</li>
+      </ul>
+
+      <h4>Request Body</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Kiểu</th>
+            <th>Bắt buộc</th>
+            <th>Mô tả</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>locationCode</code></td>
+            <td><code>string</code></td>
+            <td>Có</td>
+            <td>Mã location cần favorite hoặc unfavorite</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre>{
+  "locationCode": "LOC001"
+}</pre>
+
+      <h4>Validation chính</h4>
+      <ul>
+        <li><code>locationCode</code> không được để trống.</li>
+        <li><code>locationCode</code> phải tồn tại trong hệ thống.</li>
+        <li>Tác động theo user đang đăng nhập.</li>
+      </ul>
+
+      <h4>Hành vi nghiệp vụ</h4>
+      <ul>
+        <li>Nếu chưa favorite thì tạo record và trả <code>isFavorite = true</code>.</li>
+        <li>Nếu đã favorite thì xóa record và trả <code>isFavorite = false</code>.</li>
+      </ul>
+
+      <h4>Success Response</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Kiểu</th>
+            <th>Mô tả</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>message</code></td>
+            <td><code>string</code></td>
+            <td>Thông báo kết quả</td>
+          </tr>
+          <tr>
+            <td><code>locationCode</code></td>
+            <td><code>string</code></td>
+            <td>Mã location đã thao tác</td>
+          </tr>
+          <tr>
+            <td><code>isFavorite</code></td>
+            <td><code>boolean</code></td>
+            <td>Trạng thái favorite sau khi toggle</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre>{
+  "message": "Cap nhat yeu thich thanh cong",
+  "locationCode": "LOC001",
+  "isFavorite": true
+}</pre>
+
+      <h4>Error cases điển hình</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>HTTP Code</th>
+            <th>Điều kiện</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>400</code></td>
+            <td>Thiếu <code>locationCode</code> hoặc không hợp lệ</td>
+          </tr>
+          <tr>
+            <td><code>401</code></td>
+            <td>Thiếu hoặc sai JWT</td>
+          </tr>
+          <tr>
+            <td><code>404</code></td>
+            <td><code>locationCode</code> không tồn tại</td>
+          </tr>
+          <tr>
+            <td><code>500</code></td>
+            <td>Lỗi hệ thống</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>3.2. Lấy danh sách location đã favorite</h3>
+      <p>
+        Cho phép user xem toàn bộ <code>location</code> đã được user đó đánh dấu
+        yêu thích.
+      </p>
+      <div class="endpoint">GET /location/get-my-favorite-location</div>
+
+      <h4>Auth</h4>
+      <ul>
+        <li>Bắt buộc JWT</li>
+      </ul>
+
+      <h4>Request</h4>
+      <ul>
+        <li>Không có request body.</li>
+        <li>Không yêu cầu query params ở phiên bản đầu.</li>
+      </ul>
+
+      <h4>Hành vi nghiệp vụ</h4>
+      <ul>
+        <li>Lấy danh sách location đã favorite của user hiện tại.</li>
+        <li>Trả về shape gần với <code>LocationListDto</code>.</li>
+        <li>Có thể bổ sung <code>isFavorite = true</code> để frontend dùng trực tiếp.</li>
+        <li>Dữ liệu nên bao gồm location info, type info, owner info, services và address.</li>
+      </ul>
+
+      <h4>Success Response</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Kiểu</th>
+            <th>Mô tả</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>message</code></td>
+            <td><code>string</code></td>
+            <td>Thông báo kết quả</td>
+          </tr>
+          <tr>
+            <td><code>data</code></td>
+            <td><code>LocationListDto[]</code></td>
+            <td>Danh sách location đã favorite</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre>{
+  "message": "Lay danh sach favorite thanh cong",
+  "data": [
+    {
+      "locationCode": "LOC001",
+      "locationName": "Kho A - Tang 1",
+      "locationDescription": "Kho chua hang dien tu",
+      "locationNote": "Gan trung tam",
+      "locationLogo": "https://cdn.example.com/location-a.png",
+      "locationPriceStart": 1000000,
+      "locationPriceEnd": 2000000,
+      "locationPriceAfterDeal": 1500000,
+      "minTime": "2026-03-01T00:00:00.000Z",
+      "maxTime": "2026-12-31T00:00:00.000Z",
+      "hasRent": 0,
+      "locationRate": 4,
+      "typeCode": "TYPE001",
+      "typeName": "Kho",
+      "ownerCode": "USR001",
+      "ownerName": "owner_a",
+      "ownerEmail": "owner_a@example.com",
+      "renterCode": null,
+      "isFavorite": true,
+      "services": [],
+      "address": []
+    }
+  ]
+}</pre>
+
+      <h4>Error cases điển hình</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>HTTP Code</th>
+            <th>Điều kiện</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>401</code></td>
+            <td>Thiếu hoặc sai JWT</td>
+          </tr>
+          <tr>
+            <td><code>500</code></td>
+            <td>Lỗi hệ thống</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>3.3. Tạo link share location</h3>
+      <p>
+        Trả về link chia sẻ cho một <code>location</code>, để frontend/mobile
+        dùng khi người dùng nhấn share.
+      </p>
+      <div class="endpoint">GET /location/get-share-link?locationCode=LOC001</div>
+
+      <h4>Auth</h4>
+      <ul>
+        <li>Bắt buộc JWT ở phiên bản đầu để đồng nhất module <code>location</code>.</li>
+      </ul>
+
+      <h4>Query Params</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Kiểu</th>
+            <th>Bắt buộc</th>
+            <th>Mô tả</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>locationCode</code></td>
+            <td><code>string</code></td>
+            <td>Có</td>
+            <td>Mã location cần tạo link share</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Validation chính</h4>
+      <ul>
+        <li><code>locationCode</code> không được để trống.</li>
+        <li><code>locationCode</code> phải tồn tại.</li>
+      </ul>
+
+      <h4>Hành vi nghiệp vụ</h4>
+      <ul>
+        <li>Backend kiểm tra location tồn tại.</li>
+        <li>Backend tạo <code>shareUrl</code> chứa <code>locationCode</code>.</li>
+        <li>Frontend mở link đó, rồi gọi API detail hiện có.</li>
+      </ul>
+
+      <div class="section-note">
+        API detail hiện có:
+        <code>GET /location/get-location-by-code?locationCode=&lt;locationCode&gt;</code>
+      </div>
+
+      <h4>Công thức link đề xuất</h4>
+      <pre>${FRONTEND_BASE_URL}/location-detail?locationCode=&lt;locationCode&gt;</pre>
+
+      <h4>Success Response</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Kiểu</th>
+            <th>Mô tả</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>message</code></td>
+            <td><code>string</code></td>
+            <td>Thông báo kết quả</td>
+          </tr>
+          <tr>
+            <td><code>locationCode</code></td>
+            <td><code>string</code></td>
+            <td>Mã location</td>
+          </tr>
+          <tr>
+            <td><code>shareUrl</code></td>
+            <td><code>string</code></td>
+            <td>Link chia sẻ cho frontend/mobile</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre>{
+  "message": "Tao link chia se thanh cong",
+  "locationCode": "LOC001",
+  "shareUrl": "https://frontend.example.com/location-detail?locationCode=LOC001"
+}</pre>
+
+      <h4>Error cases điển hình</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>HTTP Code</th>
+            <th>Điều kiện</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>400</code></td>
+            <td>Thiếu <code>locationCode</code> hoặc không hợp lệ</td>
+          </tr>
+          <tr>
+            <td><code>401</code></td>
+            <td>Thiếu hoặc sai JWT</td>
+          </tr>
+          <tr>
+            <td><code>404</code></td>
+            <td><code>locationCode</code> không tồn tại</td>
+          </tr>
+          <tr>
+            <td><code>500</code></td>
+            <td>Lỗi hệ thống</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>4. Public Interface đề xuất</h2>
+      <h3>4.1. ToggleFavoriteRequestDto</h3>
+      <pre>export class ToggleFavoriteRequestDto {
+  locationCode: string;
+}</pre>
+
+      <h3>4.2. ToggleFavoriteResponseDto</h3>
+      <pre>export class ToggleFavoriteResponseDto {
+  message: string;
+  locationCode: string;
+  isFavorite: boolean;
+}</pre>
+
+      <h3>4.3. FavoriteLocationListResponseDto</h3>
+      <pre>export class FavoriteLocationListResponseDto {
+  message: string;
+  data: Array&lt;LocationListDto &amp; { isFavorite?: boolean }&gt;;
+}</pre>
+
+      <h3>4.4. GetShareLinkResponseDto</h3>
+      <pre>export class GetShareLinkResponseDto {
+  message: string;
+  locationCode: string;
+  shareUrl: string;
+}</pre>
+
+      <h2>5. Acceptance cases</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Case</th>
+            <th>Kết quả mong đợi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Favorite lần đầu</td>
+            <td>API tạo record favorite và trả <code>isFavorite = true</code></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Unfavorite khi đã favorite</td>
+            <td>API xóa record và trả <code>isFavorite = false</code></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Favorite với <code>locationCode</code> không tồn tại</td>
+            <td>Trả <code>404</code></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Danh sách favorite rỗng</td>
+            <td>Trả <code>data: []</code></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Danh sách favorite có dữ liệu</td>
+            <td>Trả đúng shape location, có <code>isFavorite = true</code> nếu áp dụng</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Share link hợp lệ</td>
+            <td>Trả đúng <code>shareUrl</code> chứa <code>locationCode</code></td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Share link cho location không tồn tại</td>
+            <td>Trả <code>404</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>6. Giả định và ghi chú</h2>
+      <ul>
+        <li>Tài liệu này chỉ đặc tả API, chưa bao gồm ERD và sequence diagram.</li>
+        <li><code>favorite</code> là dữ liệu persisted theo user.</li>
+        <li><code>share</code> không có log và không tăng counter ở v1.</li>
+        <li>
+          <code>LocationListDto</code> có thể được mở rộng thêm
+          <code>isFavorite</code> nếu frontend cần dùng lại trực tiếp.
+        </li>
+        <li>Domain frontend là cấu hình môi trường, không hard-code trong source.</li>
+      </ul>
+
+      <p class="small">
+        Tài liệu phục vụ BA, frontend, mobile và backend trước giai đoạn implementation.
+      </p>
+    </div>
+  </body>
+</html>

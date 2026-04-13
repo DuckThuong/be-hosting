@@ -16,13 +16,16 @@ import {
   CreateLocationDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  FavoriteLocationSummaryDto,
   GetLocationAddressByLocationCodeResponseDto,
   GetLocationByFillterDto,
   LocationAddressItemDto,
   LocationListDto,
+  LocationMediaDto,
   LocationResponseDto,
   LocationServiceDto,
   PaginatedLocationListDto,
+  ToggleFavoriteResponseDto,
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
@@ -52,9 +55,19 @@ import {
 import { UserDecoratorDtoResponse, UserRole } from '../dtos/user/user.dto';
 import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
+import { TbLocationFavorite } from '../entities/location/locationFavorite.entity';
+import {
+  LocationMediaType,
+  TbLocationMedia,
+} from '../entities/location/locationMedia.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { TbUserDefault } from '../entities/user/user_default.entity';
+
+type RangeBounds = {
+  minValue: number | null;
+  maxValue: number | null;
+};
 
 @Injectable()
 export class LocationRepository {
@@ -64,6 +77,12 @@ export class LocationRepository {
 
     @InjectRepository(TbLocationService)
     private readonly locationService: Repository<TbLocationService>,
+
+    @InjectRepository(TbLocationFavorite)
+    private readonly locationFavorite: Repository<TbLocationFavorite>,
+
+    @InjectRepository(TbLocationMedia)
+    private readonly locationMedia: Repository<TbLocationMedia>,
 
     @InjectRepository(TbLocationType)
     private readonly locationType: Repository<TbLocationType>,
@@ -143,8 +162,6 @@ export class LocationRepository {
         const newService = this.locationService.create({
           locationCode: location.locationCode,
           serviceCode: data.serviceCode,
-          isActive: data.isActive,
-          serviceNote: data.note ?? '',
         });
 
         await this.locationService.save(newService);
@@ -160,18 +177,10 @@ export class LocationRepository {
     payload: AddLocationServicePayload,
   ): Promise<LocationServiceResponse> {
     for (const item of payload.data) {
-      if (item.isActive !== false) continue;
-
-      await this.locationService.update(
-        {
-          locationCode: location.locationCode,
-          serviceCode: item.serviceCode,
-        },
-        {
-          isActive: false,
-          serviceNote: item.note ?? '',
-        },
-      );
+      await this.locationService.delete({
+        locationCode: location.locationCode,
+        serviceCode: item.serviceCode,
+      });
     }
 
     return {
@@ -463,6 +472,7 @@ export class LocationRepository {
       locationPriceStart: payload.locationPriceStart,
       locationPriceEnd: payload.locationPriceEnd,
       locationPriceAfterDeal: payload.locationPriceAfterDeal,
+      locationArea: payload.locationArea,
       minTimeLimit: payload.minTimeLimit,
       maxTimeLimit: payload.maxTimeLimit,
       hasRent: payload.hasRent ?? 0,
@@ -480,7 +490,7 @@ export class LocationRepository {
     const savedLocation = await this.location.save(location);
 
     return {
-      message: 'Tạo địa điểm cho thuê thành công',
+      message: 'Táº¡o Ä‘á»‹a Ä‘iá»ƒm cho thuÃª thÃ nh cÃ´ng',
       data: savedLocation,
     };
   }
@@ -530,6 +540,9 @@ export class LocationRepository {
       if (payload.data.locationPriceAfterDeal !== undefined) {
         updateData.locationPriceAfterDeal = payload.data.locationPriceAfterDeal;
       }
+      if (payload.data.locationArea !== undefined) {
+        updateData.locationArea = payload.data.locationArea;
+      }
 
       const updatedEntity = this.location.merge(existingLocation, updateData);
 
@@ -566,6 +579,9 @@ export class LocationRepository {
           locationCode: existingLocation.locationCode,
         });
 
+        await this.locationMedia.delete({
+          locationCode: existingLocation.locationCode,
+        });
         await this.locationService.delete({
           locationCode: existingLocation.locationCode,
         });
@@ -625,6 +641,7 @@ export class LocationRepository {
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -673,6 +690,7 @@ export class LocationRepository {
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -722,6 +740,7 @@ export class LocationRepository {
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -771,6 +790,7 @@ export class LocationRepository {
       .addSelect('TL.locationPriceStart', 'locationPriceStart')
       .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
+      .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
       .addSelect('TL.maxTimeLimit', 'maxTime')
       .addSelect('TL.hasRent', 'hasRent')
@@ -802,8 +822,76 @@ export class LocationRepository {
     return location as LocationListDto;
   }
 
+  public async ToggleFavorite(
+    userCode: string,
+    location: TbLocation,
+  ): Promise<ToggleFavoriteResponseDto> {
+    const existingFavorite = await this.locationFavorite.findOneBy({
+      locationCode: location.locationCode,
+      userCode,
+    });
+
+    if (existingFavorite) {
+      await this.locationFavorite.delete({
+        locationCode: location.locationCode,
+        userCode,
+      });
+
+      return {
+        message: SuccessLocationMessage.FAVORITE_REMOVED_SUCCESS,
+        locationCode: location.locationCode,
+        isFavorite: false,
+      };
+    }
+
+    const favorite = this.locationFavorite.create({
+      locationCode: location.locationCode,
+      userCode,
+    });
+
+    await this.locationFavorite.save(favorite);
+
+    return {
+      message: SuccessLocationMessage.FAVORITE_ADDED_SUCCESS,
+      locationCode: location.locationCode,
+      isFavorite: true,
+    };
+  }
+
+  public async GetMyFavoriteLocation(
+    userCode: string,
+  ): Promise<FavoriteLocationSummaryDto[]> {
+    const locations = await this.location
+      .createQueryBuilder('TL')
+      .innerJoin(
+        'tb_location-favorite',
+        'TLF',
+        'TLF.locationCode = TL.locationCode AND TLF.userCode = :userCode',
+        { userCode },
+      )
+      .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .select('TL.locationCode', 'locationCode')
+      .addSelect('TL.locationName', 'locationName')
+      .addSelect('TL.locationLogo', 'locationLogo')
+      .addSelect('TL.locationPriceStart', 'locationPriceStart')
+      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationArea', 'locationArea')
+      .addSelect('TL.hasRent', 'hasRent')
+      .addSelect('TL.typeCode', 'typeCode')
+      .addSelect('TLT.typeName', 'typeName')
+      .addSelect(
+        `(SELECT tla.fullAddress FROM \`tb_location-address\` tla WHERE tla.locationCode = TL.locationCode ORDER BY tla.id ASC LIMIT 1)`,
+        'fullAddress',
+      )
+      .addSelect('1', 'isFavorite')
+      .orderBy('TL.id', 'DESC')
+      .getRawMany<FavoriteLocationSummaryDto>();
+
+    return locations;
+  }
+
   public async GetLocationByFilter(
-    user: UserDecoratorDtoResponse,
+    user: UserDecoratorDtoResponse | undefined,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     const qb = this.location
@@ -827,6 +915,7 @@ export class LocationRepository {
         'TL.locationPriceStart AS locationPriceStart',
         'TL.locationPriceEnd AS locationPriceEnd',
         'TL.locationPriceAfterDeal AS locationPriceAfterDeal',
+        'TL.locationArea AS locationArea',
 
         'TLT.typeName AS typeName',
         'TLT.typeDescription AS typeDescription',
@@ -956,9 +1045,11 @@ export class LocationRepository {
       }
     }
 
-    qb.andWhere('TL.ownerCode NOT LIKE :ownerCodeLogin', {
-      ownerCodeLogin: `%${user.userCode}%`,
-    });
+    if (user?.userCode) {
+      qb.andWhere('TL.ownerCode NOT LIKE :ownerCodeLogin', {
+        ownerCodeLogin: `%${user.userCode}%`,
+      });
+    }
 
     const page = Number(payload.page) || 1;
     const limit = Number(payload.limit) || 10;
@@ -1083,12 +1174,197 @@ export class LocationRepository {
       .addSelect('ts.serviceName', 'serviceName')
       .addSelect('ts.servicePrice', 'servicePrice')
       .addSelect('ts.serviceDescription', 'serviceDescription')
-      .addSelect('tls.serviceNote', 'serviceNote')
-      .addSelect('tls.isActive', 'isActive')
+      .addSelect('ts.serviceDescription', 'serviceNote')
       .where('tls.locationCode = :locationCode', { locationCode })
       .getRawMany<LocationServiceDto>();
 
     return result;
+  }
+
+  public async GetLocationMedia(
+    locationCode: string,
+  ): Promise<LocationMediaDto[]> {
+    return this.locationMedia
+      .createQueryBuilder('tlm')
+      .select('tlm.mediaCode', 'mediaCode')
+      .addSelect('tlm.mediaUrl', 'mediaUrl')
+      .addSelect('tlm.mediaType', 'mediaType')
+      .addSelect('tlm.displayOrder', 'displayOrder')
+      .addSelect('tlm.isLogo', 'isLogo')
+      .where('tlm.locationCode = :locationCode', { locationCode })
+      .orderBy('tlm.displayOrder', 'ASC')
+      .addOrderBy('tlm.id', 'ASC')
+      .getRawMany<LocationMediaDto>();
+  }
+
+  public async GetLocationPriceRangeBounds(): Promise<RangeBounds> {
+    const raw = await this.location
+      .createQueryBuilder('TL')
+      .select(
+        `MIN(LEAST(COALESCE(TL.locationPriceStart, TL.locationPriceEnd), COALESCE(TL.locationPriceEnd, TL.locationPriceStart)))`,
+        'minValue',
+      )
+      .addSelect(
+        `MAX(GREATEST(COALESCE(TL.locationPriceStart, TL.locationPriceEnd), COALESCE(TL.locationPriceEnd, TL.locationPriceStart)))`,
+        'maxValue',
+      )
+      .where(
+        'TL.locationPriceStart IS NOT NULL OR TL.locationPriceEnd IS NOT NULL',
+      )
+      .getRawOne<{
+        minValue: string | number | null;
+        maxValue: string | number | null;
+      }>();
+
+    return {
+      minValue:
+        raw?.minValue === null || raw?.minValue === undefined
+          ? null
+          : Number(raw.minValue),
+      maxValue:
+        raw?.maxValue === null || raw?.maxValue === undefined
+          ? null
+          : Number(raw.maxValue),
+    };
+  }
+
+  public async GetLocationAreaRangeBounds(): Promise<RangeBounds> {
+    const raw = await this.location
+      .createQueryBuilder('TL')
+      .select('MIN(TL.locationArea)', 'minValue')
+      .addSelect('MAX(TL.locationArea)', 'maxValue')
+      .where('TL.locationArea IS NOT NULL')
+      .getRawOne<{
+        minValue: string | number | null;
+        maxValue: string | number | null;
+      }>();
+
+    return {
+      minValue:
+        raw?.minValue === null || raw?.minValue === undefined
+          ? null
+          : Number(raw.minValue),
+      maxValue:
+        raw?.maxValue === null || raw?.maxValue === undefined
+          ? null
+          : Number(raw.maxValue),
+    };
+  }
+
+  public async FindLocationMediaDtoByCode(
+    mediaCode: string,
+  ): Promise<LocationMediaDto | null> {
+    const media = await this.locationMedia
+      .createQueryBuilder('tlm')
+      .select('tlm.mediaCode', 'mediaCode')
+      .addSelect('tlm.mediaUrl', 'mediaUrl')
+      .addSelect('tlm.mediaType', 'mediaType')
+      .addSelect('tlm.displayOrder', 'displayOrder')
+      .addSelect('tlm.isLogo', 'isLogo')
+      .where('tlm.mediaCode = :mediaCode', { mediaCode })
+      .getRawOne<LocationMediaDto>();
+
+    return media ?? null;
+  }
+
+  public async FindLocationMediaByCode(
+    mediaCode: string,
+  ): Promise<TbLocationMedia | null> {
+    return this.locationMedia.findOneBy({ mediaCode });
+  }
+
+  public async CreateLocationMedia(data: {
+    locationCode: string;
+    mediaUrl: string;
+    mediaType: LocationMediaType;
+    displayOrder?: number;
+    isLogo?: boolean;
+  }): Promise<TbLocationMedia> {
+    const lastMedia = await this.locationMedia
+      .createQueryBuilder('tlm')
+      .select('MAX(tlm.displayOrder)', 'maxDisplayOrder')
+      .where('tlm.locationCode = :locationCode', {
+        locationCode: data.locationCode,
+      })
+      .getRawOne<{ maxDisplayOrder: string | null }>();
+
+    const media = this.locationMedia.create({
+      mediaCode: randomString(),
+      locationCode: data.locationCode,
+      mediaUrl: data.mediaUrl,
+      mediaType: data.mediaType,
+      displayOrder:
+        data.displayOrder ??
+        (lastMedia?.maxDisplayOrder
+          ? Number(lastMedia.maxDisplayOrder) + 1
+          : 1),
+      isLogo: data.isLogo ? 1 : 0,
+    });
+
+    return this.locationMedia.save(media);
+  }
+
+  public async UpdateLocationMediaRecord(
+    media: TbLocationMedia,
+    data: {
+      mediaUrl?: string;
+      mediaType?: LocationMediaType;
+      displayOrder?: number;
+    },
+  ): Promise<TbLocationMedia> {
+    const updatedEntity = this.locationMedia.merge(media, {
+      mediaUrl: data.mediaUrl ?? media.mediaUrl,
+      mediaType: data.mediaType ?? media.mediaType,
+      displayOrder: data.displayOrder ?? media.displayOrder,
+    });
+
+    return this.locationMedia.save(updatedEntity);
+  }
+
+  public async DeleteLocationMediaByCode(mediaCode: string): Promise<void> {
+    await this.locationMedia.delete({ mediaCode });
+  }
+
+  public async ReorderLocationMedia(
+    locationCode: string,
+    items: Array<{ mediaCode: string; displayOrder: number }>,
+  ): Promise<void> {
+    for (const item of items) {
+      await this.locationMedia.update(
+        { locationCode, mediaCode: item.mediaCode },
+        { displayOrder: item.displayOrder },
+      );
+    }
+  }
+
+  public async UpdateLocationLogo(
+    location: TbLocation,
+    selectedMedia: TbLocationMedia,
+  ): Promise<{
+    locationCode: string;
+    mediaCode: string;
+    locationLogo: string;
+  }> {
+    await this.locationMedia.update(
+      { locationCode: location.locationCode },
+      { isLogo: 0 },
+    );
+
+    await this.locationMedia.update(
+      { mediaCode: selectedMedia.mediaCode },
+      { isLogo: 1 },
+    );
+
+    await this.location.update(
+      { locationCode: location.locationCode },
+      { locationLogo: selectedMedia.mediaUrl },
+    );
+
+    return {
+      locationCode: location.locationCode,
+      mediaCode: selectedMedia.mediaCode,
+      locationLogo: selectedMedia.mediaUrl,
+    };
   }
 
   public async GetLocationAddressByLocationCode(

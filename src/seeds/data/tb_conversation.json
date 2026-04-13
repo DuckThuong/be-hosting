@@ -1,0 +1,18 @@
+[
+  {
+    "seedKey": "chat-private-001",
+    "type": "NORMAL",
+    "name": "Chat owner-01 va renter-01",
+    "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+    "createdByUserCode": "owner-01",
+    "status": "ACTIVE"
+  },
+  {
+    "seedKey": "chat-private-002",
+    "type": "NORMAL",
+    "name": "Chat owner-02 va renter-02",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+    "createdByUserCode": "owner-02",
+    "status": "ACTIVE"
+  }
+]

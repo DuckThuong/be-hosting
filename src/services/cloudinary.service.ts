@@ -4,7 +4,6 @@ import cloudinary, {
   configureCloudinary,
 } from '../common/cloudinary/cloudinary.config';
 import { CloudinaryUploadResponseDto } from '../dtos/upload.dto';
-import { RESOURCE_TYPE } from '../assests/constants/constants';
 
 interface FileUpload {
   fieldname: string;
@@ -37,10 +36,16 @@ export class CloudinaryService {
     configureCloudinary();
   }
 
-  public async uploadImage(
-    file: FileUpload,
-  ): Promise<CloudinaryUploadResponseDto> {
-    if (!file || !file.buffer) {
+  private resolveResourceType(mimeType: string): 'image' | 'raw' {
+    if (mimeType?.startsWith('image/')) {
+      return 'image';
+    }
+
+    return 'raw';
+  }
+
+  public async uploadMedia(file: FileUpload, folder: string): Promise<string> {
+    if (!file?.buffer) {
       throw new HttpException(
         ErrorUploadMessage.FILE_REQUIRED,
         HttpStatus.BAD_REQUEST,
@@ -48,12 +53,14 @@ export class CloudinaryService {
     }
 
     try {
+      const resourceType = this.resolveResourceType(file.mimetype);
+
       const result = await new Promise<UploadApiResponse>((resolve, reject) => {
         cloudinary.uploader
           .upload_stream(
             {
-              folder: file.fieldname,
-              resource_type: RESOURCE_TYPE,
+              folder,
+              resource_type: resourceType,
             },
             (error, result) => {
               if (error) return reject(new Error(error.message));
@@ -65,10 +72,11 @@ export class CloudinaryService {
           .end(file.buffer);
       });
 
-      return new CloudinaryUploadResponseDto({
-        message: SuccessUploadMessage.IMAGE_UPLOADED,
-        imageUrl: result.secure_url,
-      });
+      if (!result.secure_url) {
+        throw new Error(ErrorUploadMessage.UPLOAD_FAILED);
+      }
+
+      return result.secure_url;
     } catch (error) {
       console.error(error);
       throw new HttpException(
@@ -76,5 +84,16 @@ export class CloudinaryService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  public async uploadImage(
+    file: FileUpload,
+  ): Promise<CloudinaryUploadResponseDto> {
+    const mediaUrl = await this.uploadMedia(file, file.fieldname);
+
+    return new CloudinaryUploadResponseDto({
+      message: SuccessUploadMessage.IMAGE_UPLOADED,
+      imageUrl: mediaUrl,
+    });
   }
 }

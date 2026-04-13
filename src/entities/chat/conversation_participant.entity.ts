@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('tb_conversation_participant')
 @Index(['conversationId', 'userId'], { unique: true })
@@ -33,10 +39,18 @@ export class TbConversationParticipant {
   lastReadMessageId?: number;
 
   @Column({
-    default: false,
-    comment: 'Trạng thái tắt thông báo của người dùng đối với cuộc trò chuyện',
+    type: 'timestamp',
+    nullable: true,
+    comment: 'Thời điểm đọc tin nhắn gần nhất',
   })
-  isMuted: boolean;
+  lastReadAt?: Date;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    comment: 'Thời điểm tắt thông báo đến',
+  })
+  muteUntil?: Date;
 
   @Column({
     default: false,
@@ -45,8 +59,23 @@ export class TbConversationParticipant {
   isPinned: boolean;
 
   @Column({
-    default: false,
-    comment: 'Trạng thái ẩn/xóa cuộc trò chuyện phía người dùng (soft delete)',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    comment: 'Biệt danh cuộc trò chuyện theo từng người dùng',
   })
-  isDeleted: boolean;
+  nickname?: string | null;
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    comment: 'Thời điểm tham gia cuộc trò chuyện',
+  })
+  joinedAt: Date;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    comment: 'Thời điểm ẩn cuộc trò chuyện phía người dùng',
+  })
+  deletedAt?: Date;
 }

@@ -1,0 +1,46 @@
+[
+  {
+    "locationCode": "LOC_ROOM_01",
+    "userCode": "renter-01"
+  },
+  {
+    "locationCode": "LOC_APT_01",
+    "userCode": "renter-02"
+  },
+  {
+    "locationCode": "LOC_OFFICE_01",
+    "userCode": "renter-02"
+  },
+  {
+    "locationCode": "LOC_APT_01",
+    "userCode": "renter-01"
+  },
+  {
+    "locationCode": "LOC_HOUSE_01",
+    "userCode": "renter-02"
+  },
+  {
+    "locationCode": "MOCK_LOC_1001",
+    "userCode": "MOCK_RENTER_01"
+  },
+  {
+    "locationCode": "MOCK_LOC_1002",
+    "userCode": "MOCK_RENTER_02"
+  },
+  {
+    "locationCode": "MOCK_LOC_1004",
+    "userCode": "MOCK_RENTER_01"
+  },
+  {
+    "locationCode": "MOCK_LOC_1006",
+    "userCode": "MOCK_RENTER_02"
+  },
+  {
+    "locationCode": "MOCK_LOC_1008",
+    "userCode": "MOCK_RENTER_01"
+  },
+  {
+    "locationCode": "MOCK_LOC_1011",
+    "userCode": "MOCK_RENTER_02"
+  }
+]

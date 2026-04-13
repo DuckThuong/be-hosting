@@ -1,0 +1,22 @@
+[
+  {
+    "messageSeedKey": "chat-msg-003",
+    "fileName": "cccd-preview.jpg",
+    "mimeType": "image/jpeg",
+    "size": 245760,
+    "url": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800",
+    "storageKey": "chat/attachments/cccd-preview.jpg",
+    "width": 800,
+    "height": 533
+  },
+  {
+    "messageSeedKey": "chat-msg-004",
+    "fileName": "checkin-guide.pdf",
+    "mimeType": "application/pdf",
+    "size": 512000,
+    "url": "https://example.com/files/checkin-guide.pdf",
+    "storageKey": "chat/attachments/checkin-guide.pdf",
+    "width": null,
+    "height": null
+  }
+]

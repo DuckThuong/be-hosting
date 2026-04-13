@@ -7,7 +7,7 @@ import {
   UpdateServiceDto,
   UpdateServiceResponseDto,
 } from '../dtos/service.dto';
-import { TbService } from '../entities/service.entity';
+import { TbService } from '../entities/service/service.entity';
 import { ServiceService } from '../services/service.service';
 
 @Controller('service')

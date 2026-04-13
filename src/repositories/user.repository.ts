@@ -9,7 +9,7 @@ import {
 import { TbUserDefault } from '../entities/user/user_default.entity';
 import { TbUserProfile } from '../entities/user/user_profile.entity';
 import { ChatRepository } from './chat.repository';
-import { TbConversation } from '../entities/chat/converation.entity';
+import { TbConversation } from '../entities/chat/conversation.entity';
 
 @Injectable()
 export class UserRepository {
