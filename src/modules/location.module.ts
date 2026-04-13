@@ -14,6 +14,8 @@ import {
   TbLocationCommentReply,
 } from '../entities/location/locationComment.entity';
 import { LocationCommentRepository } from '../repositories/location/locationComment.repository';
+import { CloudinaryModule } from './cloudinary.module';
+import { TbLocationMedia } from '../entities/location/locationMedia.entity';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { LocationCommentRepository } from '../repositories/location/locationComm
       TbUserDefault,
       TbLocationComment,
       TbLocationCommentReply,
+      TbLocationMedia,
     ]),
   ],
   providers: [LocationService, LocationRepository, LocationCommentRepository],

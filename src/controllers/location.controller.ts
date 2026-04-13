@@ -34,7 +34,6 @@ import {
   UpdateLocationTypePayloadDto,
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
-import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationService } from '../services/location.service';
 import { User } from '../user.decorator';
