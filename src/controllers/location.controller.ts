@@ -196,6 +196,7 @@ export class LocationController {
 
   @ApiOperation({ summary: 'Tạo comment' })
   @Post('create-comment')
+  @UseGuards(JwtAuthGuard)
   public async createNewComment(
     @User() user: UserDecoratorDtoResponse,
     @Body() payload: LocationCommentPayloadDto,
