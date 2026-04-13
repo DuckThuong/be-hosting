@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LocationController } from '../controllers/location.controller';
 import { TbLocation } from '../entities/location/location.entity';
+import { TbLocationFavorite } from '../entities/location/locationFavorite.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
 import { LocationRepository } from '../repositories/location/location.repository';
@@ -16,8 +17,10 @@ import { LocationCommentRepository } from '../repositories/location/locationComm
 
 @Module({
   imports: [
+    CloudinaryModule,
     TypeOrmModule.forFeature([
       TbLocation,
+      TbLocationFavorite,
       TbLocationType,
       TbLocationAddress,
       TbLocationService,

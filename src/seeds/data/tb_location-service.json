@@ -1,0 +1,130 @@
+[
+  {
+    "locationCode": "LOC_ROOM_01",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_PARKING"
+    ]
+  },
+  {
+    "locationCode": "LOC_APT_01",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_AC",
+      "SRV_POOL"
+    ]
+  },
+  {
+    "locationCode": "LOC_HOUSE_01",
+    "serviceCodes": [
+      "SRV_FREE_PARKING",
+      "SRV_FREE_SECURITY"
+    ]
+  },
+  {
+    "locationCode": "LOC_OFFICE_01",
+    "serviceCodes": [
+      "SRV_FREE_RECEPTION",
+      "SRV_MEETING",
+      "SRV_PROJECTOR"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1001",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_AC",
+      "SRV_FREE_SECURITY"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1002",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_AC",
+      "SRV_GYM",
+      "SRV_POOL"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1003",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_RECEPTION",
+      "SRV_MEETING",
+      "SRV_PROJECTOR"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1004",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_PARKING",
+      "SRV_FREE_SECURITY"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1005",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_SECURITY",
+      "SRV_PROJECTOR"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1006",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_LAUNDRY",
+      "SRV_FREE_SECURITY"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1007",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_AC",
+      "SRV_FREE_ELEVATOR"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1008",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_AC",
+      "SRV_LAUNDRY",
+      "SRV_FREE_SECURITY"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1009",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_MEETING",
+      "SRV_FREE_RECEPTION"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1010",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_PARKING",
+      "SRV_FREE_SECURITY"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1011",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_SECURITY",
+      "SRV_PROJECTOR"
+    ]
+  },
+  {
+    "locationCode": "MOCK_LOC_1012",
+    "serviceCodes": [
+      "SRV_FREE_WIFI",
+      "SRV_FREE_AC"
+    ]
+  }
+]

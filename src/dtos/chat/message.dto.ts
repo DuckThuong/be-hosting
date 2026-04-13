@@ -1,12 +1,25 @@
-import { MessageType } from '../../entities/chat/message.entity';
+import { MessageStatus, MessageType } from '../../entities/chat/message.entity';
+
+export interface MessageAttachmentPayloadDto {
+  fileName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  storageKey?: string;
+  width?: number;
+  height?: number;
+}
 
 export interface MessagePayloadDto {
-  avartarUrl?: string;
+  senderAvatarUrl?: string;
   conversationId: number;
   senderId: number;
-  content: string;
+  content?: string;
   type: MessageType;
-  metaData: string;
+  metadata?: Record<string, unknown> | null;
+  replyToMessageId?: number;
+  status?: MessageStatus;
+  attachments?: MessageAttachmentPayloadDto[];
 }
 
 export enum MessageTypeEnum {

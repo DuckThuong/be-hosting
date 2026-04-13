@@ -1,0 +1,173 @@
+[
+  {
+    "userCode": "admin-01",
+    "username": "Admin",
+    "email": "admin@example.com",
+    "fullName": "Quản trị Demo",
+    "role": 0,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "owner-01",
+    "username": "Owner 1",
+    "email": "owner1@example.com",
+    "fullName": "Chủ nhà Alpha",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "owner-02",
+    "username": "Owner 2",
+    "email": "owner2@example.com",
+    "fullName": "Chủ nhà Beta",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "renter-01",
+    "username": "Renter 1",
+    "email": "renter1@example.com",
+    "fullName": "Khách thuê Gamma",
+    "role": 2,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "renter-02",
+    "username": "Renter 2",
+    "email": "renter2@example.com",
+    "fullName": "Khách thuê Delta",
+    "role": 2,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_01",
+    "username": "minh.tran",
+    "email": "minh.tran@seed.local",
+    "fullName": "Minh Trần",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_02",
+    "username": "lan.pham",
+    "email": "lan.pham@seed.local",
+    "fullName": "Lan Phạm",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_03",
+    "username": "khoa.le",
+    "email": "khoa.le@seed.local",
+    "fullName": "Khoa Lê",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": false
+  },
+  {
+    "userCode": "MOCK_OWNER_04",
+    "username": "mai.nguyen",
+    "email": "mai.nguyen@seed.local",
+    "fullName": "Mai Nguyễn",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_05",
+    "username": "huy.do",
+    "email": "huy.do@seed.local",
+    "fullName": "Huy Đỗ",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_06",
+    "username": "trang.vo",
+    "email": "trang.vo@seed.local",
+    "fullName": "Trang Võ",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": false
+  },
+  {
+    "userCode": "MOCK_OWNER_07",
+    "username": "bao.bui",
+    "email": "bao.bui@seed.local",
+    "fullName": "Bảo Bùi",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_08",
+    "username": "linh.dang",
+    "email": "linh.dang@seed.local",
+    "fullName": "Linh Đặng",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_09",
+    "username": "son.ho",
+    "email": "son.ho@seed.local",
+    "fullName": "Sơn Hồ",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": false
+  },
+  {
+    "userCode": "MOCK_OWNER_10",
+    "username": "yen.truong",
+    "email": "yen.truong@seed.local",
+    "fullName": "Yến Trương",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_11",
+    "username": "nam.ly",
+    "email": "nam.ly@seed.local",
+    "fullName": "Nam Lý",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_OWNER_12",
+    "username": "hoa.ngo",
+    "email": "hoa.ngo@seed.local",
+    "fullName": "Hoa Ngô",
+    "role": 1,
+    "status": 0,
+    "isEmailVerified": false
+  },
+  {
+    "userCode": "MOCK_RENTER_01",
+    "username": "guest.one",
+    "email": "guest.one@seed.local",
+    "fullName": "Khách Một",
+    "role": 2,
+    "status": 0,
+    "isEmailVerified": true
+  },
+  {
+    "userCode": "MOCK_RENTER_02",
+    "username": "guest.two",
+    "email": "guest.two@seed.local",
+    "fullName": "Khách Hai",
+    "role": 2,
+    "status": 0,
+    "isEmailVerified": true
+  }
+]

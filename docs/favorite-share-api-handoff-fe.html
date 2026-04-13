@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Favorite And Share API Test Guide</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        color: #1f2937;
+        margin: 0;
+        background: #ffffff;
+      }
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 16mm 15mm 18mm;
+        box-sizing: border-box;
+      }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+      h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+      h2 {
+        font-size: 20px;
+        margin-top: 24px;
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #d8e2f0;
+      }
+      h3 {
+        font-size: 15px;
+        color: #0f766e;
+        margin-top: 16px;
+        margin-bottom: 8px;
+      }
+      p,
+      li {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      ul,
+      ol {
+        margin: 8px 0 12px 18px;
+        padding: 0;
+      }
+      .hero {
+        border: 1px solid #d8e2f0;
+        background: linear-gradient(135deg, #eefcf8 0%, #f4f7ff 100%);
+        border-radius: 14px;
+        padding: 16px 18px;
+      }
+      .endpoint {
+        background: #f5f7fb;
+        border-left: 4px solid #0f766e;
+        padding: 10px 12px;
+        border-radius: 8px;
+        margin: 8px 0 10px;
+        font-weight: 600;
+      }
+      .meta {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 6px 12px;
+        margin: 10px 0 12px;
+        font-size: 13px;
+      }
+      .label {
+        font-weight: 700;
+      }
+      code,
+      pre {
+        font-family: Consolas, "Courier New", monospace;
+      }
+      pre {
+        background: #fff7e8;
+        border: 1px solid #efd9aa;
+        border-radius: 8px;
+        padding: 10px 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 12px;
+        margin: 8px 0 12px;
+      }
+      .error-list li {
+        margin-bottom: 4px;
+      }
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="hero">
+        <h1>Favorite And Share API Test Guide</h1>
+        <p>Manual testing sheet for Postman based on the current backend contract.</p>
+        <div class="meta">
+          <div class="label">Base URL</div>
+          <div><code>http://127.0.0.1:8000</code></div>
+          <div class="label">Bearer token</div>
+          <div><code>Authorization: Bearer &lt;access_token&gt;</code></div>
+        </div>
+      </div>
+
+      <h2>1. Toggle Favorite</h2>
+      <div class="endpoint">POST /location/toggle-favorite</div>
+      <div class="meta">
+        <div class="label">Auth</div>
+        <div>Required</div>
+      </div>
+      <h3>Request Sample</h3>
+      <pre>{
+  "locationCode": "LOC_ROOM_01"
+}</pre>
+      <h3>Response Sample: Add Favorite</h3>
+      <pre>{
+  "message": "Da them vao danh sach yeu thich.",
+  "locationCode": "LOC_ROOM_01",
+  "isFavorite": true
+}</pre>
+      <h3>Response Sample: Remove Favorite</h3>
+      <pre>{
+  "message": "Da xoa khoi danh sach yeu thich.",
+  "locationCode": "LOC_ROOM_01",
+  "isFavorite": false
+}</pre>
+      <h3>Error Codes</h3>
+      <ul class="error-list">
+        <li><code>400</code>: locationCode empty or invalid length</li>
+        <li><code>401</code>: missing token, invalid token, expired token</li>
+        <li><code>404</code>: location not found</li>
+        <li><code>500</code>: unexpected server error</li>
+      </ul>
+
+      <h2>2. Get My Favorite Locations</h2>
+      <div class="endpoint">GET /location/get-my-favorite-location</div>
+      <div class="meta">
+        <div class="label">Auth</div>
+        <div>Required</div>
+      </div>
+      <h3>Request Sample</h3>
+      <pre>GET /location/get-my-favorite-location</pre>
+      <h3>Response Sample</h3>
+      <pre>{
+  "message": "Lay danh sach yeu thich thanh cong.",
+  "data": [
+    {
+      "locationCode": "LOC_ROOM_01",
+      "locationName": "Phong tro gan cho Ben Thanh",
+      "locationLogo": "https://picsum.photos/seed/loc-room-01/800/600",
+      "fullAddress": "120 Le Thanh Ton, Ben Nghe, Quan 1, Ho Chi Minh City",
+      "locationPriceStart": 3500000,
+      "locationPriceEnd": 4200000,
+      "typeCode": "ROOM",
+      "typeName": "Phong tro",
+      "hasRent": 0,
+      "isFavorite": true
+    }
+  ]
+}</pre>
+      <h3>Error Codes</h3>
+      <ul class="error-list">
+        <li><code>401</code>: missing token, invalid token, expired token</li>
+        <li><code>500</code>: unexpected server error</li>
+      </ul>
+
+      <h2>3. Get Share Link</h2>
+      <div class="endpoint">GET /location/get-share-link?locationCode=LOC_ROOM_01</div>
+      <div class="meta">
+        <div class="label">Auth</div>
+        <div>Not required</div>
+      </div>
+      <h3>Request Sample</h3>
+      <pre>GET /location/get-share-link?locationCode=LOC_ROOM_01</pre>
+      <h3>Response Sample</h3>
+      <pre>{
+  "message": "Tao link chia se thanh cong.",
+  "locationCode": "LOC_ROOM_01",
+  "shareUrl": "http://localhost:3001/room-detail?locationCode=LOC_ROOM_01"
+}</pre>
+      <h3>Error Codes</h3>
+      <ul class="error-list">
+        <li><code>400</code>: locationCode empty or invalid length</li>
+        <li><code>404</code>: location not found</li>
+        <li><code>500</code>: unexpected server error</li>
+      </ul>
+
+      <h2>4. Suggested Postman Flow</h2>
+      <ol>
+        <li>Call <code>POST /auth/signin</code> to get <code>access_token</code>.</li>
+        <li>Call <code>POST /location/toggle-favorite</code> with Bearer token.</li>
+        <li>Call <code>GET /location/get-my-favorite-location</code> with Bearer token.</li>
+        <li>Call <code>GET /location/get-share-link?locationCode=LOC_ROOM_01</code> without token.</li>
+      </ol>
+    </div>
+  </body>
+</html>

@@ -1,4 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
+import {
+  ErrorLocationMessage,
+  SuccessLocationMessage,
+} from '../assests/messages/location.message';
 import {
   COMMENT_TYPE,
   LOCATION_RENT_STATUS,
@@ -6,21 +12,35 @@ import {
 import { ErrorLocationMessage } from '../assests/messages/location.message';
 import { ErrorServiceMessage } from '../assests/messages/service.message';
 import {
+  AddLocationMediaRequestDto,
   CreateLocationDto,
+  DeleteLocationMediaRequestDto,
   DeleteLocationDto,
   DeleteLocationResponseDto,
+  FavoriteLocationListResponseDto,
+  FavoriteLocationSummaryDto,
   GetLocationAddressByLocationCodePayloadDto,
   GetLocationByFillterDto,
+  GetShareLinkQueryDto,
+  GetShareLinkResponseDto,
+  LocationMediaListResponseDto,
+  LocationMediaDto,
+  LocationMediaResponseDto,
   LocationListDto,
   LocationResponseDto,
   PaginatedLocationListDto,
+  ReorderLocationMediaRequestDto,
+  ToggleFavoriteRequestDto,
+  ToggleFavoriteResponseDto,
   UpdatelocationPayloadDto,
+  UpdateLocationMediaRequestDto,
+  UpdateLocationLogoRequestDto,
+  UpdateLocationLogoResponseDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
 } from '../dtos/location/location.dto';
 import {
   AddLocationServicePayload,
-  LocationServiceData,
   LocationServiceResponse,
 } from '../dtos/location/locationService.dto';
 import {
@@ -38,6 +58,11 @@ import {
   UpdateLocationAddressPayloadDto,
 } from '../dtos/location/locationAddress.dto';
 import { validString } from '../common/helpers/common.helper';
+import {
+  LocationMediaType,
+  TbLocationMedia,
+} from '../entities/location/locationMedia.entity';
+import { CloudinaryService } from './cloudinary.service';
 import { LocationCommentRepository } from '../repositories/location/locationComment.repository';
 import {
   GetAllCommentDto,
@@ -47,6 +72,164 @@ import {
 
 @Injectable()
 export class LocationService {
+  constructor(
+    private locationRepo: LocationRepository,
+    private configService: ConfigService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
+
+  private async enrichLocationDetails(
+    location: LocationListDto,
+  ): Promise<void> {
+    if (!location.locationCode) {
+      return;
+    }
+
+    const service = await this.locationRepo.GetLocationServices(
+      location.locationCode,
+    );
+    location.services = service;
+
+    const address = await this.locationRepo.GetLocationAddressByLocationCode(
+      location.locationCode,
+    );
+    location.address = address.data;
+
+    const media = await this.locationRepo.GetLocationMedia(
+      location.locationCode,
+    );
+    location.media = media;
+  }
+
+  private parseMediaType(mediaType?: string): LocationMediaType | undefined {
+    if (!mediaType) {
+      return undefined;
+    }
+
+    if (mediaType === LocationMediaType.IMAGE) {
+      return LocationMediaType.IMAGE;
+    }
+
+    if (mediaType === LocationMediaType.VIDEO) {
+      return LocationMediaType.VIDEO;
+    }
+
+    return undefined;
+  }
+
+  private parseOptionalBoolean(value: unknown): boolean | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true' || normalized === '1') return true;
+      if (normalized === 'false' || normalized === '0') return false;
+    }
+
+    return undefined;
+  }
+
+  private parseOptionalDisplayOrder(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return undefined;
+    }
+
+    return parsed;
+  }
+
+  private ensureMediaMatchesFileType(
+    file: Express.Multer.File,
+    mediaType: LocationMediaType,
+  ): void {
+    if (!file?.mimetype) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_FILE_REQUIRED.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      mediaType === LocationMediaType.IMAGE &&
+      !file.mimetype.startsWith('image/')
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      mediaType === LocationMediaType.VIDEO &&
+      !file.mimetype.startsWith('video/')
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  private async getOwnedLocation(
+    user: UserDecoratorDtoResponse,
+    locationCode: string,
+  ) {
+    const location = await this.locationRepo.FindLocationByCode(locationCode);
+
+    if (!location) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (location.ownerCode !== user.userCode) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_PERMISSION_DENIED.toString(),
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    return location;
+  }
+
+  private async getLocationMediaOrFail(
+    locationCode: string,
+    mediaCode: string,
+  ): Promise<TbLocationMedia> {
+    const media = await this.locationRepo.FindLocationMediaByCode(mediaCode);
+
+    if (!media) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (media.locationCode !== locationCode) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_BELONG_TO_LOCATION.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return media;
+  }
   constructor(
     private locationRepo: LocationRepository,
 
@@ -444,6 +627,16 @@ export class LocationService {
       );
     }
 
+    if (
+      payload.locationArea !== undefined &&
+      (!Number.isFinite(payload.locationArea) || payload.locationArea < 0)
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_AREA_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     if (payload.serviceCode.length > 0) {
       for (const item of payload.serviceCode) {
         if (!item.serviceCode || item.serviceCode.trim() === '') {
@@ -469,12 +662,10 @@ export class LocationService {
       };
       const location = await this.locationRepo.CreateLocation(dataPayload);
       if (payload.serviceCode.length > 0 && location.data) {
-        const serviceData: LocationServiceData[] = [];
+        const serviceData: Array<{ serviceCode: string }> = [];
         for (const item of payload.serviceCode) {
           serviceData.push({
             serviceCode: item.serviceCode,
-            isActive: true,
-            note: '',
           });
         }
         const servicePayload: AddLocationServicePayload = {
@@ -647,16 +838,25 @@ export class LocationService {
       );
     }
 
+    if (
+      payload.data.locationArea !== undefined &&
+      (!Number.isFinite(payload.data.locationArea) ||
+        payload.data.locationArea < 0)
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_AREA_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     try {
       const location = await this.locationRepo.UpdateLocation(payload);
 
       if (payload.data.serviceCode?.length > 0 && location.data) {
-        const serviceData: LocationServiceData[] = [];
+        const serviceData: Array<{ serviceCode: string }> = [];
         for (const item of payload.data.serviceCode) {
           serviceData.push({
             serviceCode: item.serviceCode,
-            isActive: true,
-            note: '',
           });
         }
         const servicePayload: AddLocationServicePayload = {
@@ -834,17 +1034,7 @@ export class LocationService {
 
       for (const item of location) {
         if (item.locationCode) {
-          const service = await this.locationRepo.GetLocationServices(
-            item.locationCode,
-          );
-          item.services = service;
-
-          const address =
-            await this.locationRepo.GetLocationAddressByLocationCode(
-              item.locationCode,
-            );
-
-          item.address = address.data;
+          await this.enrichLocationDetails(item);
         }
       }
       return location;
@@ -868,17 +1058,7 @@ export class LocationService {
 
       for (const item of location) {
         if (item.locationCode) {
-          const service = await this.locationRepo.GetLocationServices(
-            item.locationCode,
-          );
-          item.services = service;
-
-          const address =
-            await this.locationRepo.GetLocationAddressByLocationCode(
-              item.locationCode,
-            );
-
-          item.address = address.data;
+          await this.enrichLocationDetails(item);
         }
       }
       return location;
@@ -902,17 +1082,7 @@ export class LocationService {
 
       for (const item of location) {
         if (item.locationCode) {
-          const service = await this.locationRepo.GetLocationServices(
-            item.locationCode,
-          );
-          item.services = service;
-
-          const address =
-            await this.locationRepo.GetLocationAddressByLocationCode(
-              item.locationCode,
-            );
-
-          item.address = address.data;
+          await this.enrichLocationDetails(item);
         }
       }
       return location;
@@ -957,19 +1127,7 @@ export class LocationService {
         );
       }
 
-      if (location.locationCode) {
-        const service = await this.locationRepo.GetLocationServices(
-          location.locationCode,
-        );
-        location.services = service;
-
-        const address =
-          await this.locationRepo.GetLocationAddressByLocationCode(
-            location.locationCode,
-          );
-
-        location.address = address.data;
-      }
+      await this.enrichLocationDetails(location);
       return location;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -984,7 +1142,7 @@ export class LocationService {
   }
 
   public async GetLocationByFilter(
-    user: UserDecoratorDtoResponse,
+    user: UserDecoratorDtoResponse | undefined,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
     if (payload.locationName && payload.locationName.length > 200) {
@@ -1138,17 +1296,7 @@ export class LocationService {
       const result = await this.locationRepo.GetLocationByFilter(user, payload);
       for (const item of result.data) {
         if (item.locationCode) {
-          const service = await this.locationRepo.GetLocationServices(
-            item.locationCode,
-          );
-          item.services = service;
-
-          const address =
-            await this.locationRepo.GetLocationAddressByLocationCode(
-              item.locationCode,
-            );
-
-          item.address = address.data;
+          await this.enrichLocationDetails(item);
         }
       }
 
@@ -1163,6 +1311,540 @@ export class LocationService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  public async ToggleFavorite(
+    user: UserDecoratorDtoResponse,
+    payload: ToggleFavoriteRequestDto,
+  ): Promise<ToggleFavoriteResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.locationRepo.FindLocationByCode(
+      payload.locationCode,
+    );
+
+    if (!location) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    try {
+      return await this.locationRepo.ToggleFavorite(user.userCode, location);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during toggle favorite location:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async GetMyFavoriteLocation(
+    user: UserDecoratorDtoResponse,
+  ): Promise<FavoriteLocationListResponseDto> {
+    try {
+      const locations: FavoriteLocationSummaryDto[] =
+        await this.locationRepo.GetMyFavoriteLocation(user.userCode);
+
+      return {
+        message: SuccessLocationMessage.GET_FAVORITE_LIST_SUCCESS,
+        data: locations,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get my favorite location:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async GetLocationPriceRangeBounds(): Promise<{
+    minValue: number | null;
+    maxValue: number | null;
+  }> {
+    return await this.locationRepo.GetLocationPriceRangeBounds();
+  }
+
+  public async GetLocationAreaRangeBounds(): Promise<{
+    minValue: number | null;
+    maxValue: number | null;
+  }> {
+    return await this.locationRepo.GetLocationAreaRangeBounds();
+  }
+
+  public async UpdateLocationLogo(
+    user: UserDecoratorDtoResponse,
+    payload: UpdateLocationLogoRequestDto,
+  ): Promise<UpdateLocationLogoResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!payload.mediaCode || payload.mediaCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.mediaCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.locationRepo.FindLocationByCode(
+      payload.locationCode,
+    );
+
+    if (!location) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (location.ownerCode !== user.userCode) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_PERMISSION_DENIED.toString(),
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const selectedMedia = await this.locationRepo.FindLocationMediaByCode(
+      payload.mediaCode,
+    );
+
+    if (!selectedMedia) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (selectedMedia.locationCode !== payload.locationCode) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_BELONG_TO_LOCATION.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (selectedMedia.mediaType !== LocationMediaType.IMAGE) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_LOGO_MUST_BE_IMAGE.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const result = await this.locationRepo.UpdateLocationLogo(
+      location,
+      selectedMedia,
+    );
+
+    return {
+      message: SuccessLocationMessage.UPDATE_LOGO_SUCCESS,
+      locationCode: result.locationCode,
+      mediaCode: result.mediaCode,
+      locationLogo: result.locationLogo,
+    };
+  }
+
+  public async AddLocationMedia(
+    user: UserDecoratorDtoResponse,
+    payload: AddLocationMediaRequestDto,
+    file: Express.Multer.File,
+  ): Promise<LocationMediaResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!file) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_FILE_REQUIRED.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const mediaType = this.parseMediaType(payload.mediaType);
+    if (!mediaType) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.getOwnedLocation(user, payload.locationCode);
+    this.ensureMediaMatchesFileType(file, mediaType);
+
+    const displayOrder = this.parseOptionalDisplayOrder(payload.displayOrder);
+    if (payload.displayOrder !== undefined && displayOrder === undefined) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_DISPLAY_ORDER_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const isLogo = this.parseOptionalBoolean(payload.isLogo) ?? false;
+    if (isLogo && mediaType !== LocationMediaType.IMAGE) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_LOGO_MUST_BE_IMAGE.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const mediaUrl = await this.cloudinaryService.uploadMedia(
+      file,
+      `location/${location.locationCode}`,
+    );
+
+    const createdMedia = await this.locationRepo.CreateLocationMedia({
+      locationCode: location.locationCode,
+      mediaUrl,
+      mediaType,
+      displayOrder,
+      isLogo,
+    });
+
+    if (isLogo) {
+      await this.locationRepo.UpdateLocationLogo(location, createdMedia);
+    }
+
+    const result = await this.locationRepo.FindLocationMediaDtoByCode(
+      createdMedia.mediaCode,
+    );
+
+    if (!result) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return {
+      message: SuccessLocationMessage.ADD_MEDIA_SUCCESS,
+      data: result,
+    };
+  }
+
+  public async UpdateLocationMedia(
+    user: UserDecoratorDtoResponse,
+    payload: UpdateLocationMediaRequestDto,
+    file?: Express.Multer.File,
+  ): Promise<LocationMediaResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!payload.mediaCode || payload.mediaCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.mediaCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (
+      file === undefined &&
+      payload.mediaType === undefined &&
+      payload.displayOrder === undefined &&
+      payload.isLogo === undefined
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_UPDATE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.getOwnedLocation(user, payload.locationCode);
+    const existingMedia = await this.getLocationMediaOrFail(
+      payload.locationCode,
+      payload.mediaCode,
+    );
+
+    const nextMediaType =
+      this.parseMediaType(payload.mediaType) ?? existingMedia.mediaType;
+    if (
+      payload.mediaType !== undefined &&
+      !this.parseMediaType(payload.mediaType)
+    ) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_TYPE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const displayOrder = this.parseOptionalDisplayOrder(payload.displayOrder);
+    if (payload.displayOrder !== undefined && displayOrder === undefined) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_DISPLAY_ORDER_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const requestedIsLogo = this.parseOptionalBoolean(payload.isLogo);
+    if (payload.isLogo !== undefined && requestedIsLogo === undefined) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_UPDATE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (file) {
+      this.ensureMediaMatchesFileType(file, nextMediaType);
+    }
+
+    if (existingMedia.isLogo && requestedIsLogo === false) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_UPDATE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const finalIsLogo = requestedIsLogo ?? Boolean(existingMedia.isLogo);
+    if (finalIsLogo && nextMediaType !== LocationMediaType.IMAGE) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_LOGO_MUST_BE_IMAGE.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    let mediaUrl: string | undefined;
+    if (file) {
+      mediaUrl = await this.cloudinaryService.uploadMedia(
+        file,
+        `location/${location.locationCode}`,
+      );
+    }
+
+    const updatedMedia = await this.locationRepo.UpdateLocationMediaRecord(
+      existingMedia,
+      {
+        mediaUrl,
+        mediaType: nextMediaType,
+        displayOrder,
+      },
+    );
+
+    if (finalIsLogo) {
+      await this.locationRepo.UpdateLocationLogo(location, updatedMedia);
+    }
+
+    const result = await this.locationRepo.FindLocationMediaDtoByCode(
+      updatedMedia.mediaCode,
+    );
+
+    if (!result) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return {
+      message: SuccessLocationMessage.UPDATE_MEDIA_SUCCESS,
+      data: result,
+    };
+  }
+
+  public async DeleteLocationMedia(
+    user: UserDecoratorDtoResponse,
+    payload: DeleteLocationMediaRequestDto,
+  ): Promise<LocationMediaResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!payload.mediaCode || payload.mediaCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.getOwnedLocation(user, payload.locationCode);
+    const media = await this.getLocationMediaOrFail(
+      payload.locationCode,
+      payload.mediaCode,
+    );
+
+    if (Boolean(media.isLogo)) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_DELETE_LOGO_FORBIDDEN.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const mediaDto = await this.locationRepo.FindLocationMediaDtoByCode(
+      media.mediaCode,
+    );
+
+    if (!mediaDto) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    await this.locationRepo.DeleteLocationMediaByCode(media.mediaCode);
+
+    return {
+      message: SuccessLocationMessage.DELETE_MEDIA_SUCCESS,
+      data: mediaDto,
+    };
+  }
+
+  public async ReorderLocationMedia(
+    user: UserDecoratorDtoResponse,
+    payload: ReorderLocationMediaRequestDto,
+  ): Promise<LocationMediaListResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!payload.data || payload.data.length === 0) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_MEDIA_REORDER_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.getOwnedLocation(user, payload.locationCode);
+
+    for (const item of payload.data) {
+      if (!item.mediaCode || item.mediaCode.trim() === '') {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_MEDIA_CODE_NOTEMPTY.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (!Number.isInteger(item.displayOrder) || item.displayOrder < 1) {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_MEDIA_DISPLAY_ORDER_INVALID.toString(),
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      await this.getLocationMediaOrFail(payload.locationCode, item.mediaCode);
+    }
+
+    await this.locationRepo.ReorderLocationMedia(
+      payload.locationCode,
+      payload.data,
+    );
+
+    return {
+      message: SuccessLocationMessage.REORDER_MEDIA_SUCCESS,
+      data: await this.locationRepo.GetLocationMedia(payload.locationCode),
+    };
+  }
+
+  public async GetShareLink(
+    payload: GetShareLinkQueryDto,
+  ): Promise<GetShareLinkResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const location = await this.locationRepo.FindLocationByCode(
+      payload.locationCode,
+    );
+
+    if (!location) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const rawBaseUrl =
+      this.configService.get<string>('FRONTEND_BASE_URL') ||
+      this.configService.get<string>('LOCAL_DOMAIN') ||
+      'http://localhost:3001';
+    const baseUrl = rawBaseUrl
+      .trim()
+      .replace(/^["']|["']$/g, '')
+      .replace(/\/+$/, '');
+
+    return {
+      message: SuccessLocationMessage.GET_SHARE_LINK_SUCCESS,
+      locationCode: payload.locationCode,
+      shareUrl: `${baseUrl}/room-detail?locationCode=${encodeURIComponent(payload.locationCode)}`,
+    };
   }
 
   public async createNewComment(

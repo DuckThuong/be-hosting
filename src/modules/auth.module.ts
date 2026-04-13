@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -11,18 +12,23 @@ import { MailModule } from './mail.module';
 
 @Module({
   imports: [
+    ConfigModule,
     PassportModule,
     TypeOrmModule.forFeature([TbUserDefault]),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'duckthuong-28072003-secretkey',
-      signOptions: {
-        expiresIn: '1d',
-      },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '1d',
+        },
+      }),
     }),
     MailModule,
   ],
   providers: [AuthService, JwtStrategy, AuthRepository],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

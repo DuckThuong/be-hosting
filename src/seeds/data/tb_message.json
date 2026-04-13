@@ -1,0 +1,70 @@
+[
+  {
+    "seedKey": "chat-msg-001",
+    "conversationSeedKey": "chat-private-001",
+    "senderUserCode": "owner-01",
+    "senderAvatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+    "type": "TEXT",
+    "content": "Chao ban, phong van con trong tuan nay.",
+    "metadata": null,
+    "replyToMessageSeedKey": null,
+    "status": "READ",
+    "editedAt": null,
+    "deletedAt": null,
+    "deletedByUserCode": null,
+    "createdAt": "2026-04-03 10:01:00",
+    "updatedAt": "2026-04-03 10:01:00"
+  },
+  {
+    "seedKey": "chat-msg-002",
+    "conversationSeedKey": "chat-private-001",
+    "senderUserCode": "renter-01",
+    "senderAvatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+    "type": "TEXT",
+    "content": "Cam on anh, em muon dat toi thu Bay.",
+    "metadata": null,
+    "replyToMessageSeedKey": "chat-msg-001",
+    "status": "SENT",
+    "editedAt": null,
+    "deletedAt": null,
+    "deletedByUserCode": null,
+    "createdAt": "2026-04-03 10:04:00",
+    "updatedAt": "2026-04-03 10:04:00"
+  },
+  {
+    "seedKey": "chat-msg-003",
+    "conversationSeedKey": "chat-private-002",
+    "senderUserCode": "renter-02",
+    "senderAvatarUrl": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
+    "type": "IMAGE",
+    "content": null,
+    "metadata": {
+      "caption": "Gui anh hinh CCCD de xac nhan"
+    },
+    "replyToMessageSeedKey": null,
+    "status": "READ",
+    "editedAt": null,
+    "deletedAt": null,
+    "deletedByUserCode": null,
+    "createdAt": "2026-04-03 11:03:00",
+    "updatedAt": "2026-04-03 11:03:00"
+  },
+  {
+    "seedKey": "chat-msg-004",
+    "conversationSeedKey": "chat-private-002",
+    "senderUserCode": "owner-02",
+    "senderAvatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+    "type": "FILE",
+    "content": "Day la file huong dan check-in.",
+    "metadata": {
+      "label": "checkin-guide"
+    },
+    "replyToMessageSeedKey": "chat-msg-003",
+    "status": "READ",
+    "editedAt": null,
+    "deletedAt": null,
+    "deletedByUserCode": null,
+    "createdAt": "2026-04-03 11:08:00",
+    "updatedAt": "2026-04-03 11:08:00"
+  }
+]

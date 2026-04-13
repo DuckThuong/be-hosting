@@ -1,19 +1,31 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import {
   ContactToUserDto,
   ConversationResponseDto,
+  PublicConversationType,
+  SendMessageDto,
 } from '../dtos/chat/chat.dto';
 import { UserResponseDto } from '../dtos/user/user.dto';
 import {
+  ConversationStatus,
   ConversationType,
   TbConversation,
-} from '../entities/chat/converation.entity';
-import { TbConversationParticipant } from '../entities/chat/converation_paticipant.entity';
-import { MessageType, TbMessage } from '../entities/chat/message.entity';
+} from '../entities/chat/conversation.entity';
+import { TbConversationParticipant } from '../entities/chat/conversation_participant.entity';
+import { TbMessageAttachment } from '../entities/chat/message_attachment.entity';
+import {
+  MessageStatus,
+  MessageType,
+  TbMessage,
+} from '../entities/chat/message.entity';
 import { UserRepository } from './user.repository';
-import { MessagePayloadDto, MessageTypeEnum } from '../dtos/chat/message.dto';
+import {
+  MessageAttachmentPayloadDto,
+  MessagePayloadDto,
+  MessageTypeEnum,
+} from '../dtos/chat/message.dto';
 import {
   ContactMessageTemplate,
   RentLocationMessageTemplate,
@@ -22,6 +34,13 @@ import { LocationRepository } from './location/location.repository';
 
 @Injectable()
 export class ChatRepository {
+  private readonly privateConversationTypes = [
+    ConversationType.RENT,
+    ConversationType.CONTACT,
+    ConversationType.NORMAL,
+    ConversationType.PRIVATE,
+  ];
+
   constructor(
     @InjectRepository(TbConversation)
     private readonly conversation: Repository<TbConversation>,
@@ -32,6 +51,9 @@ export class ChatRepository {
     @InjectRepository(TbMessage)
     private readonly message: Repository<TbMessage>,
 
+    @InjectRepository(TbMessageAttachment)
+    private readonly messageAttachment: Repository<TbMessageAttachment>,
+
     @Inject(forwardRef(() => UserRepository))
     private readonly userRepo: UserRepository,
 
@@ -39,28 +61,85 @@ export class ChatRepository {
     private readonly locationRepo: LocationRepository,
   ) {}
 
+  private getMessagePreview(
+    type: MessageType,
+    content?: string,
+    attachments?: MessageAttachmentPayloadDto[],
+  ): string {
+    if (content?.trim()) {
+      return content.trim().slice(0, 255);
+    }
+
+    if (type === MessageType.IMAGE) {
+      return '[Image]';
+    }
+
+    if (type === MessageType.FILE) {
+      return '[File]';
+    }
+
+    if (attachments?.length) {
+      return attachments[0].mimeType.startsWith('image/')
+        ? '[Image]'
+        : '[File]';
+    }
+
+    return '[Message]';
+  }
+
+  private normalizeConversationType(
+    type: ConversationType,
+  ): PublicConversationType {
+    if (type === ConversationType.RENT) {
+      return PublicConversationType.RENT;
+    }
+
+    if (type === ConversationType.CONTACT) {
+      return PublicConversationType.CONTACT;
+    }
+
+    return PublicConversationType.NORMAL;
+  }
+
+  private resolveConversationType(type?: string): ConversationType {
+    if (type === MessageTypeEnum.RENT) {
+      return ConversationType.RENT;
+    }
+
+    if (type === MessageTypeEnum.CONTACT) {
+      return ConversationType.CONTACT;
+    }
+
+    return ConversationType.NORMAL;
+  }
+
   private async createConversation(
     user: UserResponseDto,
     contactId: number,
-    type: string,
+    type: ConversationType,
   ): Promise<TbConversation> {
     const contact = await this.userRepo.getUserProfileByUserId(contactId);
 
     const newConversation = this.conversation.create({
-      type: ConversationType.PRIVATE,
-      name: `Cuộc trò chuyện giữa ${user.fullName ?? user.userName} và ${contact.fullName ?? contact.userName}`,
-      avatar: contact.avatarUrl || '',
-      lastMessage: 'Xin chào!',
-      lastMessageAt: new Date(),
-      lastMessageType: type,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      type,
+      name: contact?.fullName ?? contact?.userName ?? undefined,
+      avatar: contact?.avatarUrl || undefined,
+      createdByUserId: user.id!,
+      status: ConversationStatus.ACTIVE,
     });
     const savedConversation = await this.conversation.save(newConversation);
 
     const participants = this.conversationParticipant.create([
-      { conversationId: savedConversation.id, userId: user.id },
-      { conversationId: savedConversation.id, userId: contactId },
+      {
+        conversationId: savedConversation.id,
+        userId: user.id!,
+        unreadCount: 0,
+      },
+      {
+        conversationId: savedConversation.id,
+        userId: contactId,
+        unreadCount: 0,
+      },
     ]);
 
     await this.conversationParticipant.save(participants);
@@ -71,38 +150,119 @@ export class ChatRepository {
   private async checkConversationExistence(
     user: UserResponseDto,
     contactId: number,
-    type: string,
+    type: ConversationType,
   ): Promise<TbConversation> {
     const result = await this.conversation
       .createQueryBuilder('c')
       .innerJoin(
         'tb_conversation_participant',
         'p1',
-        'p1.conversationId = c.id AND p1.userId = :userA',
+        'p1.conversationId = c.id AND p1.userId = :userA AND p1.deletedAt IS NULL',
         { userA: user.id },
       )
       .innerJoin(
         'tb_conversation_participant',
         'p2',
-        'p2.conversationId = c.id AND p2.userId = :userB',
+        'p2.conversationId = c.id AND p2.userId = :userB AND p2.deletedAt IS NULL',
         { userB: contactId },
       )
-      .where('c.type = :type', { type: ConversationType.PRIVATE })
+      .where('c.type IN (:...types)', { types: this.privateConversationTypes })
+      .andWhere('c.status != :blocked', {
+        blocked: ConversationStatus.BLOCKED,
+      })
+      .andWhere(
+        `(SELECT COUNT(*) FROM tb_conversation_participant cp WHERE cp.conversationId = c.id AND cp.deletedAt IS NULL) = 2`,
+      )
       .getOne();
 
     if (!result) {
       return this.createConversation(user, contactId, type);
-    } else {
-      return result;
     }
+
+    if (result.type !== type && type !== ConversationType.NORMAL) {
+      result.type = type;
+      return this.conversation.save(result);
+    }
+
+    return result;
+  }
+
+  private async persistMessage(payload: MessagePayloadDto): Promise<TbMessage> {
+    return this.message.manager.transaction(async (manager) => {
+      const messageRepo = manager.getRepository(TbMessage);
+      const conversationRepo = manager.getRepository(TbConversation);
+      const participantRepo = manager.getRepository(TbConversationParticipant);
+      const attachmentRepo = manager.getRepository(TbMessageAttachment);
+
+      const createdMessage = messageRepo.create({
+        conversationId: payload.conversationId,
+        senderId: payload.senderId,
+        senderAvatarUrl: payload.senderAvatarUrl,
+        content: payload.content?.trim() || undefined,
+        type: payload.type,
+        metadata: payload.metadata ?? null,
+        replyToMessageId: payload.replyToMessageId,
+        status: payload.status ?? MessageStatus.SENT,
+      });
+      const savedMessage = await messageRepo.save(createdMessage);
+
+      if (payload.attachments?.length) {
+        const attachments = attachmentRepo.create(
+          payload.attachments.map((attachment) => ({
+            ...attachment,
+            messageId: savedMessage.id,
+          })),
+        );
+        await attachmentRepo.save(attachments);
+      }
+
+      await conversationRepo.update(payload.conversationId, {
+        lastMessageId: savedMessage.id,
+        lastMessagePreview: this.getMessagePreview(
+          payload.type,
+          payload.content,
+          payload.attachments,
+        ),
+        lastMessageType: payload.type,
+        lastMessageAt: savedMessage.createdAt,
+        status: ConversationStatus.ACTIVE,
+      });
+
+      await participantRepo
+        .createQueryBuilder()
+        .update(TbConversationParticipant)
+        .set({
+          unreadCount: () => 'unreadCount + 1',
+          deletedAt: () => 'NULL',
+        })
+        .where('conversationId = :conversationId', {
+          conversationId: payload.conversationId,
+        })
+        .andWhere('userId != :senderId', { senderId: payload.senderId })
+        .execute();
+
+      await participantRepo
+        .createQueryBuilder()
+        .update(TbConversationParticipant)
+        .set({
+          deletedAt: () => 'NULL',
+        })
+        .where('conversationId = :conversationId', {
+          conversationId: payload.conversationId,
+        })
+        .andWhere('userId = :senderId', { senderId: payload.senderId })
+        .execute();
+
+      return savedMessage;
+    });
   }
 
   public async findConversationById(
     conversationId: number,
-  ): Promise<TbConversation> {
-    return (await this.conversation.findOne({
+  ): Promise<TbConversation | null> {
+    return await this.conversation.findOne({
       where: { id: conversationId },
-    })) as TbConversation;
+    });
   }
 
   public async isParticipant(
@@ -110,59 +270,86 @@ export class ChatRepository {
     userId: number,
   ): Promise<boolean> {
     const result = await this.conversationParticipant.findOne({
-      where: { conversationId, userId },
+      where: { conversationId, userId, deletedAt: IsNull() },
     });
     return !!result;
   }
 
-  public async contactToUser(payload: ContactToUserDto): Promise<any> {
+  public async findParticipant(
+    conversationId: number,
+    userId: number,
+  ): Promise<TbConversationParticipant | null> {
+    return await this.conversationParticipant.findOne({
+      where: { conversationId, userId, deletedAt: IsNull() },
+    });
+  }
+
+  public async getConversationParticipantIds(
+    conversationId: number,
+  ): Promise<number[]> {
+    const participants = await this.conversationParticipant.find({
+      where: { conversationId, deletedAt: IsNull() },
+      select: { userId: true },
+    });
+
+    return participants.map((participant) => participant.userId);
+  }
+
+  public async contactToUser(
+    payload: ContactToUserDto,
+  ): Promise<TbConversation> {
+    const conversationType = this.resolveConversationType(payload.type);
     const conversation = await this.checkConversationExistence(
       payload.fromUser,
       payload.toUserId,
-      payload.type as string,
+      conversationType,
     );
 
     if (payload.type === MessageTypeEnum.RENT && payload.locationCd) {
       const location = await this.locationRepo.GetLocationByCode(
         payload.locationCd,
       );
-      const newMessage: MessagePayloadDto = {
-        avartarUrl: payload.fromUser.avatarUrl,
+      await this.persistMessage({
+        senderAvatarUrl: payload.fromUser.avatarUrl,
         conversationId: conversation.id,
         senderId: payload.fromUser.id!,
         content: RentLocationMessageTemplate({
           imgUrl: location?.locationLogo as string,
           locationName: location?.locationName || '',
-          locationPriceStart: location?.locationPriceStart || '0',
-          locationPriceEnd: location?.locationPriceEnd || '0',
+          locationPriceStart: String(location?.locationPriceStart || '0'),
+          locationPriceEnd: String(location?.locationPriceEnd || '0'),
           typeName: location?.typeName as string,
           time: new Date().toLocaleString('vi-VN', {
             timeZone: 'Asia/Ho_Chi_Minh',
           }),
         }),
         type: MessageType.SYSTEM,
-        metaData: '',
-      };
-      await this.message.save(this.message.create(newMessage));
+        metadata: {
+          messageType: MessageTypeEnum.RENT,
+          locationCd: payload.locationCd,
+        },
+      });
     } else if (payload.type === MessageTypeEnum.CONTACT && payload.locationCd) {
       const location = await this.locationRepo.GetLocationByCode(
         payload.locationCd,
       );
-      const newMessage: MessagePayloadDto = {
-        avartarUrl: payload.fromUser.avatarUrl,
+      await this.persistMessage({
+        senderAvatarUrl: payload.fromUser.avatarUrl,
         conversationId: conversation.id,
         senderId: payload.fromUser.id!,
         content: ContactMessageTemplate({
           imgUrl: location?.locationLogo as string,
           locationName: location?.locationName || '',
-          locationPriceStart: location?.locationPriceStart || '0',
-          locationPriceEnd: location?.locationPriceEnd || '0',
+          locationPriceStart: String(location?.locationPriceStart || '0'),
+          locationPriceEnd: String(location?.locationPriceEnd || '0'),
           typeName: location?.typeName as string,
         }),
         type: MessageType.SYSTEM,
-        metaData: '',
-      };
-      await this.message.save(this.message.create(newMessage));
+        metadata: {
+          messageType: MessageTypeEnum.CONTACT,
+          locationCd: payload.locationCd,
+        },
+      });
     }
 
     return conversation;
@@ -174,10 +361,12 @@ export class ChatRepository {
       .innerJoin(
         'tb_conversation_participant',
         'p',
-        'p.conversationId = c.id AND p.userId = :userId',
+        'p.conversationId = c.id AND p.userId = :userId AND p.deletedAt IS NULL',
         { userId },
       )
-      .orderBy('c.lastMessageAt', 'DESC')
+      .where('c.type IN (:...types)', { types: this.privateConversationTypes })
+      .orderBy('p.isPinned', 'DESC')
+      .addOrderBy('c.lastMessageAt', 'DESC')
       .getMany();
   }
 
@@ -187,7 +376,8 @@ export class ChatRepository {
     limit: number = 20,
   ): Promise<TbMessage[]> {
     return await this.message.find({
-      where: { conversationId },
+      where: { conversationId, deletedAt: IsNull() },
+      relations: { attachments: true },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -195,24 +385,190 @@ export class ChatRepository {
   }
 
   public async sendMessage(
-    conversationId: number,
     senderId: number,
-    content: string,
+    dto: SendMessageDto,
+    senderAvatarUrl?: string,
   ): Promise<TbMessage> {
-    const newMessage = this.message.create({
-      conversationId,
+    let type = dto.type;
+
+    if (!type) {
+      if (dto.attachments?.[0]?.mimeType?.startsWith('image/')) {
+        type = MessageType.IMAGE;
+      } else if (dto.attachments?.length) {
+        type = MessageType.FILE;
+      } else {
+        type = MessageType.TEXT;
+      }
+    }
+
+    const savedMessage = await this.persistMessage({
+      conversationId: dto.conversationId,
       senderId,
-      content,
-      createdAt: new Date(),
-    });
-    const saved = await this.message.save(newMessage);
-
-    await this.conversation.update(conversationId, {
-      lastMessage: content,
-      lastMessageAt: new Date(),
+      senderAvatarUrl,
+      content: dto.content,
+      type,
+      replyToMessageId: dto.replyToMessageId,
+      attachments: dto.attachments,
     });
 
-    return saved;
+    return await this.message.findOneOrFail({
+      where: { id: savedMessage.id, deletedAt: IsNull() },
+      relations: { attachments: true },
+    });
+  }
+
+  public async updateMessageStatus(
+    messageId: number,
+    status: MessageStatus,
+  ): Promise<TbMessage | null> {
+    await this.message.update({ id: messageId }, { status });
+
+    return this.message.findOne({
+      where: { id: messageId, deletedAt: IsNull() },
+    });
+  }
+
+  public async findLatestMessage(
+    conversationId: number,
+  ): Promise<TbMessage | null> {
+    return this.message.findOne({
+      where: { conversationId, deletedAt: IsNull() },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  public async markConversationAsRead(
+    conversationId: number,
+    userId: number,
+    messageId?: number,
+  ): Promise<TbConversationParticipant | null> {
+    const lastMessage =
+      messageId == null
+        ? await this.message.findOne({
+            where: { conversationId, deletedAt: IsNull() },
+            order: { createdAt: 'DESC' },
+          })
+        : await this.message.findOne({
+            where: { id: messageId, conversationId, deletedAt: IsNull() },
+          });
+
+    if (!lastMessage) {
+      return await this.conversationParticipant.findOne({
+        where: { conversationId, userId, deletedAt: IsNull() },
+      });
+    }
+
+    await this.conversationParticipant.update(
+      { conversationId, userId, deletedAt: IsNull() },
+      {
+        lastReadMessageId: lastMessage.id,
+        lastReadAt: new Date(),
+        unreadCount: 0,
+      },
+    );
+
+    await this.message.update(
+      { id: lastMessage.id },
+      { status: MessageStatus.READ },
+    );
+
+    return await this.conversationParticipant.findOne({
+      where: { conversationId, userId, deletedAt: IsNull() },
+    });
+  }
+
+  public async markConversationAsReadAndReturnMessage(
+    conversationId: number,
+    userId: number,
+    messageId?: number,
+  ): Promise<TbMessage | null> {
+    const lastMessage =
+      messageId == null
+        ? await this.findLatestMessage(conversationId)
+        : await this.message.findOne({
+            where: { id: messageId, conversationId, deletedAt: IsNull() },
+          });
+
+    if (!lastMessage) {
+      return null;
+    }
+
+    await this.conversationParticipant.update(
+      { conversationId, userId, deletedAt: IsNull() },
+      {
+        lastReadMessageId: lastMessage.id,
+        lastReadAt: new Date(),
+        unreadCount: 0,
+      },
+    );
+
+    await this.message.update(
+      { id: lastMessage.id },
+      { status: MessageStatus.READ },
+    );
+
+    return this.message.findOne({
+      where: { id: lastMessage.id, deletedAt: IsNull() },
+    });
+  }
+
+  public async updateConversationNickname(
+    conversationId: number,
+    userId: number,
+    nickname: string | null,
+  ): Promise<TbConversationParticipant | null> {
+    await this.conversationParticipant.update(
+      { conversationId, userId, deletedAt: IsNull() },
+      { nickname },
+    );
+
+    return await this.findParticipant(conversationId, userId);
+  }
+
+  public async updateConversationPinState(
+    conversationId: number,
+    userId: number,
+    isPinned: boolean,
+  ): Promise<TbConversationParticipant | null> {
+    return await this.conversationParticipant.manager.transaction(
+      async (manager) => {
+        const participantRepo = manager.getRepository(
+          TbConversationParticipant,
+        );
+
+        if (isPinned) {
+          await participantRepo
+            .createQueryBuilder()
+            .update(TbConversationParticipant)
+            .set({ isPinned: false })
+            .where('userId = :userId', { userId })
+            .andWhere('deletedAt IS NULL')
+            .execute();
+        }
+
+        await participantRepo.update(
+          { conversationId, userId, deletedAt: IsNull() },
+          { isPinned },
+        );
+
+        return await participantRepo.findOne({
+          where: { conversationId, userId, deletedAt: IsNull() },
+        });
+      },
+    );
+  }
+
+  public async updateConversationMuteState(
+    conversationId: number,
+    userId: number,
+    muteUntil: Date,
+  ): Promise<TbConversationParticipant | null> {
+    await this.conversationParticipant.update(
+      { conversationId, userId, deletedAt: IsNull() },
+      { muteUntil },
+    );
+
+    return await this.findParticipant(conversationId, userId);
   }
 
   public async getAllConversations(
@@ -226,12 +582,7 @@ export class ChatRepository {
     const allParticipants = await this.conversationParticipant
       .createQueryBuilder('cp')
       .where('cp.conversationId IN (:...conversationIds)', { conversationIds })
-      .getMany();
-
-    const lastMessages = await this.message
-      .createQueryBuilder('m')
-      .where('m.conversationId IN (:...conversationIds)', { conversationIds })
-      .orderBy('m.createdAt', 'DESC')
+      .andWhere('cp.deletedAt IS NULL')
       .getMany();
 
     const otherParticipantIds = [
@@ -252,27 +603,44 @@ export class ChatRepository {
         (cp) => cp.conversationId === conversation.id,
       );
 
-      const otherParticipant = participants.find((cp) => cp.userId !== userId);
+      const currentParticipant =
+        participants.find((cp) => cp.userId === userId) ?? null;
+      const otherParticipant =
+        participants.find((cp) => cp.userId !== userId) ?? null;
 
       const toUser = otherParticipant
         ? (userMap.get(otherParticipant.userId) ?? null)
         : null;
 
-      const lastMessage =
-        lastMessages.find((m) => m.conversationId === conversation.id) ?? null;
-
       return {
         conversationId: conversation.id,
-        conversationType: conversation.type,
-        conversationName: conversation.name,
-        conversationAvatar: conversation.avatar,
-        lastMessage: lastMessage?.content ?? conversation.lastMessage,
-        lastMessageAt: conversation.lastMessageAt,
-        lastMessageType: conversation.lastMessageType,
+        conversationType: this.normalizeConversationType(conversation.type),
+        conversationStatus: conversation.status,
+        conversationName:
+          toUser?.fullName ?? toUser?.userName ?? conversation.name ?? null,
+        conversationAvatar: toUser?.avatarUrl ?? conversation.avatar ?? null,
+        lastMessageId: conversation.lastMessageId ?? null,
+        lastMessagePreview: conversation.lastMessagePreview ?? null,
+        lastMessageAt: conversation.lastMessageAt ?? null,
+        lastMessageType: conversation.lastMessageType ?? null,
         conversationCreatedAt: conversation.createdAt,
+        unreadCount: currentParticipant?.unreadCount ?? 0,
+        lastReadMessageId: currentParticipant?.lastReadMessageId ?? null,
         participants,
         toUser,
       } as ConversationResponseDto;
     });
+  }
+
+  public async getConversationResponseForUser(
+    userId: number,
+    conversationId: number,
+  ): Promise<ConversationResponseDto | null> {
+    const conversations = await this.getAllConversations(userId);
+    return (
+      conversations.find(
+        (conversation) => conversation.conversationId === conversationId,
+      ) ?? null
+    );
   }
 }

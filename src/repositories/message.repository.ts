@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { TbMessage } from '../entities/chat/message.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { MessagePayloadDto } from '../dtos/chat/message.dto';
+import { MessageStatus, TbMessage } from '../entities/chat/message.entity';
 
 @Injectable()
 export class MessageRepository {
@@ -15,11 +15,12 @@ export class MessageRepository {
     const newMessage = this.message.create({
       conversationId: dto.conversationId,
       senderId: dto.senderId,
+      senderAvatarUrl: dto.senderAvatarUrl,
       content: dto.content,
       type: dto.type,
-      metadata: dto.metaData,
-      createdAt: new Date(),
-      isDeleted: false,
+      metadata: dto.metadata ?? null,
+      replyToMessageId: dto.replyToMessageId,
+      status: dto.status ?? MessageStatus.SENT,
     });
     return await this.message.save(newMessage);
   }

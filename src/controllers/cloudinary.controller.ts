@@ -2,10 +2,18 @@ import {
   Controller,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../common/jwt/jwt.guard';
 import { CloudinaryUploadResponseDto } from '../dtos/upload.dto';
 import { CloudinaryService } from '../services/cloudinary.service';
 
@@ -15,6 +23,8 @@ export class UploadController {
   constructor(private readonly cloudinaryService: CloudinaryService) {}
 
   @Post('image')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Upload image to Cloudinary' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

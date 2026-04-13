@@ -1,0 +1,46 @@
+[
+  {
+    "conversationSeedKey": "chat-private-001",
+    "userCode": "owner-01",
+    "unreadCount": 0,
+    "lastReadMessageSeedKey": "chat-msg-002",
+    "lastReadAt": "2026-04-03 10:05:00",
+    "muteUntil": null,
+    "isPinned": true,
+    "joinedAt": "2026-04-03 10:00:00",
+    "deletedAt": null
+  },
+  {
+    "conversationSeedKey": "chat-private-001",
+    "userCode": "renter-01",
+    "unreadCount": 1,
+    "lastReadMessageSeedKey": "chat-msg-001",
+    "lastReadAt": "2026-04-03 10:02:00",
+    "muteUntil": null,
+    "isPinned": false,
+    "joinedAt": "2026-04-03 10:00:00",
+    "deletedAt": null
+  },
+  {
+    "conversationSeedKey": "chat-private-002",
+    "userCode": "owner-02",
+    "unreadCount": 0,
+    "lastReadMessageSeedKey": "chat-msg-004",
+    "lastReadAt": "2026-04-03 11:10:00",
+    "muteUntil": null,
+    "isPinned": false,
+    "joinedAt": "2026-04-03 11:00:00",
+    "deletedAt": null
+  },
+  {
+    "conversationSeedKey": "chat-private-002",
+    "userCode": "renter-02",
+    "unreadCount": 0,
+    "lastReadMessageSeedKey": "chat-msg-004",
+    "lastReadAt": "2026-04-03 11:12:00",
+    "muteUntil": null,
+    "isPinned": false,
+    "joinedAt": "2026-04-03 11:00:00",
+    "deletedAt": null
+  }
+]
