@@ -30,7 +30,7 @@ import {
   ContactMessageTemplate,
   RentLocationMessageTemplate,
 } from '../templates/message.template';
-import { LocationRepository } from './location.repository';
+import { LocationRepository } from './location/location.repository';
 
 @Injectable()
 export class ChatRepository {

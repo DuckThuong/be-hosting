@@ -29,3 +29,8 @@ export const USER_ROLE = {
   OWNER: 1,
   USER: 2,
 };
+
+export const COMMENT_TYPE = {
+  COMMENT: 0,
+  REPLY: 1,
+};

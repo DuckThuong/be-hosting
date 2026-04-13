@@ -1,16 +1,20 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LOCATION_RENT_STATUS } from '../assests/constants/constants';
+import {
+  COMMENT_TYPE,
+  LOCATION_RENT_STATUS,
+} from '../assests/constants/constants';
 import {
   ErrorLocationMessage,
   SuccessLocationMessage,
 } from '../assests/messages/location.message';
 import { ErrorServiceMessage } from '../assests/messages/service.message';
+import { validString } from '../common/helpers/common.helper';
 import {
   AddLocationMediaRequestDto,
   CreateLocationDto,
-  DeleteLocationMediaRequestDto,
   DeleteLocationDto,
+  DeleteLocationMediaRequestDto,
   DeleteLocationResponseDto,
   FavoriteLocationListResponseDto,
   FavoriteLocationSummaryDto,
@@ -18,22 +22,31 @@ import {
   GetLocationByFillterDto,
   GetShareLinkQueryDto,
   GetShareLinkResponseDto,
-  LocationMediaListResponseDto,
-  LocationMediaDto,
-  LocationMediaResponseDto,
   LocationListDto,
+  LocationMediaListResponseDto,
+  LocationMediaResponseDto,
   LocationResponseDto,
   PaginatedLocationListDto,
   ReorderLocationMediaRequestDto,
   ToggleFavoriteRequestDto,
   ToggleFavoriteResponseDto,
-  UpdatelocationPayloadDto,
-  UpdateLocationMediaRequestDto,
   UpdateLocationLogoRequestDto,
   UpdateLocationLogoResponseDto,
+  UpdateLocationMediaRequestDto,
+  UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
 } from '../dtos/location/location.dto';
+import {
+  DeleteLocationAddressesDto,
+  DeleteLocationAddressResponseDto,
+  UpdateLocationAddressPayloadDto,
+} from '../dtos/location/locationAddress.dto';
+import {
+  GetAllCommentDto,
+  GetAllCommentResponseDto,
+  LocationCommentPayloadDto,
+} from '../dtos/location/locationComment.dto';
 import {
   AddLocationServicePayload,
   LocationServiceResponse,
@@ -45,26 +58,22 @@ import {
   UpdateLocationTypeResponseDto,
 } from '../dtos/location/locationType.dto';
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
-import { TbLocationType } from '../entities/location/locationType.entity';
-import { LocationRepository } from '../repositories/location.repository';
-import {
-  DeleteLocationAddressesDto,
-  DeleteLocationAddressResponseDto,
-  UpdateLocationAddressPayloadDto,
-} from '../dtos/location/locationAddress.dto';
-import { validString } from '../common/helpers/common.helper';
 import {
   LocationMediaType,
   TbLocationMedia,
 } from '../entities/location/locationMedia.entity';
+import { TbLocationType } from '../entities/location/locationType.entity';
+import { LocationRepository } from '../repositories/location/location.repository';
+import { LocationCommentRepository } from '../repositories/location/locationComment.repository';
 import { CloudinaryService } from './cloudinary.service';
 
 @Injectable()
 export class LocationService {
   constructor(
-    private locationRepo: LocationRepository,
-    private configService: ConfigService,
-    private cloudinaryService: CloudinaryService,
+    private readonly locationRepo: LocationRepository,
+    private readonly configService: ConfigService,
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly commentRepo: LocationCommentRepository,
   ) {}
 
   private async enrichLocationDetails(
@@ -95,10 +104,12 @@ export class LocationService {
       return undefined;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     if (mediaType === LocationMediaType.IMAGE) {
       return LocationMediaType.IMAGE;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
     if (mediaType === LocationMediaType.VIDEO) {
       return LocationMediaType.VIDEO;
     }
@@ -1712,7 +1723,7 @@ export class LocationService {
       payload.mediaCode,
     );
 
-    if (Boolean(media.isLogo)) {
+    if (media.isLogo) {
       throw new HttpException(
         ErrorLocationMessage.LOCATION_MEDIA_DELETE_LOGO_FORBIDDEN.toString(),
         HttpStatus.BAD_REQUEST,
@@ -1829,5 +1840,89 @@ export class LocationService {
       locationCode: payload.locationCode,
       shareUrl: `${baseUrl}/room-detail?locationCode=${encodeURIComponent(payload.locationCode)}`,
     };
+  }
+
+  public async createNewComment(
+    user: UserDecoratorDtoResponse,
+    payload: LocationCommentPayloadDto,
+  ): Promise<any> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.content.ratevalue && payload.content.ratevalue === null) {
+      payload.content.ratevalue = 0;
+    }
+
+    if (payload.commentId) {
+      payload.type = COMMENT_TYPE.REPLY;
+    } else {
+      payload.type = COMMENT_TYPE.COMMENT;
+    }
+
+    try {
+      const location = await this.locationRepo.GetLocationByCode(
+        payload.locationCode,
+      );
+
+      if (!location) {
+        throw new HttpException(
+          ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return await this.commentRepo.createComment(user.userCode, payload);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get location by code:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async getComment(
+    payload: GetAllCommentDto,
+  ): Promise<GetAllCommentResponseDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      return await this.commentRepo.getAllComment(payload);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error during get location by code:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

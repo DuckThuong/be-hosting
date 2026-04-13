@@ -5,12 +5,17 @@ import { TbLocation } from '../entities/location/location.entity';
 import { TbLocationFavorite } from '../entities/location/locationFavorite.entity';
 import { TbLocationService } from '../entities/location/locationService.entity';
 import { TbLocationType } from '../entities/location/locationType.entity';
-import { LocationRepository } from '../repositories/location.repository';
+import { LocationRepository } from '../repositories/location/location.repository';
 import { LocationService } from '../services/location.service';
 import { TbLocationAddress } from '../entities/location/locationAddress.entity';
 import { TbUserDefault } from '../entities/user/user_default.entity';
-import { TbLocationMedia } from '../entities/location/locationMedia.entity';
+import {
+  TbLocationComment,
+  TbLocationCommentReply,
+} from '../entities/location/locationComment.entity';
+import { LocationCommentRepository } from '../repositories/location/locationComment.repository';
 import { CloudinaryModule } from './cloudinary.module';
+import { TbLocationMedia } from '../entities/location/locationMedia.entity';
 
 @Module({
   imports: [
@@ -22,10 +27,12 @@ import { CloudinaryModule } from './cloudinary.module';
       TbLocationAddress,
       TbLocationService,
       TbUserDefault,
+      TbLocationComment,
+      TbLocationCommentReply,
       TbLocationMedia,
     ]),
   ],
-  providers: [LocationService, LocationRepository],
+  providers: [LocationService, LocationRepository, LocationCommentRepository],
   controllers: [LocationController],
   exports: [LocationService],
 })
