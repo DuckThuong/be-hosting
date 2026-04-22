@@ -20,6 +20,7 @@ import {
   FavoriteLocationSummaryDto,
   GetLocationAddressByLocationCodePayloadDto,
   GetLocationByFillterDto,
+  GetRelatedLocationQueryDto,
   GetShareLinkQueryDto,
   GetShareLinkResponseDto,
   LocationListDto,
@@ -1301,6 +1302,87 @@ export class LocationService {
         throw error;
       }
       console.error('Error during get location by filter:', error);
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async GetRelatedLocation(
+    payload: GetRelatedLocationQueryDto,
+  ): Promise<PaginatedLocationListDto> {
+    if (!payload.locationCode || payload.locationCode.trim() === '') {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_NOTEMPTY.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.locationCode.length > 50) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const page = Number(payload.page) || 1;
+    const limit = Number(payload.limit) || 8;
+
+    if (!Number.isInteger(page) || page <= 0) {
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!Number.isInteger(limit) || limit <= 0) {
+      throw new HttpException(
+        ErrorLocationMessage.CATCH_ERROR.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const currentLocation = await this.locationRepo.FindLocationByCode(
+      payload.locationCode,
+    );
+
+    if (!currentLocation) {
+      throw new HttpException(
+        ErrorLocationMessage.LOCATION_NOT_FOUND.toString(),
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const currentAddress = await this.locationRepo.GetPrimaryAddressByLocationCode(
+      payload.locationCode,
+    );
+    const scopedRegion = currentAddress?.addressRegion?.trim();
+    const scopedCity = scopedRegion ? undefined : currentAddress?.addressCity?.trim();
+
+    try {
+      const result = await this.locationRepo.GetRelatedLocation({
+        locationCode: payload.locationCode,
+        typeCode: currentLocation.typeCode,
+        addressRegion: scopedRegion || undefined,
+        addressCity: scopedCity || undefined,
+        page,
+        limit,
+      });
+
+      for (const item of result.data) {
+        if (item.locationCode) {
+          await this.enrichLocationDetails(item);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      console.error('Error during get related location:', error);
       throw new HttpException(
         ErrorLocationMessage.CATCH_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,

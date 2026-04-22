@@ -894,6 +894,29 @@ export class LocationRepository {
     user: UserDecoratorDtoResponse | undefined,
     payload: GetLocationByFillterDto,
   ): Promise<PaginatedLocationListDto> {
+    const normalizedPayload: GetLocationByFillterDto = {
+      ...payload,
+      locationName: this.normalizeFilterInput(payload.locationName),
+      locationType: this.normalizeLocationTypeInput(payload.locationType),
+      typeName: this.normalizeFilterInput(payload.typeName),
+      ownerEmail: this.normalizeFilterInput(payload.ownerEmail),
+      ownerName: this.normalizeFilterInput(payload.ownerName),
+      renderEmail: this.normalizeFilterInput(payload.renderEmail),
+      renderName: this.normalizeFilterInput(payload.renderName),
+      addressName: this.normalizeFilterInput(payload.addressName),
+      fullAddress: this.normalizeFilterInput(payload.fullAddress),
+      addressWard: this.normalizeFilterInput(payload.addressWard),
+      addressDistrict: this.normalizeFilterInput(payload.addressDistrict),
+      addressCity: this.normalizeFilterInput(payload.addressCity),
+      addressProvince: this.normalizeFilterInput(payload.addressProvince),
+      addressCountry: this.normalizeFilterInput(payload.addressCountry),
+      addressRegion: this.normalizeFilterInput(payload.addressRegion),
+      addressType: this.normalizeFilterInput(payload.addressType),
+      addressLat: this.normalizeFilterInput(payload.addressLat),
+      addressLong: this.normalizeFilterInput(payload.addressLong),
+      searchValue: this.normalizeFilterInput(payload.searchValue),
+    };
+
     const qb = this.location
       .createQueryBuilder('TL')
       .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
@@ -941,21 +964,21 @@ export class LocationRepository {
         'TUPR.userCity AS renterCity',
       ]);
 
-    if (validString(payload.locationName)) {
+    if (validString(normalizedPayload.locationName)) {
       qb.andWhere('TL.locationName LIKE :locationName', {
-        locationName: `%${payload.locationName}%`,
+        locationName: `%${normalizedPayload.locationName}%`,
       });
     }
 
-    if (validString(payload.locationType)) {
+    if (validString(normalizedPayload.locationType)) {
       qb.andWhere('TL.typeCode LIKE :locationType', {
-        locationType: `%${payload.locationType}%`,
+        locationType: `%${normalizedPayload.locationType}%`,
       });
     }
 
-    if (validString(payload.typeName)) {
+    if (validString(normalizedPayload.typeName)) {
       const type = await this.locationType.findOneBy({
-        typeName: Like(`%${payload.typeName}%`),
+        typeName: Like(`%${normalizedPayload.typeName}%`),
       });
       if (type) {
         qb.andWhere('TL.typeCode LIKE :locationType', {
@@ -964,12 +987,15 @@ export class LocationRepository {
       }
     }
 
-    if (validString(payload.ownerEmail) && validString(payload.ownerName)) {
+    if (
+      validString(normalizedPayload.ownerEmail) &&
+      validString(normalizedPayload.ownerName)
+    ) {
       const user = await this.user
         .createQueryBuilder('u')
-        .where('u.email = :email', { email: payload.ownerEmail })
+        .where('u.email = :email', { email: normalizedPayload.ownerEmail })
         .andWhere('u.username LIKE :username', {
-          username: `%${payload.ownerName}%`,
+          username: `%${normalizedPayload.ownerName}%`,
         })
         .getOne();
 
@@ -980,18 +1006,21 @@ export class LocationRepository {
       }
     }
 
-    if (payload.hasRent) {
+    if (normalizedPayload.hasRent) {
       qb.andWhere('TL.hasRent LIKE :hasRent', {
-        hasRent: `%${payload.hasRent}%`,
+        hasRent: `%${normalizedPayload.hasRent}%`,
       });
     }
 
-    if (validString(payload.renderEmail) && validString(payload.renderName)) {
+    if (
+      validString(normalizedPayload.renderEmail) &&
+      validString(normalizedPayload.renderName)
+    ) {
       const user = await this.user
         .createQueryBuilder('u')
-        .where('u.email = :email', { email: payload.renderEmail })
+        .where('u.email = :email', { email: normalizedPayload.renderEmail })
         .andWhere('u.username LIKE :username', {
-          username: `%${payload.renderName}%`,
+          username: `%${normalizedPayload.renderName}%`,
         })
         .getOne();
 
@@ -1002,25 +1031,26 @@ export class LocationRepository {
       }
     }
 
-    if (payload.locationRate) {
+    if (normalizedPayload.locationRate) {
       qb.andWhere('TL.locationRate LIKE :locationRate', {
-        locationRate: `%${payload.locationRate}%`,
+        locationRate: `%${normalizedPayload.locationRate}%`,
       });
     }
 
-    const locationCodes = await this.getLocationCodesByAddress(payload);
+    const locationCodes =
+      await this.getLocationCodesByAddress(normalizedPayload);
     if (locationCodes && locationCodes.length > 0) {
       qb.andWhere('TL.locationCode IN (:...locationCodes)', {
         locationCodes,
       });
     }
 
-    if (validString(payload.searchValue)) {
-      const sv = `%${payload.searchValue}%`;
+    if (validString(normalizedPayload.searchValue)) {
+      const sv = `%${normalizedPayload.searchValue}%`;
 
       const addressMatchedCodes = await this.getLocationCodesByAddress({
-        ...payload,
-        fullAddress: payload.searchValue,
+        ...normalizedPayload,
+        fullAddress: normalizedPayload.searchValue,
       });
 
       if (addressMatchedCodes && addressMatchedCodes.length > 0) {
@@ -1051,8 +1081,8 @@ export class LocationRepository {
       });
     }
 
-    const page = Number(payload.page) || 1;
-    const limit = Number(payload.limit) || 10;
+    const page = Number(normalizedPayload.page) || 1;
+    const limit = Number(normalizedPayload.limit) || 10;
     const offset = (page - 1) * limit;
 
     const total = await qb.clone().getCount();
@@ -1069,6 +1099,123 @@ export class LocationRepository {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  public async GetRelatedLocation(payload: {
+    locationCode: string;
+    typeCode: string;
+    addressRegion?: string;
+    addressCity?: string;
+    page: number;
+    limit: number;
+  }): Promise<PaginatedLocationListDto> {
+    const qb = this.location
+      .createQueryBuilder('TL')
+      .leftJoin('tb_location-type', 'TLT', 'TLT.typeCode = TL.typeCode')
+      .leftJoin('tb_user_default', 'TUDO', 'TUDO.userCode = TL.ownerCode')
+      .leftJoin('tb_user_profile', 'TUPO', 'TUPO.user_id = TUDO.id')
+      .leftJoin('tb_user_default', 'TUDR', 'TUDR.userCode = TL.userRentCd')
+      .leftJoin('tb_user_profile', 'TUPR', 'TUPR.user_id = TUDR.id')
+      .select([
+        'TL.locationCode AS locationCode',
+        'TL.locationName AS locationName',
+        'TL.locationDescription AS locationDescription',
+        'TL.locationNote AS locationNote',
+        'TL.locationLogo AS locationLogo',
+        'TL.minTimeLimit AS minTime',
+        'TL.maxTimeLimit AS maxTime',
+        'TL.hasRent AS hasRent',
+        'TL.locationRate AS locationRate',
+        'TL.typeCode AS typeCode',
+        'TL.locationPriceStart AS locationPriceStart',
+        'TL.locationPriceEnd AS locationPriceEnd',
+        'TL.locationPriceAfterDeal AS locationPriceAfterDeal',
+        'TL.locationArea AS locationArea',
+
+        'TLT.typeName AS typeName',
+        'TLT.typeDescription AS typeDescription',
+        'TLT.typeLogo AS typeLogo',
+        'TLT.typeBackGround AS typeBackGround',
+
+        'TL.ownerCode AS ownerCode',
+        'TUDO.userName AS ownerName',
+        'TUDO.email AS ownerEmail',
+        'TUPO.avatarUrl AS ownerAvatar',
+        'TUPO.coverUrl AS ownerCover',
+        'TUPO.phone AS ownerPhone',
+        'TUPO.fullAddress AS ownerAddress',
+        'TUPO.userCity AS ownerCity',
+
+        'TL.userRentCd AS renterCode',
+        'TUDR.userName AS renterName',
+        'TUDR.email AS renterEmail',
+        'TUPR.avatarUrl AS renterAvatar',
+        'TUPR.coverUrl AS renterCover',
+        'TUPR.phone AS renterPhone',
+        'TUPR.fullAddress AS renterAddress',
+        'TUPR.userCity AS renterCity',
+      ])
+      .where('TL.locationCode != :locationCode', {
+        locationCode: payload.locationCode,
+      });
+
+    const regionFilter = validString(payload.addressRegion)
+      ? `EXISTS (
+          SELECT 1
+          FROM \`tb_location-address\` TLA
+          WHERE TLA.locationCode = TL.locationCode
+            AND TLA.addressRegion LIKE :addressRegion
+        )`
+      : undefined;
+    const cityFilter =
+      !regionFilter && validString(payload.addressCity)
+        ? `EXISTS (
+          SELECT 1
+          FROM \`tb_location-address\` TLA
+          WHERE TLA.locationCode = TL.locationCode
+            AND TLA.addressCity LIKE :addressCity
+        )`
+        : undefined;
+
+    if (regionFilter) {
+      qb.andWhere(
+        `(TL.typeCode = :typeCode OR ${regionFilter})`,
+        {
+          typeCode: payload.typeCode,
+          addressRegion: `%${payload.addressRegion}%`,
+        },
+      );
+    } else if (cityFilter) {
+      qb.andWhere(
+        `(TL.typeCode = :typeCode OR ${cityFilter})`,
+        {
+          typeCode: payload.typeCode,
+          addressCity: `%${payload.addressCity}%`,
+        },
+      );
+    } else {
+      qb.andWhere('TL.typeCode = :typeCode', {
+        typeCode: payload.typeCode,
+      });
+    }
+
+    const offset = (payload.page - 1) * payload.limit;
+    const total = await qb.clone().getCount();
+
+    const data = await qb
+      .orderBy('TL.locationRate', 'DESC')
+      .addOrderBy('TL.locationCode', 'ASC')
+      .offset(offset)
+      .limit(payload.limit)
+      .getRawMany<LocationListDto>();
+
+    return {
+      data,
+      total,
+      page: payload.page,
+      limit: payload.limit,
+      totalPages: Math.ceil(total / payload.limit),
     };
   }
 
@@ -1160,6 +1307,18 @@ export class LocationRepository {
 
     const results = await qb.getRawMany<{ locationCode: string }>();
     return results.map((r) => r.locationCode);
+  }
+
+  private normalizeFilterInput(value?: string | null): string | undefined {
+    const normalizedValue = value?.trim();
+    return normalizedValue || undefined;
+  }
+
+  private normalizeLocationTypeInput(
+    value?: string | null,
+  ): string | undefined {
+    const normalizedValue = this.normalizeFilterInput(value);
+    return normalizedValue?.replaceAll('-', '_');
   }
 
   public async GetLocationServices(
@@ -1396,5 +1555,35 @@ export class LocationRepository {
     return {
       data: result,
     };
+  }
+
+  public async GetPrimaryAddressByLocationCode(
+    locationCode: string,
+  ): Promise<LocationAddressItemDto | null> {
+    const address = await this.locationAddress
+      .createQueryBuilder('tla')
+      .select([
+        'tla.addressCode AS addressCode',
+        'tla.addressName AS addressName',
+        'tla.fullAddress AS fullAddress',
+        'tla.addressWard AS addressWard',
+        'tla.addressDistrict AS addressDistrict',
+        'tla.addressCity AS addressCity',
+        'tla.addressProvince AS addressProvince',
+        'tla.addressCountry AS addressCountry',
+        'tla.addressPortal AS addressPortal',
+        'tla.addressLat AS addressLat',
+        'tla.addressLong AS addressLong',
+        'tla.addressRegion AS addressRegion',
+        'tla.addressStatus AS addressStatus',
+        'tla.addressDescription AS addressDescription',
+        'tla.addressNote AS addressNote',
+        'tla.addressType AS addressType',
+      ])
+      .where('tla.locationCode = :locationCode', { locationCode })
+      .orderBy('tla.id', 'ASC')
+      .getRawOne<LocationAddressItemDto>();
+
+    return address ?? null;
   }
 }

@@ -81,17 +81,6 @@ export class AuthService {
       );
     }
 
-    if (!user.isEmailVerified) {
-      const otpPayload: SendOtpDto = {
-        email: user.email,
-      };
-      await this.mailService.sendOTP(otpPayload);
-      throw new HttpException(
-        ErrorLoginMessage.USER_NOT_VERIFIED.toString(),
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
     try {
       const payload: JwtPayload = {
         sub: user.id,
@@ -168,10 +157,11 @@ export class AuthService {
         );
       }
 
-      const otpPayload: SendOtpDto = {
-        email: newUser.email,
-      };
-      await this.mailService.sendOTP(otpPayload);
+      // Temporarily disable mandatory OTP flow after sign up.
+      // const otpPayload: SendOtpDto = {
+      //   email: newUser.email,
+      // };
+      // await this.mailService.sendOTP(otpPayload);
 
       return { message: SuccessRegisterMessage.REGISTER_SUCCESS.toString() };
     } catch (error) {

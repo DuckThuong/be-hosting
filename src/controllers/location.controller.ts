@@ -16,6 +16,7 @@ import {
   DeleteLocationResponseDto,
   GetLocationAddressByLocationCodePayloadDto,
   GetLocationByFillterDto,
+  GetRelatedLocationQueryDto,
   LocationListDto,
   LocationResponseDto,
   PaginatedLocationListDto,
@@ -186,6 +187,14 @@ export class LocationController {
     return this.locationService.GetLocationByFilter(user, payload);
   }
 
+  @ApiOperation({ summary: 'Lay danh sach phong lien quan' })
+  @Get('get-related-location')
+  public async getRelatedLocation(
+    @Query() payload: GetRelatedLocationQueryDto,
+  ): Promise<PaginatedLocationListDto> {
+    return this.locationService.GetRelatedLocation(payload);
+  }
+
   @ApiOperation({ summary: 'Lấy comment' })
   @Get('get-comment')
   public async getComment(
@@ -204,3 +213,4 @@ export class LocationController {
     return this.locationService.createNewComment(user, payload);
   }
 }
+

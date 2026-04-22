@@ -1210,6 +1210,30 @@ export class GetLocationAddressByLocationCodeResponseDto {
   data: LocationAddressItemDto[];
 }
 
+export class GetRelatedLocationQueryDto {
+  @ApiProperty({
+    description: 'Mã location hiện tại',
+    example: 'UWUi9ZXl',
+  })
+  @IsString()
+  @IsNotEmpty()
+  locationCode: string;
+
+  @ApiProperty({
+    description: 'Trang hiện tại',
+    example: '1',
+    required: false,
+  })
+  page?: string;
+
+  @ApiProperty({
+    description: 'Số lượng mỗi trang',
+    example: '8',
+    required: false,
+  })
+  limit?: string;
+}
+
 export class GetLocationByFillterDto {
   @ApiProperty({
     description: 'searchValue',
