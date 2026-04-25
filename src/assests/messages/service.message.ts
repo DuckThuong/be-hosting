@@ -1,23 +1,24 @@
 export class SuccessServiceMessage {
-  static readonly CREATE_SUCCESS = 'Tạo mới thành công';
-  static readonly UPDATE_SUCCESS = 'Cập nhật thành công';
+  static readonly CREATE_SUCCESS = 'Tao moi thanh cong';
+  static readonly UPDATE_SUCCESS = 'Cap nhat thanh cong';
 }
 
 export class ErrorServiceMessage {
-  static readonly CATCH_ERROR = 'Đã xảy ra lỗi';
-  static readonly SERVICE_NOT_EXIST = 'Dịch vụ không tồn tại';
-  static readonly SERVICE_CODE_NOTEMPTY = 'Mã dịch vụ không được để trống';
+  static readonly CATCH_ERROR = 'Da xay ra loi';
+  static readonly SERVICE_NOT_EXIST = 'Dich vu khong ton tai';
+  static readonly SERVICE_CODE_NOTEMPTY = 'Ma dich vu khong duoc de trong';
   static readonly SERVICE_CODE_INVALID =
-    'Mã dịch vụ không được vượt quá 50 ký tự';
-  static readonly SERVICE_NAME_NOTEMPTY = 'Tên dịch vụ không được để trống';
+    'Ma dich vu khong duoc vuot qua 50 ky tu';
+  static readonly SERVICE_NAME_NOTEMPTY = 'Ten dich vu khong duoc de trong';
   static readonly SERVICE_NAME_INVALID =
-    'Tên dịch vụ không được vượt quá 50 ký tự';
+    'Ten dich vu khong duoc vuot qua 50 ky tu';
   static readonly SERVICE_DESCRIPTION_INVALID =
-    'Mô tả dịch vụ không được vượt quá 2000 ký tự';
+    'Mo ta dich vu khong duoc vuot qua 2000 ky tu';
   static readonly SERVICE_LOGO_INVALID =
-    'Logo dịch vụ không được vượt quá 2000 ký tự';
+    'Logo dich vu khong duoc vuot qua 2000 ky tu';
   static readonly SERVICE_BACKGROUND_INVALID =
-    'Ảnh nền dịch vụ không được vượt quá 2000 ký tự';
-  static readonly TYPE_NOT_EXIST = 'Dịch vụ không tồn tại';
-  static readonly ID_REQUIRED = 'ID dịch vụ là bắt buộc';
+    'Anh nen dich vu khong duoc vuot qua 2000 ky tu';
+  static readonly SERVICE_PRICE_INVALID = 'Gia dich vu khong hop le';
+  static readonly TYPE_NOT_EXIST = 'Dich vu khong ton tai';
+  static readonly ID_REQUIRED = 'ID dich vu la bat buoc';
 }

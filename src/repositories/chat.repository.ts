@@ -284,6 +284,15 @@ export class ChatRepository {
     });
   }
 
+  public async findAttachmentById(
+    attachmentId: number,
+  ): Promise<TbMessageAttachment | null> {
+    return await this.messageAttachment.findOne({
+      where: { id: attachmentId },
+      relations: { message: true },
+    });
+  }
+
   public async getConversationParticipantIds(
     conversationId: number,
   ): Promise<number[]> {

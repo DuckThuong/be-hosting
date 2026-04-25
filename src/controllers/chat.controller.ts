@@ -2,12 +2,15 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   ParseIntPipe,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../common/jwt/jwt.guard';
 import {
   ContactToUserPayloadDto,
@@ -28,7 +31,20 @@ import { User } from '../user.decorator';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @ApiOperation({ summary: 'Tạo hoặc lấy cuộc trò chuyện với người dùng khác' })
+  private buildContentDisposition(
+    mode: 'inline' | 'attachment',
+    fileName?: string,
+  ): string {
+    const originalName = fileName || 'attachment';
+    const fallbackName = originalName
+      .replace(/[^\x20-\x7E]+/g, '_')
+      .replace(/["\\]/g, '_');
+    const encodedName = encodeURIComponent(originalName);
+
+    return `${mode}; filename="${fallbackName}"; filename*=UTF-8''${encodedName}`;
+  }
+
+  @ApiOperation({ summary: 'Tao hoac lay cuoc tro chuyen voi nguoi dung khac' })
   @Post('contact')
   public async contactToUser(
     @Body() body: ContactToUserPayloadDto,
@@ -37,7 +53,7 @@ export class ChatController {
     return this.chatService.contactToUser(user, body);
   }
 
-  @ApiOperation({ summary: 'Lấy danh sách cuộc trò chuyện của user' })
+  @ApiOperation({ summary: 'Lay danh sach cuoc tro chuyen cua user' })
   @Get('conversations')
   public async getConversations(
     @User() user: UserDecoratorDtoResponse,
@@ -45,7 +61,7 @@ export class ChatController {
     return this.chatService.getConversations(user.id);
   }
 
-  @ApiOperation({ summary: 'Lấy danh sách tin nhắn trong cuộc trò chuyện' })
+  @ApiOperation({ summary: 'Lay danh sach tin nhan trong cuoc tro chuyen' })
   @Get('messages')
   public async getMessages(
     @Query('conversationId', ParseIntPipe) conversationId: number,
@@ -56,7 +72,57 @@ export class ChatController {
     return this.chatService.getMessages(conversationId, user.id, +page, +limit);
   }
 
-  @ApiOperation({ summary: 'Gửi tin nhắn' })
+  @ApiOperation({ summary: 'Xem file dinh kem trong chat' })
+  @Get('attachments/:id/view')
+  public async viewAttachment(
+    @Param('id', ParseIntPipe) attachmentId: number,
+    @User() user: UserDecoratorDtoResponse,
+    @Res() response: Response,
+  ): Promise<void> {
+    const attachment = await this.chatService.getAttachmentForUser(
+      attachmentId,
+      user.id,
+    );
+    const content = await this.chatService.fetchAttachmentContent(attachment);
+
+    response.setHeader(
+      'Content-Type',
+      attachment.mimeType || 'application/octet-stream',
+    );
+    response.setHeader(
+      'Content-Disposition',
+      this.buildContentDisposition('inline', attachment.fileName),
+    );
+    response.setHeader('Content-Length', content.byteLength.toString());
+    response.send(content);
+  }
+
+  @ApiOperation({ summary: 'Tai file dinh kem trong chat' })
+  @Get('attachments/:id/download')
+  public async downloadAttachment(
+    @Param('id', ParseIntPipe) attachmentId: number,
+    @User() user: UserDecoratorDtoResponse,
+    @Res() response: Response,
+  ): Promise<void> {
+    const attachment = await this.chatService.getAttachmentForUser(
+      attachmentId,
+      user.id,
+    );
+    const content = await this.chatService.fetchAttachmentContent(attachment);
+
+    response.setHeader(
+      'Content-Type',
+      attachment.mimeType || 'application/octet-stream',
+    );
+    response.setHeader(
+      'Content-Disposition',
+      this.buildContentDisposition('attachment', attachment.fileName),
+    );
+    response.setHeader('Content-Length', content.byteLength.toString());
+    response.send(content);
+  }
+
+  @ApiOperation({ summary: 'Gui tin nhan' })
   @Post('send')
   public async sendMessage(
     @Body() body: SendMessageDto,
@@ -65,7 +131,7 @@ export class ChatController {
     return this.chatService.sendMessage(user, body);
   }
 
-  @ApiOperation({ summary: 'Đánh dấu cuộc trò chuyện đã đọc' })
+  @ApiOperation({ summary: 'Danh dau cuoc tro chuyen da doc' })
   @Post('read')
   public async markConversationAsRead(
     @Body() body: MarkConversationReadDto,
@@ -74,7 +140,7 @@ export class ChatController {
     return this.chatService.markConversationAsRead(user.id, body);
   }
 
-  @ApiOperation({ summary: 'Cập nhật biệt danh cuộc trò chuyện' })
+  @ApiOperation({ summary: 'Cap nhat biet danh cuoc tro chuyen' })
   @Post('nickname')
   public async setConversationNickname(
     @Body() body: SetConversationNicknameDto,
@@ -83,7 +149,7 @@ export class ChatController {
     return this.chatService.setConversationNickname(user.id, body);
   }
 
-  @ApiOperation({ summary: 'Ghim hoặc bỏ ghim cuộc trò chuyện' })
+  @ApiOperation({ summary: 'Ghim hoac bo ghim cuoc tro chuyen' })
   @Post('pin')
   public async pinConversation(
     @Body() body: PinConversationDto,
@@ -92,7 +158,7 @@ export class ChatController {
     return this.chatService.pinConversation(user.id, body);
   }
 
-  @ApiOperation({ summary: 'Cập nhật tắt thông báo cuộc trò chuyện' })
+  @ApiOperation({ summary: 'Cap nhat tat thong bao cuoc tro chuyen' })
   @Post('mute')
   public async muteConversation(
     @Body() body: MuteConversationDto,

@@ -66,6 +66,7 @@ export class ErrorLocationMessage {
     'Mo ta khu vuc khong hop le (toi da 2000 ky tu).';
   static readonly LOCATION_NOTE_INVALID =
     'Ghi chu khu vuc khong hop le (toi da 2000 ky tu).';
+  static readonly LOCATION_PRICE_INVALID = 'Thong tin gia khu vuc khong hop le.';
   static readonly LOCATION_RATE_INVALID =
     'Danh gia khu vuc khong hop le (tu 0 den 5).';
   static readonly LOCATION_AREA_INVALID = 'Dien tich khu vuc khong hop le.';

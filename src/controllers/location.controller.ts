@@ -187,7 +187,7 @@ export class LocationController {
     return this.locationService.GetLocationByFilter(user, payload);
   }
 
-  @ApiOperation({ summary: 'Lay danh sach phong lien quan' })
+  @ApiOperation({ summary: 'Lấy danh sách địa điểm liên quan' })
   @Get('get-related-location')
   public async getRelatedLocation(
     @Query() payload: GetRelatedLocationQueryDto,

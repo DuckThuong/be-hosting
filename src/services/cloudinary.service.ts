@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UploadApiResponse } from 'cloudinary';
+import { extname } from 'path';
 import cloudinary, {
   configureCloudinary,
 } from '../common/cloudinary/cloudinary.config';
@@ -44,6 +45,18 @@ export class CloudinaryService {
     return 'raw';
   }
 
+  private buildRawPublicId(originalName: string): string {
+    const extension = extname(originalName || '').toLowerCase();
+    const baseName = (originalName || 'file')
+      .replace(extension, '')
+      .trim()
+      .replace(/[^a-zA-Z0-9-_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'file';
+
+    return `${Date.now()}-${baseName}${extension}`;
+  }
+
   public async uploadMedia(file: FileUpload, folder: string): Promise<string> {
     if (!file?.buffer) {
       throw new HttpException(
@@ -54,14 +67,22 @@ export class CloudinaryService {
 
     try {
       const resourceType = this.resolveResourceType(file.mimetype);
+      const uploadOptions: Record<string, string | boolean> = {
+        folder,
+        resource_type: resourceType,
+      };
+
+      if (resourceType === 'raw') {
+        uploadOptions.public_id = this.buildRawPublicId(file.originalname);
+        uploadOptions.use_filename = true;
+        uploadOptions.unique_filename = false;
+        uploadOptions.filename_override = file.originalname;
+      }
 
       const result = await new Promise<UploadApiResponse>((resolve, reject) => {
         cloudinary.uploader
           .upload_stream(
-            {
-              folder,
-              resource_type: resourceType,
-            },
+            uploadOptions,
             (error, result) => {
               if (error) return reject(new Error(error.message));
               if (!result)

@@ -19,6 +19,25 @@
     "locationRate": 4
   },
   {
+    "locationCode": "LOC_SHOP_01",
+    "typeCode": "SHOP",
+    "locationName": "Mặt bằng kinh doanh Quận 3",
+    "locationLogo": "https://picsum.photos/seed/loc-shop-01/800/600",
+    "ownerCode": "owner-01",
+    "minTimeLimit": "6",
+    "maxTimeLimit": "36",
+    "locationPriceStart": 25000000,
+    "locationPriceEnd": 30000000,
+    "locationPriceAfterDeal": 24000000,
+    "locationArea": 80,
+    "hasRent": 0,
+    "userRentCd": null,
+    "locationDescription": "Mặt bằng kinh doanh sầm uất, phù hợp cửa hàng thời trang hoặc cà phê.",
+    "locationNote": "Đã có hệ thống điện nước riêng biệt.",
+    "locationStatus": 1,
+    "locationRate": 5
+  },
+  {
     "locationCode": "LOC_APT_01",
     "typeCode": "APARTMENT",
     "locationName": "Căn hộ studio Quận 1",

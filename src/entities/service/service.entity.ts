@@ -1,5 +1,10 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
+export enum ServicePricingType {
+  FULL = 'FULL',
+  DAILY = 'DAILY',
+}
+
 @Entity('tb_service')
 export class TbService {
   @PrimaryGeneratedColumn('increment', {
@@ -27,4 +32,17 @@ export class TbService {
 
   @Column({ type: 'tinyint', unique: false, nullable: true })
   serviceDiscount: number;
+
+  @Column({
+    type: 'enum',
+    enum: ServicePricingType,
+    default: ServicePricingType.FULL,
+  })
+  pricingType: ServicePricingType;
+
+  @Column({ type: 'tinyint', default: 0 })
+  isCustom: number;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  createdByUserCode: string | null;
 }

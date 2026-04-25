@@ -11,6 +11,7 @@ import {
   UpdateServiceResponseDto,
 } from '../dtos/service.dto';
 import { TbService } from '../entities/service/service.entity';
+import { ServicePricingType } from '../entities/service/service.entity';
 import { randomString } from '../common/helpers/common.helper';
 
 @Injectable()
@@ -29,8 +30,11 @@ export class ServiceRepository {
       serviceDescription: payload.serviceDescription,
       serviceLogo: payload.serviceLogo,
       serviceBackGround: payload.serviceBackGround,
-      servicePrice: payload.servicePrice,
-      serviceDiscount: payload.serviceDiscount,
+      servicePrice: 0,
+      serviceDiscount: 0,
+      pricingType: ServicePricingType.FULL,
+      isCustom: 0,
+      createdByUserCode: null,
     });
 
     const saveType = await this.service.save(service);
@@ -51,8 +55,9 @@ export class ServiceRepository {
         payload.serviceDescription ?? oldData.serviceDescription,
       serviceLogo: payload.serviceLogo ?? oldData.serviceLogo,
       serviceBackGround: payload.serviceBackGround ?? oldData.serviceBackGround,
-      servicePrice: payload.servicePrice ?? oldData.servicePrice,
-      serviceDiscount: payload.serviceDiscount ?? oldData.serviceDiscount,
+      servicePrice: 0,
+      serviceDiscount: 0,
+      pricingType: ServicePricingType.FULL,
     });
 
     const savedType = await this.service.save(updatedEntity);
@@ -63,7 +68,15 @@ export class ServiceRepository {
   }
 
   public async GetAllService(): Promise<ServiceDto[]> {
-    return await this.service.find();
+    return await this.service.find({
+      where: {
+        isCustom: 0,
+        servicePrice: 0 as any,
+      },
+      order: {
+        serviceName: 'ASC',
+      },
+    });
   }
 
   public async GetServiceById(id: number): Promise<ServiceDto | null> {

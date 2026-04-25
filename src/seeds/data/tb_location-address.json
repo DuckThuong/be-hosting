@@ -19,6 +19,25 @@
     "addressType": "1"
   },
   {
+    "locationCode": "LOC_SHOP_01",
+    "addressCode": "ADDR_SHOP_01",
+    "addressName": "Địa chỉ chính cửa hàng",
+    "fullAddress": "HUST, Hai Ba Trung, Hanoi",
+    "addressWard": "Hai Ba Trung",
+    "addressDistrict": "Hai Ba Trung",
+    "addressCity": "Hà Nội",
+    "addressProvince": "Hà Nội",
+    "addressCountry": "Việt Nam",
+    "addressPortal": "700000",
+    "addressLat": "10.774500",
+    "addressLong": "106.703500",
+    "addressRegion": "north",
+    "addressStatus": "0",
+    "addressDescription": "Địa chỉ đại diện của cửa hàng",
+    "addressNote": "Mặt tiền đường lớn",
+    "addressType": "1"
+  },
+  {
     "locationCode": "LOC_APT_01",
     "addressCode": "ADDR_APT_01",
     "addressName": "Địa chỉ chính căn hộ",

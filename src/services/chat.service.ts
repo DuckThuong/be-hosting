@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   ForbiddenException,
   Injectable,
@@ -25,6 +26,7 @@ import {
 } from '../dtos/user/user.dto';
 import { ChatRealtimeService } from './chat-realtime.service';
 import { MessageResponseDto } from '../dtos/chat/message-response.dto';
+import { TbMessageAttachment } from '../entities/chat/message_attachment.entity';
 
 @Injectable()
 export class ChatService {
@@ -57,6 +59,42 @@ export class ChatService {
 
   public async ensureParticipantAccess(conversationId: number, userId: number) {
     return this.validateParticipantAccess(conversationId, userId);
+  }
+
+  public async getAttachmentForUser(
+    attachmentId: number,
+    userId: number,
+  ): Promise<TbMessageAttachment> {
+    const attachment = await this.chatRepository.findAttachmentById(attachmentId);
+
+    if (!attachment?.message?.conversationId) {
+      throw new NotFoundException('File dinh kem khong ton tai.');
+    }
+
+    await this.validateParticipantAccess(attachment.message.conversationId, userId);
+
+    return attachment;
+  }
+
+  public async fetchAttachmentContent(
+    attachment: TbMessageAttachment,
+  ): Promise<Buffer> {
+    try {
+      const response = await fetch(attachment.url);
+
+      if (!response.ok) {
+        throw new BadGatewayException('Khong the doc file dinh kem.');
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (error) {
+      if (error instanceof BadGatewayException) {
+        throw error;
+      }
+
+      throw new BadGatewayException('Khong the doc file dinh kem.');
+    }
   }
 
   private resolveMuteUntil(preset: MuteConversationPreset): Date {

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ServicePricingType } from '../entities/service/service.entity';
 
 export class CreateServiceDto {
   @ApiProperty({
@@ -42,6 +43,13 @@ export class CreateServiceDto {
     required: true,
   })
   serviceDiscount: number;
+
+  @ApiProperty({
+    description: 'pricingType',
+    enum: ServicePricingType,
+    required: false,
+  })
+  pricingType?: ServicePricingType;
 }
 
 export class UpdateServiceDto {
@@ -93,6 +101,13 @@ export class UpdateServiceDto {
     required: true,
   })
   serviceDiscount: number;
+
+  @ApiProperty({
+    description: 'pricingType',
+    enum: ServicePricingType,
+    required: false,
+  })
+  pricingType?: ServicePricingType;
 }
 export class CreateServiceResponseDto {
   message: string;
@@ -113,4 +128,7 @@ export class ServiceDto {
   serviceBackGround: string;
   servicePrice: number;
   serviceDiscount: number;
+  pricingType: ServicePricingType;
+  isCustom: number;
+  createdByUserCode: string | null;
 }
