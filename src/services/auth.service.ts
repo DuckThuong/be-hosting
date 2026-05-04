@@ -140,14 +140,18 @@ export class AuthService {
     try {
       const hashedPassword = await bcrypt.hash(payload.password, ROUND);
 
+      // Tạo username ngẫu nhiên từ tiền tố email để tránh trùng lặp
+      // Vì FE truyền họ tên khách vào field userName
+      const generatedUsername = `${payload.email.split('@')[0]}_${Math.floor(Math.random() * 100000)}`;
+
       const newUser = await this.authRepository.createUser({
         userCode: randomString(),
-        username: payload.userName,
+        username: generatedUsername, // Tự sinh username duy nhất
+        fullName: payload.userName,  // Lưu họ tên vào trường fullName
         email: payload.email,
         password: hashedPassword,
         role: UserRole.USER,
         status: UserStatus.ACTIVE,
-        isEmailVerified: false,
       });
 
       if (!newUser) {
@@ -157,8 +161,12 @@ export class AuthService {
         );
       }
 
-      // Create empty user profile for the new user
-      await this.authRepository.createUserProfile(newUser.id);
+      // Khởi tạo profile và lưu thêm số điện thoại, ngày sinh
+      await this.authRepository.createUserProfile(
+        newUser.id, 
+        payload.phoneNumber, 
+        payload.dateOfBirth
+      );
 
       // Temporarily disable mandatory OTP flow after sign up.
       // const otpPayload: SendOtpDto = {

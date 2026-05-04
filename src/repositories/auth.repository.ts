@@ -31,8 +31,12 @@ export class AuthRepository {
     return await this.repo.save(user);
   }
 
-  public async createUserProfile(userId: number): Promise<TbUserProfile> {
-    const profile = this.profileRepo.create({ user_id: userId });
+  public async createUserProfile(userId: number, phone?: string, dateOfBirth?: string): Promise<TbUserProfile> {
+    const profileData: Partial<TbUserProfile> = { user_id: userId };
+    if (phone) profileData.phone = phone;
+    if (dateOfBirth) profileData.dateOfBirth = new Date(dateOfBirth);
+    
+    const profile = this.profileRepo.create(profileData);
     return await this.profileRepo.save(profile);
   }
 

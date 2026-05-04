@@ -14,15 +14,12 @@ export abstract class BaseEntity {
   @CreateDateColumn({
     type: 'timestamp',
     comment: 'Thời điểm tạo',
-    default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
     comment: 'Thời điểm cập nhật',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
 

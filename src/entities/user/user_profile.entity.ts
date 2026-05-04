@@ -12,6 +12,8 @@ export class TbUserProfile extends BaseEntity {
 
   @OneToOne(() => TbUserDefault, (user) => user.profile, {
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+    
   })
   @JoinColumn({ name: 'user_id' })
   user?: TbUserDefault;
@@ -44,7 +46,7 @@ export class TbUserProfile extends BaseEntity {
     nullable: true,
     comment: 'Date of birth',
   })
-  dateOfBirth?: Date;
+  dateOfBirth: Date;
 
   @Column({
     type: 'varchar',
@@ -52,15 +54,16 @@ export class TbUserProfile extends BaseEntity {
     nullable: true,
     comment: 'Phone number',
   })
-  phone?: string;
+  phone: string;
 
   @Column({
     type: 'varchar',
     comment: 'Địa chỉ chi tiết',
     length: 255,
     unique: false,
+    nullable: true,
   })
-  fullAddress: string;
+  fullAddress?: string;
 
   @Column({
     type: 'varchar',
