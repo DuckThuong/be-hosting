@@ -1,4 +1,4 @@
-import { MAIL_CONFIG } from './../../assests/constants/mail.constant';
+import { MAIL_CONFIG } from '@assets/constants/mail.constant';
 
 export class OtpHelper {
   static generate(): string {

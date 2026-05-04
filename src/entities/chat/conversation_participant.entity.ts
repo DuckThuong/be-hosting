@@ -1,20 +1,17 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
-  PrimaryGeneratedColumn,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
+import { BaseEntity } from '../base.entity';
+import { TbConversation } from './conversation.entity';
 
 @Entity('tb_conversation_participant')
 @Index(['conversationId', 'userId'], { unique: true })
 @Index(['userId'])
-export class TbConversationParticipant {
-  @PrimaryGeneratedColumn({
-    comment: 'Khóa chính của bản ghi người tham gia cuộc trò chuyện',
-  })
-  id: number;
-
+export class TbConversationParticipant extends BaseEntity {
   @Column({
     comment: 'ID cuộc trò chuyện mà người dùng tham gia',
   })
@@ -66,16 +63,18 @@ export class TbConversationParticipant {
   })
   nickname?: string | null;
 
-  @CreateDateColumn({
-    type: 'timestamp',
-    comment: 'Thời điểm tham gia cuộc trò chuyện',
-  })
-  joinedAt: Date;
-
   @Column({
     type: 'timestamp',
     nullable: true,
-    comment: 'Thời điểm ẩn cuộc trò chuyện phía người dùng',
+    comment: 'Thời điểm tham gia cuộc trò chuyện (legacy)',
   })
-  deletedAt?: Date;
+  joinedAt?: Date;
+
+  // ── Relations ──
+
+  @ManyToOne(() => TbConversation, (c) => c.participants, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'conversationId' })
+  conversation?: TbConversation;
 }

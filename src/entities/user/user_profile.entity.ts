@@ -1,17 +1,20 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { BaseEntity } from '../base.entity';
+import { TbUserDefault } from './user_default.entity';
 
 @Entity('tb_user_profile')
-export class TbUserProfile {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
+export class TbUserProfile extends BaseEntity {
   @Column({
     type: 'int',
     comment: 'User id',
   })
   user_id: number;
+
+  @OneToOne(() => TbUserDefault, (user) => user.profile, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'user_id' })
+  user?: TbUserDefault;
 
   @Column({
     type: 'varchar',

@@ -1,182 +1,142 @@
 [
   {
-    "serviceCode": "SRV_FREE_WIFI",
-    "serviceName": "Wifi miễn phí",
-    "serviceDescription": "Cung cấp wifi tốc độ cao miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_WIFI",
+    "name": "Wifi mien phi",
+    "description": "Cung cap wifi toc do cao mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_PARKING",
-    "serviceName": "Giữ xe miễn phí",
-    "serviceDescription": "Dịch vụ giữ xe miễn phí cho khách",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_PARKING",
+    "name": "Giu xe mien phi",
+    "description": "Dich vu giu xe mien phi cho khach",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_WATER",
-    "serviceName": "Nước uống miễn phí",
-    "serviceDescription": "Nước uống phục vụ miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_WATER",
+    "name": "Nuoc uong mien phi",
+    "description": "Nuoc uong phuc vu mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_TV",
-    "serviceName": "TV giải trí",
-    "serviceDescription": "Xem TV miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_TV",
+    "name": "TV giai tri",
+    "description": "Xem TV mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_AC",
-    "serviceName": "Máy lạnh",
-    "serviceDescription": "Sử dụng máy lạnh miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_AC",
+    "name": "May lanh",
+    "description": "Su dung may lanh mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_RECEPTION",
-    "serviceName": "Lễ tân 24/7",
-    "serviceDescription": "Dịch vụ lễ tân miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_RECEPTION",
+    "name": "Le tan 24/7",
+    "description": "Dich vu le tan mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_SECURITY",
-    "serviceName": "Bảo vệ",
-    "serviceDescription": "An ninh miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_SECURITY",
+    "name": "Bao ve",
+    "description": "An ninh mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_CLEANING",
-    "serviceName": "Dọn phòng",
-    "serviceDescription": "Dịch vụ dọn phòng miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_CLEANING",
+    "name": "Don phong",
+    "description": "Dich vu don phong mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_ELEVATOR",
-    "serviceName": "Thang máy",
-    "serviceDescription": "Sử dụng thang máy miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_ELEVATOR",
+    "name": "Thang may",
+    "description": "Su dung thang may mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_FREE_BIKE",
-    "serviceName": "Cho mượn xe đạp",
-    "serviceDescription": "Cho mượn xe đạp miễn phí",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 0,
-    "serviceDiscount": 0
+    "code": "SRV_FREE_BIKE",
+    "name": "Cho muon xe dap",
+    "description": "Cho muon xe dap mien phi",
+    "category": "GENERAL",
+    "servicePrice": 0
   },
   {
-    "serviceCode": "SRV_LAUNDRY",
-    "serviceName": "Giặt ủi",
-    "serviceDescription": "Dịch vụ giặt ủi",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 50000,
-    "serviceDiscount": 10
+    "code": "SRV_LAUNDRY",
+    "name": "Giat ui",
+    "description": "Dich vu giat ui",
+    "category": "GENERAL",
+    "servicePrice": 50000
   },
   {
-    "serviceCode": "SRV_BREAKFAST",
-    "serviceName": "Bữa sáng",
-    "serviceDescription": "Cung cấp bữa sáng",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 80000,
-    "serviceDiscount": 5
+    "code": "SRV_BREAKFAST",
+    "name": "Bua sang",
+    "description": "Cung cap bua sang",
+    "category": "GENERAL",
+    "servicePrice": 80000
   },
   {
-    "serviceCode": "SRV_AIRPORT",
-    "serviceName": "Đưa đón sân bay",
-    "serviceDescription": "Dịch vụ đưa đón sân bay",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 250000,
-    "serviceDiscount": 15
+    "code": "SRV_AIRPORT",
+    "name": "Dua don san bay",
+    "description": "Dich vu dua don san bay",
+    "category": "GENERAL",
+    "servicePrice": 250000
   },
   {
-    "serviceCode": "SRV_SPA",
-    "serviceName": "Spa",
-    "serviceDescription": "Dịch vụ spa thư giãn",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 300000,
-    "serviceDiscount": 20
+    "code": "SRV_SPA",
+    "name": "Spa",
+    "description": "Dich vu spa thu gian",
+    "category": "GENERAL",
+    "servicePrice": 300000
   },
   {
-    "serviceCode": "SRV_GYM",
-    "serviceName": "Phòng gym",
-    "serviceDescription": "Sử dụng phòng gym",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 120000,
-    "serviceDiscount": 10
+    "code": "SRV_GYM",
+    "name": "Phong gym",
+    "description": "Su dung phong gym",
+    "category": "GENERAL",
+    "servicePrice": 120000
   },
   {
-    "serviceCode": "SRV_POOL",
-    "serviceName": "Hồ bơi",
-    "serviceDescription": "Sử dụng hồ bơi",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 100000,
-    "serviceDiscount": 5
+    "code": "SRV_POOL",
+    "name": "Ho boi",
+    "description": "Su dung ho boi",
+    "category": "GENERAL",
+    "servicePrice": 100000
   },
   {
-    "serviceCode": "SRV_MASSAGE",
-    "serviceName": "Massage",
-    "serviceDescription": "Dịch vụ massage",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 350000,
-    "serviceDiscount": 25
+    "code": "SRV_MASSAGE",
+    "name": "Massage",
+    "description": "Dich vu massage",
+    "category": "GENERAL",
+    "servicePrice": 350000
   },
   {
-    "serviceCode": "SRV_PROJECTOR",
-    "serviceName": "Thuê máy chiếu",
-    "serviceDescription": "Dịch vụ thuê máy chiếu",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 150000,
-    "serviceDiscount": 10
+    "code": "SRV_PROJECTOR",
+    "name": "Thue may chieu",
+    "description": "Dich vu thue may chieu",
+    "category": "GENERAL",
+    "servicePrice": 150000
   },
   {
-    "serviceCode": "SRV_MEETING",
-    "serviceName": "Phòng họp",
-    "serviceDescription": "Thuê phòng họp",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 400000,
-    "serviceDiscount": 15
+    "code": "SRV_MEETING",
+    "name": "Phong hop",
+    "description": "Thue phong hop",
+    "category": "GENERAL",
+    "servicePrice": 400000
   },
   {
-    "serviceCode": "SRV_EXTRA_BED",
-    "serviceName": "Giường phụ",
-    "serviceDescription": "Thuê giường phụ",
-    "serviceLogo": null,
-    "serviceBackGround": null,
-    "servicePrice": 200000,
-    "serviceDiscount": 10
+    "code": "SRV_EXTRA_BED",
+    "name": "Giuong phu",
+    "description": "Thue giuong phu",
+    "category": "GENERAL",
+    "servicePrice": 200000
   }
 ]

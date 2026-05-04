@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ErrorLocationMessage } from '../assests/messages/location.message';
+import { ErrorLocationMessage } from '../assets/messages/location.message';
 import {
   LocationDetailResponseDto,
   LocationListQueryDto,
@@ -10,7 +10,9 @@ import { LocationReadRepository } from '../repositories/location/location-read.r
 
 @Injectable()
 export class LocationQueryService {
-  constructor(private readonly locationReadRepository: LocationReadRepository) {}
+  constructor(
+    private readonly locationReadRepository: LocationReadRepository,
+  ) {}
 
   public async getLocations(
     payload: LocationListQueryDto,
@@ -18,8 +20,11 @@ export class LocationQueryService {
     return this.locationReadRepository.searchLocations(payload);
   }
 
-  public async getLocationByCode(locationCode: string): Promise<LocationDetailResponseDto> {
-    const location = await this.locationReadRepository.getLocationByCode(locationCode);
+  public async getLocationByCode(
+    locationCode: string,
+  ): Promise<LocationDetailResponseDto> {
+    const location =
+      await this.locationReadRepository.getLocationByCode(locationCode);
 
     if (!location) {
       throw new HttpException(
@@ -31,8 +36,10 @@ export class LocationQueryService {
     return location;
   }
 
-  public async getLocationsByOwner(ownerCode: string): Promise<LocationSummaryResponseDto[]> {
-    return this.locationReadRepository.getLocationsByOwner(ownerCode);  
+  public async getLocationsByOwner(
+    ownerCode: string,
+  ): Promise<LocationSummaryResponseDto[]> {
+    return this.locationReadRepository.getLocationsByOwner(ownerCode);
   }
 
   public async getRelatedLocations(
@@ -40,7 +47,8 @@ export class LocationQueryService {
     page?: number,
     limit?: number,
   ): Promise<PaginatedLocationResponseDto> {
-    const current = await this.locationReadRepository.getLocationByCode(locationCode);
+    const current =
+      await this.locationReadRepository.getLocationByCode(locationCode);
 
     if (!current) {
       throw new HttpException(
@@ -49,6 +57,10 @@ export class LocationQueryService {
       );
     }
 
-    return this.locationReadRepository.getRelatedLocations(locationCode, page, limit);
+    return this.locationReadRepository.getRelatedLocations(
+      locationCode,
+      page,
+      limit,
+    );
   }
 }

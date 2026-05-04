@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { ROUND } from '../assests/constants/constants';
+import { ROUND } from '../assets/constants/constants';
 import { isEmail } from '../common/validators/validator';
 import { SignInDtoResponse, SignInPayload } from '../dtos/auth/signIn.dto';
 import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
@@ -24,7 +24,7 @@ import {
   SuccessForgotPasswordMessage,
   SuccessRegisterMessage,
   SuccessResetPasswordMessage,
-} from '../assests/messages/auth.message';
+} from '../assets/messages/auth.message';
 import {
   ForgotPasswordPayload,
   ForgotPasswordResponse,
@@ -157,6 +157,9 @@ export class AuthService {
         );
       }
 
+      // Create empty user profile for the new user
+      await this.authRepository.createUserProfile(newUser.id);
+
       // Temporarily disable mandatory OTP flow after sign up.
       // const otpPayload: SendOtpDto = {
       //   email: newUser.email,
@@ -244,7 +247,16 @@ export class AuthService {
       );
     }
 
-    const isValid = await bcrypt.compare(payload.oldPassword, user.password);
+    // Query DB to get actual hashed password (JWT decorator has empty password)
+    const dbUser = await this.authRepository.findById(user.id);
+    if (!dbUser) {
+      throw new HttpException(
+        ErrorLoginMessage.USER_NOT_FOUND.toString(),
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const isValid = await bcrypt.compare(payload.oldPassword, dbUser.password);
 
     if (!isValid) {
       throw new HttpException(

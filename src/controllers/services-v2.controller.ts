@@ -1,7 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ServiceCatalogItemDto } from '../dtos/location/location-v2.dto';
-import { ServicePricingType } from '../entities/service/service.entity';
+import { ServiceDto } from '../dtos/service.dto';
 import { LocationReadRepository } from '../repositories/location/location-read.repository';
 
 @ApiTags('services')
@@ -9,27 +8,16 @@ import { LocationReadRepository } from '../repositories/location/location-read.r
 export class ServicesV2Controller {
   constructor(private readonly locationReadRepository: LocationReadRepository) {}
 
-  @ApiOperation({ summary: 'List service catalog' })
+  @ApiOperation({ summary: 'Lấy danh sách dịch vụ' })
   @Get()
-  public async getServices(): Promise<ServiceCatalogItemDto[]> {
+  public async getServices(): Promise<ServiceDto[]> {
     const services = await this.locationReadRepository.getServices();
 
     return services.map((service) => ({
-      serviceCode: service.serviceCode,
-      serviceName: service.serviceName,
-      serviceDescription: service.serviceDescription ?? undefined,
-      serviceLogo: service.serviceLogo ?? undefined,
-      serviceBackGround: service.serviceBackGround ?? undefined,
-      servicePrice:
-        service.servicePrice === null || service.servicePrice === undefined
-          ? undefined
-          : Number(service.servicePrice),
-      serviceDiscount:
-        service.serviceDiscount === null || service.serviceDiscount === undefined
-          ? undefined
-          : Number(service.serviceDiscount),
-      pricingType: service.pricingType ?? ServicePricingType.FULL,
-      isCustom: Boolean(service.isCustom),
+      id: service.id,
+      code: service.code,
+      name: service.name,
+      category: service.category,
     }));
   }
 }

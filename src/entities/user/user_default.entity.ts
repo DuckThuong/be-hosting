@@ -1,17 +1,16 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { UserRole, UserStatus } from '../../dtos/user/user.dto';
+import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
+import { BaseEntity } from '../base.entity';
+import { UserRole, UserStatus } from '../../assets/enums/user.enum';
+import { TbUserProfile } from './user_profile.entity';
 
 @Entity('tb_user_default')
-export class TbUserDefault {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
+export class TbUserDefault extends BaseEntity {
   @Column({
     type: 'varchar',
     length: 50,
     comment: 'Username',
+    unique: true,
+    nullable: false,
   })
   username: string;
 
@@ -19,6 +18,8 @@ export class TbUserDefault {
     type: 'varchar',
     length: 50,
     comment: 'UserCode',
+    unique: true,
+    nullable: false,
   })
   userCode: string;
 
@@ -26,6 +27,8 @@ export class TbUserDefault {
     type: 'varchar',
     length: 100,
     comment: 'User email',
+    unique: true,
+    nullable: false,
   })
   email: string;
 
@@ -34,6 +37,7 @@ export class TbUserDefault {
     length: 255,
     select: true,
     comment: 'Hashed password',
+    nullable: false,  
   })
   password: string;
 
@@ -58,13 +62,19 @@ export class TbUserDefault {
     enum: UserRole,
     default: UserRole.USER,
     comment: 'User role',
+    nullable: false,  
   })
   role: UserRole;
 
   @Column({
     type: 'boolean',
-    default: false,
+    default: true,
     comment: 'Is email verified',
   })
   isEmailVerified: boolean;
+
+  // ── Relations ──
+
+  @OneToOne(() => TbUserProfile, (profile) => profile.user, { cascade: true })
+  profile?: TbUserProfile;
 }

@@ -1,12 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
+import { BaseEntity } from '../base.entity';
+import { TbLocation } from './location.entity';
 
 @Entity('tb_location-type')
-export class TbLocationType {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
+export class TbLocationType extends BaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
   typeCode: string;
 
@@ -21,4 +18,9 @@ export class TbLocationType {
 
   @Column({ type: 'varchar', length: 2000, unique: false, nullable: true })
   typeBackGround: string;
+
+  // ── Relations ──
+
+  @OneToMany(() => TbLocation, (location) => location.type)
+  locations?: TbLocation[];
 }

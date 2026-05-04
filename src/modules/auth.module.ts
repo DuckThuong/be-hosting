@@ -10,11 +10,13 @@ import { AuthRepository } from '../repositories/auth.repository';
 import { AuthService } from '../services/auth.service';
 import { MailModule } from './mail.module';
 
+import { TbUserProfile } from '../entities/user/user_profile.entity';
+
 @Module({
   imports: [
     ConfigModule,
     PassportModule,
-    TypeOrmModule.forFeature([TbUserDefault]),
+    TypeOrmModule.forFeature([TbUserDefault, TbUserProfile]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -7,6 +7,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { UserRole, UserStatus } from '../../assets/enums/user.enum';
 export class UserDecoratorDtoResponse {
   id: number;
   userCode: string;
@@ -21,17 +22,8 @@ export class UserDecoratorDtoResponse {
   isEmailVerified: boolean;
 }
 
-export enum UserStatus {
-  ACTIVE = 0,
-  INACTIVE = 1,
-  BLOCKED = 2,
-}
-
-export enum UserRole {
-  ADMIN = 0,
-  OWNER = 1,
-  USER = 2,
-}
+// Re-export enums from entity layer (source of truth)
+export { UserStatus, UserRole };
 
 export class UserProfileInformationDto {
   @ApiProperty({

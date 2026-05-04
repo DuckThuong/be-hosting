@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { COMMENT_TYPE } from '../../assests/constants/constants';
-import { SuccessLocationMessage } from '../../assests/messages/location.message';
+import { COMMENT_TYPE } from '../../assets/constants/constants';
+import { SuccessLocationMessage } from '../../assets/messages/location.message';
 import {
   formatComment,
   formatReply,

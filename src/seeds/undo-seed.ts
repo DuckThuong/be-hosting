@@ -97,7 +97,7 @@ function loadSeedRefs(): SeedRefs {
     addressCodes: loadCodes('tb_location-address', 'addressCode'),
     mediaCodes: loadCodes('tb_location-media', 'mediaCode'),
     locationTypeCodes: loadCodes('tb_location-type', 'typeCode'),
-    serviceCodes: loadCodes('tb_service', 'serviceCode'),
+    serviceCodes: loadCodes('tb_service', 'code'),
     conversationKeys: conversations.map((item) => item.seedKey),
     conversationNames: conversations.map((item) => item.name),
     conversationCreatorCodes: conversations.map((item) => item.createdByUserCode),
@@ -263,8 +263,8 @@ function buildTargets(refs: SeedRefs): SeedTarget[] {
     },
     {
       table: 'tb_service',
-      countSql: `SELECT COUNT(*) AS total FROM \`tb_service\` WHERE \`serviceCode\` IN (${serviceCodePlaceholders})`,
-      deleteSql: `DELETE FROM \`tb_service\` WHERE \`serviceCode\` IN (${serviceCodePlaceholders})`,
+      countSql: `SELECT COUNT(*) AS total FROM \`tb_service\` WHERE \`code\` IN (${serviceCodePlaceholders})`,
+      deleteSql: `DELETE FROM \`tb_service\` WHERE \`code\` IN (${serviceCodePlaceholders})`,
       params: refs.serviceCodes,
     },
     {

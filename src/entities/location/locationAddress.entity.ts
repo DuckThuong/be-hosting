@@ -1,12 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { BaseEntity } from '../base.entity';
+import { TbLocation } from './location.entity';
 
 @Entity('tb_location-address')
-export class TbLocationAddress {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
+export class TbLocationAddress extends BaseEntity {
   @Column({
     type: 'varchar',
     comment: 'Mã địa điểm',
@@ -137,4 +134,12 @@ export class TbLocationAddress {
     unique: false,
   })
   addressType: string;
+
+  // ── Relations ──
+
+  @ManyToOne(() => TbLocation, (location) => location.addresses, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'locationCode', referencedColumnName: 'locationCode' })
+  location?: TbLocation;
 }

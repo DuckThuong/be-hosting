@@ -5,9 +5,9 @@ import {
   UpdateServiceDto,
   UpdateServiceResponseDto,
 } from '../dtos/service.dto';
-import { TbService } from '../entities/service/service.entity';
 import { ServiceRepository } from '../repositories/service.repository';
-import { ErrorServiceMessage } from '../assests/messages/service.message';
+import { ErrorServiceMessage } from '../assets/messages/service.message';
+import { ServiceDto } from '../dtos/service.dto';
 
 @Injectable()
 export class ServiceService {
@@ -23,40 +23,23 @@ export class ServiceService {
       );
     }
 
-    if (!payload.serviceName || payload.serviceName.trim() === '') {
+    if (!payload.name || payload.name.trim() === '') {
       throw new HttpException(
         ErrorServiceMessage.SERVICE_NAME_NOTEMPTY.toString(),
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    if (payload.serviceName.length > 50) {
+    if (payload.code && payload.code.length > 50) {
+      throw new HttpException(
+        ErrorServiceMessage.SERVICE_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.name.length > 100) {
       throw new HttpException(
         ErrorServiceMessage.SERVICE_NAME_INVALID.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (
-      payload.serviceDescription &&
-      payload.serviceDescription.length > 2000
-    ) {
-      throw new HttpException(
-        ErrorServiceMessage.SERVICE_DESCRIPTION_INVALID.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (payload.serviceLogo && payload.serviceLogo.length > 2000) {
-      throw new HttpException(
-        ErrorServiceMessage.SERVICE_LOGO_INVALID.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (payload.serviceBackGround && payload.serviceBackGround.length > 2000) {
-      throw new HttpException(
-        ErrorServiceMessage.SERVICE_BACKGROUND_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -85,33 +68,16 @@ export class ServiceService {
       );
     }
 
-    if (payload.serviceName && payload.serviceName.length > 50) {
+    if (payload.code && payload.code.length > 50) {
+      throw new HttpException(
+        ErrorServiceMessage.SERVICE_CODE_INVALID.toString(),
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (payload.name && payload.name.length > 100) {
       throw new HttpException(
         ErrorServiceMessage.SERVICE_NAME_INVALID.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (
-      payload.serviceDescription &&
-      payload.serviceDescription.length > 2000
-    ) {
-      throw new HttpException(
-        ErrorServiceMessage.SERVICE_DESCRIPTION_INVALID.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (payload.serviceLogo && payload.serviceLogo.length > 2000) {
-      throw new HttpException(
-        ErrorServiceMessage.SERVICE_LOGO_INVALID.toString(),
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (payload.serviceBackGround && payload.serviceBackGround.length > 2000) {
-      throw new HttpException(
-        ErrorServiceMessage.SERVICE_BACKGROUND_INVALID.toString(),
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -139,7 +105,7 @@ export class ServiceService {
     }
   }
 
-  public async GetAllService(): Promise<TbService[]> {
+  public async GetAllService(): Promise<ServiceDto[]> {
     try {
       return await this.serviceRepo.GetAllService();
     } catch (error) {

@@ -1,6 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ErrorLocationMessage, SuccessLocationMessage } from '../assests/messages/location.message';
-import { ErrorServiceMessage } from '../assests/messages/service.message';
+import {
+  ErrorLocationMessage,
+  SuccessLocationMessage,
+} from '../assets/messages/location.message';
+import { ErrorServiceMessage } from '../assets/messages/service.message';
 import {
   CreateLocationRequestDto,
   LocationMutationResponseDto,
@@ -27,7 +30,8 @@ export class LocationWriteService {
       user.userCode,
       payload,
     );
-    const location = await this.locationReadRepository.getLocationByCode(locationCode);
+    const location =
+      await this.locationReadRepository.getLocationByCode(locationCode);
 
     if (!location) {
       throw new HttpException(
@@ -47,7 +51,8 @@ export class LocationWriteService {
     locationCode: string,
     payload: UpdateLocationRequestDto,
   ): Promise<LocationMutationResponseDto> {
-    const location = await this.locationWriteRepository.findLocationByCode(locationCode);
+    const location =
+      await this.locationWriteRepository.findLocationByCode(locationCode);
 
     if (!location) {
       throw new HttpException(
@@ -66,7 +71,8 @@ export class LocationWriteService {
     await this.ensureValidPayload(payload);
     await this.locationWriteRepository.updateLocation(location, payload);
 
-    const updated = await this.locationReadRepository.getLocationByCode(locationCode);
+    const updated =
+      await this.locationReadRepository.getLocationByCode(locationCode);
     if (!updated) {
       throw new HttpException(
         ErrorLocationMessage.CATCH_ERROR.toString(),
@@ -97,9 +103,10 @@ export class LocationWriteService {
     }
 
     if (payload.typeCode) {
-      const locationType = await this.locationWriteRepository.findLocationTypeByCode(
-        payload.typeCode,
-      );
+      const locationType =
+        await this.locationWriteRepository.findLocationTypeByCode(
+          payload.typeCode,
+        );
 
       if (!locationType) {
         throw new HttpException(
@@ -124,7 +131,8 @@ export class LocationWriteService {
       payload.availability?.hasTimeLimit &&
       payload.availability.availableFrom &&
       payload.availability.availableTo &&
-      new Date(payload.availability.availableFrom) > new Date(payload.availability.availableTo)
+      new Date(payload.availability.availableFrom) >
+        new Date(payload.availability.availableTo)
     ) {
       throw new HttpException(
         ErrorLocationMessage.TIME_LIMIT_RANGE_INVALID.toString(),
@@ -139,7 +147,9 @@ export class LocationWriteService {
 
     if (existingServiceCodes.length > 0) {
       const services =
-        await this.locationWriteRepository.findServicesByCodes(existingServiceCodes);
+        await this.locationWriteRepository.findServicesByCodes(
+          existingServiceCodes,
+        );
       if (services.length !== existingServiceCodes.length) {
         throw new HttpException(
           ErrorServiceMessage.SERVICE_CODE_INVALID.toString(),
@@ -156,14 +166,14 @@ export class LocationWriteService {
         );
       }
 
-      if (service.serviceCode && Number(service.customPrice ?? 0) > 0) {
+      if (service.basePrice !== undefined && service.basePrice < 0) {
         throw new HttpException(
           ErrorServiceMessage.SERVICE_PRICE_INVALID.toString(),
           HttpStatus.BAD_REQUEST,
         );
       }
 
-      if (service.customPrice !== undefined && service.customPrice < 0) {
+      if (service.quantity !== undefined && service.quantity < 1) {
         throw new HttpException(
           ErrorServiceMessage.SERVICE_PRICE_INVALID.toString(),
           HttpStatus.BAD_REQUEST,

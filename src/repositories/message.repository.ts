@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MessagePayloadDto } from '../dtos/chat/message.dto';
-import { MessageStatus, TbMessage } from '../entities/chat/message.entity';
+import { TbMessage } from '../entities/chat/message.entity';
+import { MessageStatus } from '../assets/enums/message.enum';
 
 @Injectable()
 export class MessageRepository {

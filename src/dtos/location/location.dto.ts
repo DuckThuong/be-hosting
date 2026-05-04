@@ -459,44 +459,59 @@ export class LocationServiceDto {
   serviceCode: string;
 
   @ApiProperty({
-    description: 'Logo dịch vụ',
-    example: 'https://cdn.example.com/service-logo.png',
-    required: false,
-  })
-  serviceLogo?: string;
-
-  @ApiProperty({
-    description: 'Hình nền dịch vụ',
-    example: 'https://cdn.example.com/service-bg.png',
-    required: false,
-  })
-  serviceBackGround?: string;
-
-  @ApiProperty({
     description: 'Tên dịch vụ',
     example: 'Wifi miễn phí',
   })
   serviceName: string;
 
   @ApiProperty({
-    description: 'Giá dịch vụ',
-    example: 50000,
+    description: 'Danh mục dịch vụ',
+    example: 'GENERAL',
+    required: false,
   })
-  servicePrice: number;
+  category?: string;
 
   @ApiProperty({
     description: 'Mô tả dịch vụ',
     example: 'Wifi tốc độ cao 100Mbps',
     required: false,
   })
-  serviceDescription?: string;
+  description?: string;
 
   @ApiProperty({
-    description: 'Ghi chú dịch vụ',
-    example: 'Miễn phí cho khách thuê dài hạn',
+    description: 'Dịch vụ miễn phí hay có phí',
+    example: true,
     required: false,
   })
-  serviceNote?: string;
+  isFree?: boolean;
+
+  @ApiProperty({
+    description: 'Giá cơ bản',
+    example: 50000,
+    required: false,
+  })
+  basePrice?: number;
+
+  @ApiProperty({
+    description: 'Đơn vị tính',
+    example: 'FULL',
+    required: false,
+  })
+  unit?: string;
+
+  @ApiProperty({
+    description: 'Số lượng',
+    example: 1,
+    required: false,
+  })
+  quantity?: number;
+
+  @ApiProperty({
+    description: 'Trạng thái hoạt động',
+    example: true,
+    required: false,
+  })
+  isActive?: boolean;
 }
 
 export class LocationAddressItemDto {

@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ConversationStatus } from '../../entities/chat/conversation.entity';
-import { MessageType } from '../../entities/chat/message.entity';
-import { UserResponseDto } from '../user/user.dto';
 import { MessageAttachmentPayloadDto } from './message.dto';
+import { MessageType } from '../../assets/enums/message.enum';
+import { UserResponseDto } from '../user/user.dto';
 
 export enum PublicConversationType {
   RENT = 'RENT',

@@ -1,12 +1,10 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
+import { BaseEntity } from '../base.entity';
 import { TbLocation } from './location.entity';
 
 export enum LocationMediaType {
@@ -15,12 +13,7 @@ export enum LocationMediaType {
 }
 
 @Entity('tb_location-media')
-export class TbLocationMedia {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
+export class TbLocationMedia extends BaseEntity {
   @Column({ type: 'varchar', length: 50, unique: true })
   mediaCode: string;
 
@@ -43,11 +36,7 @@ export class TbLocationMedia {
   @Column({ type: 'tinyint', default: 0 })
   isLogo: number;
 
-  @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ type: 'timestamp' })
-  updatedAt: Date;
+  // ── Relations ──
 
   @ManyToOne(() => TbLocation, (location) => location.media, {
     onDelete: 'CASCADE',

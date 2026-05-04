@@ -1,4 +1,4 @@
-import { MessageStatus, MessageType } from '../../entities/chat/message.entity';
+import { MessageType, MessageStatus } from '../../assets/enums/message.enum';
 
 export interface MessageAttachmentPayloadDto {
   fileName: string;

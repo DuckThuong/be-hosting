@@ -1,17 +1,16 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
-  PrimaryGeneratedColumn,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
 } from 'typeorm';
+import { BaseEntity } from '../base.entity';
+import { TbLocation } from './location.entity';
+import { TbUserDefault } from '../user/user_default.entity';
 
 @Entity('tb_location-comment')
-export class TbLocationComment {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
+export class TbLocationComment extends BaseEntity {
   @Column({ type: 'varchar', length: 25, nullable: false })
   locationCode: string;
 
@@ -27,19 +26,22 @@ export class TbLocationComment {
   @Column({ type: 'varchar' })
   metaData: string;
 
-  @CreateDateColumn({
-    type: 'timestamp',
-  })
-  createdAt: Date;
+  // ── Relations ──
+
+  @ManyToOne(() => TbLocation)
+  @JoinColumn({ name: 'locationCode', referencedColumnName: 'locationCode' })
+  location?: TbLocation;
+
+  @ManyToOne(() => TbUserDefault)
+  @JoinColumn({ name: 'userCode', referencedColumnName: 'userCode' })
+  user?: TbUserDefault;
+
+  @OneToMany(() => TbLocationCommentReply, (reply) => reply.parentComment)
+  replies?: TbLocationCommentReply[];
 }
 
 @Entity('tb_location-comment-reply')
-export class TbLocationCommentReply {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
+export class TbLocationCommentReply extends BaseEntity {
   @Column({ type: 'int', nullable: false })
   preCommentId: number;
 
@@ -55,8 +57,15 @@ export class TbLocationCommentReply {
   @Column({ type: 'varchar' })
   metaData: string;
 
-  @CreateDateColumn({
-    type: 'timestamp',
+  // ── Relations ──
+
+  @ManyToOne(() => TbLocationComment, (comment) => comment.replies, {
+    onDelete: 'CASCADE',
   })
-  createdAt: Date;
+  @JoinColumn({ name: 'preCommentId' })
+  parentComment?: TbLocationComment;
+
+  @ManyToOne(() => TbUserDefault)
+  @JoinColumn({ name: 'userCode', referencedColumnName: 'userCode' })
+  user?: TbUserDefault;
 }

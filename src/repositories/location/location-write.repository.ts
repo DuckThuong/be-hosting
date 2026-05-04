@@ -5,7 +5,7 @@ import {
   ADDRESS_STATUS,
   ADDRESS_TYPE,
   LOCATION_RENT_STATUS,
-} from '../../assests/constants/constants';
+} from '../../assets/constants/constants';
 import { randomString } from '../../common/helpers/common.helper';
 import {
   CreateLocationRequestDto,
@@ -18,8 +18,12 @@ import { TbLocationAddress } from '../../entities/location/locationAddress.entit
 import { TbLocationMedia } from '../../entities/location/locationMedia.entity';
 import { TbLocationService } from '../../entities/location/locationService.entity';
 import { TbLocationType } from '../../entities/location/locationType.entity';
-import { ServicePricingType, TbService } from '../../entities/service/service.entity';
+import { TbService } from '../../entities/service/service.entity';
 import { TbUserDefault } from '../../entities/user/user_default.entity';
+
+const DEFAULT_SERVICE_CATEGORY = 'CUSTOM';
+const DEFAULT_SERVICE_UNIT = 'FULL';
+const DEFAULT_SERVICE_QUANTITY = 1;
 
 @Injectable()
 export class LocationWriteRepository {
@@ -40,28 +44,54 @@ export class LocationWriteRepository {
     private readonly userRepo: Repository<TbUserDefault>,
   ) {}
 
-  public async findLocationByCode(locationCode: string): Promise<TbLocation | null> {
+  public async findLocationByCode(
+    locationCode: string,
+  ): Promise<TbLocation | null> {
     return this.locationRepo.findOneBy({ locationCode });
   }
 
-  public async findLocationTypeByCode(typeCode: string): Promise<TbLocationType | null> {
+  public async findLocationTypeByCode(
+    typeCode: string,
+  ): Promise<TbLocationType | null> {
     return this.locationTypeRepo.findOneBy({ typeCode });
   }
 
-  public async findServicesByCodes(serviceCodes: string[]): Promise<TbService[]> {
+  public async findServicesByCodes(
+    serviceCodes: string[],
+  ): Promise<TbService[]> {
     if (serviceCodes.length === 0) {
       return [];
     }
 
     return this.serviceRepo
       .createQueryBuilder('service')
-      .where('service.serviceCode IN (:...serviceCodes)', { serviceCodes })
+      .where('service.code IN (:...serviceCodes)', { serviceCodes })
       .getMany();
+  }
+
+  private getLocationServicePayload(
+    locationCode: string,
+    serviceCode: string,
+    service: LocationServiceSelectionDto,
+  ): Partial<TbLocationService> {
+    const basePrice = Number(service.basePrice ?? 0);
+    const isFree =
+      service.isFree !== undefined ? service.isFree : Number(basePrice) <= 0;
+
+    return {
+      locationCode,
+      serviceCode,
+      description: service.description?.trim() ?? '',
+      isFree,
+      basePrice: isFree ? 0 : basePrice,
+      unit: service.unit?.trim() || DEFAULT_SERVICE_UNIT,
+      quantity: service.quantity ?? DEFAULT_SERVICE_QUANTITY,
+      isActive: true,
+    };
   }
 
   private async resolveServiceCode(
     service: LocationServiceSelectionDto,
-    ownerCode: string,
     queryRunner: any,
   ): Promise<string> {
     if (service.serviceCode) {
@@ -69,33 +99,28 @@ export class LocationWriteRepository {
     }
 
     const created = queryRunner.manager.create(TbService, {
-      serviceCode: randomString(),
-      serviceName: service.name,
-      serviceDescription: service.description ?? '',
-      serviceLogo: null,
-      serviceBackGround: null,
-      servicePrice: service.customPrice ?? 0,
-      serviceDiscount: 0,
-      pricingType: service.pricingType ?? ServicePricingType.FULL,
-      isCustom: 1,
-      createdByUserCode: ownerCode,
+      code: randomString(),
+      name: service.name,
+      category: DEFAULT_SERVICE_CATEGORY,
     });
 
     const saved = await queryRunner.manager.save(created);
-    return saved.serviceCode;
+    return saved.code;
   }
 
   public async createLocation(
     ownerCode: string,
     payload: CreateLocationRequestDto,
   ): Promise<string> {
-    const queryRunner = this.locationRepo.manager.connection.createQueryRunner();
+    const queryRunner =
+      this.locationRepo.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       const mediaInputs = payload.media ?? [];
-      const logoMedia = mediaInputs.find((item) => item.isLogo) ?? mediaInputs[0];
+      const logoMedia =
+        mediaInputs.find((item) => item.isLogo) ?? mediaInputs[0];
       const locationCode = randomString();
       const locationPayload: Partial<TbLocation> = {
         locationCode,
@@ -104,7 +129,8 @@ export class LocationWriteRepository {
         locationName: payload.name,
         locationLogo: logoMedia?.url ?? '',
         locationPriceStart: payload.pricing.priceStart,
-        locationPriceEnd: payload.pricing.priceEnd ?? payload.pricing.priceStart,
+        locationPriceEnd:
+          payload.pricing.priceEnd ?? payload.pricing.priceStart,
         locationPriceAfterDeal: payload.pricing.priceAfterDeal,
         locationArea: payload.area,
         minTimeLimit:
@@ -129,7 +155,9 @@ export class LocationWriteRepository {
 
       await queryRunner.manager.save(location);
 
-      const owner = await queryRunner.manager.findOneBy(TbUserDefault, { userCode: ownerCode });
+      const owner = await queryRunner.manager.findOneBy(TbUserDefault, {
+        userCode: ownerCode,
+      });
       if (owner && owner.role !== UserRole.OWNER) {
         owner.role = UserRole.OWNER;
         await queryRunner.manager.save(owner);
@@ -162,22 +190,16 @@ export class LocationWriteRepository {
         for (const service of payload.services ?? []) {
           const serviceCode = await this.resolveServiceCode(
             service,
-            ownerCode,
             queryRunner,
           );
           locationServices.push(
-            queryRunner.manager.create(TbLocationService, {
-              locationCode,
-              serviceCode,
-              customPrice: service.customPrice ?? null,
-              pricingType: service.pricingType ?? ServicePricingType.FULL,
-            }),
+            queryRunner.manager.create(
+              TbLocationService,
+              this.getLocationServicePayload(locationCode, serviceCode, service),
+            ),
           );
         }
-        await queryRunner.manager.save(
-          TbLocationService,
-          locationServices,
-        );
+        await queryRunner.manager.save(TbLocationService, locationServices);
       }
 
       if (mediaInputs.length > 0) {
@@ -210,7 +232,8 @@ export class LocationWriteRepository {
     location: TbLocation,
     payload: UpdateLocationRequestDto,
   ): Promise<void> {
-    const queryRunner = this.locationRepo.manager.connection.createQueryRunner();
+    const queryRunner =
+      this.locationRepo.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -229,7 +252,8 @@ export class LocationWriteRepository {
           typeCode: nextTypeCode,
           locationName: payload.name ?? location.locationName,
           locationLogo: logoMedia?.url ?? location.locationLogo,
-          locationPriceStart: payload.pricing?.priceStart ?? location.locationPriceStart,
+          locationPriceStart:
+            payload.pricing?.priceStart ?? location.locationPriceStart,
           locationPriceEnd:
             payload.pricing?.priceEnd ??
             payload.pricing?.priceStart ??
@@ -239,13 +263,13 @@ export class LocationWriteRepository {
           locationArea: payload.area ?? location.locationArea,
           minTimeLimit:
             payload.availability?.hasTimeLimit === true
-              ? payload.availability.availableFrom ?? location.minTimeLimit
+              ? (payload.availability.availableFrom ?? location.minTimeLimit)
               : payload.availability?.hasTimeLimit === false
                 ? undefined
                 : location.minTimeLimit,
           maxTimeLimit:
             payload.availability?.hasTimeLimit === true
-              ? payload.availability.availableTo ?? location.maxTimeLimit
+              ? (payload.availability.availableTo ?? location.maxTimeLimit)
               : payload.availability?.hasTimeLimit === false
                 ? undefined
                 : location.maxTimeLimit,
@@ -255,7 +279,8 @@ export class LocationWriteRepository {
               : payload.availability.isRented
                 ? LOCATION_RENT_STATUS.HAS_RENT
                 : LOCATION_RENT_STATUS.READY,
-          locationDescription: payload.description ?? location.locationDescription,
+          locationDescription:
+            payload.description ?? location.locationDescription,
           locationNote: payload.note ?? location.locationNote,
         },
       );
@@ -298,22 +323,20 @@ export class LocationWriteRepository {
           for (const service of payload.services) {
             const serviceCode = await this.resolveServiceCode(
               service,
-              location.ownerCode,
               queryRunner,
             );
             locationServices.push(
-              queryRunner.manager.create(TbLocationService, {
-                locationCode: location.locationCode,
-                serviceCode,
-                customPrice: service.customPrice ?? null,
-                pricingType: service.pricingType ?? ServicePricingType.FULL,
-              }),
+              queryRunner.manager.create(
+                TbLocationService,
+                this.getLocationServicePayload(
+                  location.locationCode,
+                  serviceCode,
+                  service,
+                ),
+              ),
             );
           }
-          await queryRunner.manager.save(
-            TbLocationService,
-            locationServices,
-          );
+          await queryRunner.manager.save(TbLocationService, locationServices);
         }
       }
 

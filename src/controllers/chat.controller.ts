@@ -83,18 +83,8 @@ export class ChatController {
       attachmentId,
       user.id,
     );
-    const content = await this.chatService.fetchAttachmentContent(attachment);
-
-    response.setHeader(
-      'Content-Type',
-      attachment.mimeType || 'application/octet-stream',
-    );
-    response.setHeader(
-      'Content-Disposition',
-      this.buildContentDisposition('inline', attachment.fileName),
-    );
-    response.setHeader('Content-Length', content.byteLength.toString());
-    response.send(content);
+    // Redirect to the file URL directly instead of proxying through server
+    response.redirect(attachment.url);
   }
 
   @ApiOperation({ summary: 'Tai file dinh kem trong chat' })
@@ -108,18 +98,8 @@ export class ChatController {
       attachmentId,
       user.id,
     );
-    const content = await this.chatService.fetchAttachmentContent(attachment);
-
-    response.setHeader(
-      'Content-Type',
-      attachment.mimeType || 'application/octet-stream',
-    );
-    response.setHeader(
-      'Content-Disposition',
-      this.buildContentDisposition('attachment', attachment.fileName),
-    );
-    response.setHeader('Content-Length', content.byteLength.toString());
-    response.send(content);
+    // Redirect to the file URL directly instead of proxying through server
+    response.redirect(attachment.url);
   }
 
   @ApiOperation({ summary: 'Gui tin nhan' })

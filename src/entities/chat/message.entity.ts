@@ -1,36 +1,21 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
+import { BaseEntity } from '../base.entity';
 import { TbMessageAttachment } from './message_attachment.entity';
+import { TbConversation } from './conversation.entity';
+import { MessageType, MessageStatus } from '../../assets/enums/message.enum';
 
-export enum MessageType {
-  TEXT = 'TEXT',
-  IMAGE = 'IMAGE',
-  FILE = 'FILE',
-  SYSTEM = 'SYSTEM',
-}
-
-export enum MessageStatus {
-  SENT = 'SENT',
-  DELIVERED = 'DELIVERED',
-  READ = 'READ',
-}
 
 @Entity('tb_message')
 @Index(['conversationId', 'id'])
 @Index(['senderId'])
-export class TbMessage {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Khóa chính của tin nhắn',
-  })
-  id: number;
-
+export class TbMessage extends BaseEntity {
   @Column({
     comment: 'ID cuộc trò chuyện chứa tin nhắn này',
   })
@@ -91,30 +76,17 @@ export class TbMessage {
   editedAt?: Date;
 
   @Column({
-    type: 'timestamp',
-    nullable: true,
-    comment: 'Thời điểm xóa mềm tin nhắn',
-  })
-  deletedAt?: Date;
-
-  @Column({
     nullable: true,
     comment: 'Người thực hiện xóa mềm tin nhắn',
   })
   deletedByUserId?: number;
 
+  // ── Relations ──
+
+  @ManyToOne(() => TbConversation, (c) => c.messages, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'conversationId' })
+  conversation?: TbConversation;
+
   @OneToMany(() => TbMessageAttachment, (attachment) => attachment.message)
   attachments?: TbMessageAttachment[];
-
-  @CreateDateColumn({
-    type: 'timestamp',
-    comment: 'Thời điểm gửi tin nhắn',
-  })
-  createdAt: Date;
-
-  @UpdateDateColumn({
-    type: 'timestamp',
-    comment: 'Thời điểm cập nhật tin nhắn',
-  })
-  updatedAt: Date;
 }

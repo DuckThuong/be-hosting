@@ -16,10 +16,13 @@ import {
 import { TbConversationParticipant } from '../entities/chat/conversation_participant.entity';
 import { TbMessageAttachment } from '../entities/chat/message_attachment.entity';
 import {
-  MessageStatus,
-  MessageType,
+
   TbMessage,
 } from '../entities/chat/message.entity';
+import {
+  MessageStatus,
+  MessageType
+} from '@/assets/enums/message.enum'
 import { UserRepository } from './user.repository';
 import {
   MessageAttachmentPayloadDto,
@@ -59,7 +62,7 @@ export class ChatRepository {
 
     @Inject(forwardRef(() => LocationRepository))
     private readonly locationRepo: LocationRepository,
-  ) {}
+  ) { }
 
   private getMessagePreview(
     type: MessageType,
@@ -454,12 +457,12 @@ export class ChatRepository {
     const lastMessage =
       messageId == null
         ? await this.message.findOne({
-            where: { conversationId, deletedAt: IsNull() },
-            order: { createdAt: 'DESC' },
-          })
+          where: { conversationId, deletedAt: IsNull() },
+          order: { createdAt: 'DESC' },
+        })
         : await this.message.findOne({
-            where: { id: messageId, conversationId, deletedAt: IsNull() },
-          });
+          where: { id: messageId, conversationId, deletedAt: IsNull() },
+        });
 
     if (!lastMessage) {
       return await this.conversationParticipant.findOne({
@@ -495,8 +498,8 @@ export class ChatRepository {
       messageId == null
         ? await this.findLatestMessage(conversationId)
         : await this.message.findOne({
-            where: { id: messageId, conversationId, deletedAt: IsNull() },
-          });
+          where: { id: messageId, conversationId, deletedAt: IsNull() },
+        });
 
     if (!lastMessage) {
       return null;

@@ -4,10 +4,10 @@ import { JwtAuthGuard } from '../common/jwt/jwt.guard';
 import {
   CreateServiceDto,
   CreateServiceResponseDto,
+  ServiceDto,
   UpdateServiceDto,
   UpdateServiceResponseDto,
 } from '../dtos/service.dto';
-import { TbService } from '../entities/service/service.entity';
 import { ServiceService } from '../services/service.service';
 
 @Controller('service')
@@ -34,7 +34,7 @@ export class ServiceController {
 
   @ApiOperation({ summary: 'Lấy toàn bộ dịch vụ' })
   @Get('get-all-location-service')
-  public async getAllService(): Promise<TbService[]> {
+  public async getAllService(): Promise<ServiceDto[]> {
     return this.serviceSV.GetAllService();
   }
 }

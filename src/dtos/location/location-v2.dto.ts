@@ -17,7 +17,6 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { LocationMediaType } from '../../entities/location/locationMedia.entity';
-import { ServicePricingType } from '../../entities/service/service.entity';
 
 export class LocationPricingDto {
   @ApiProperty({ example: 1000000 })
@@ -163,19 +162,31 @@ export class LocationServiceSelectionDto {
   description?: string;
 
   @ApiPropertyOptional({
-    enum: ServicePricingType,
-    example: ServicePricingType.DAILY,
+    example: false,
   })
   @IsOptional()
-  @IsEnum(ServicePricingType)
-  pricingType?: ServicePricingType;
+  @IsBoolean()
+  isFree?: boolean;
 
   @ApiPropertyOptional({ example: 25000 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  customPrice?: number;
+  basePrice?: number;
+
+  @ApiPropertyOptional({ example: 'FULL' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  unit?: string;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantity?: number;
 }
 
 export class CreateLocationRequestDto {
@@ -429,28 +440,25 @@ export class ServiceCatalogItemDto {
   serviceName: string;
 
   @ApiPropertyOptional()
-  serviceDescription?: string;
+  description?: string;
 
   @ApiPropertyOptional()
-  serviceLogo?: string;
+  category?: string;
 
   @ApiPropertyOptional()
-  serviceBackGround?: string;
+  isActive?: boolean;
 
   @ApiPropertyOptional()
-  servicePrice?: number;
+  isFree?: boolean;
 
   @ApiPropertyOptional()
-  serviceDiscount?: number;
-
-  @ApiProperty({ enum: ServicePricingType })
-  pricingType: ServicePricingType;
+  basePrice?: number;
 
   @ApiPropertyOptional()
-  isCustom?: boolean;
+  unit?: string;
 
   @ApiPropertyOptional()
-  customPrice?: number;
+  quantity?: number;
 }
 
 export class LocationAddressResponseDto {

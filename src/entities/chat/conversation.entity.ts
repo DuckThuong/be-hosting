@@ -1,11 +1,12 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
-import { MessageType } from './message.entity';
+import { BaseEntity } from '../base.entity';
+import { TbConversationParticipant } from './conversation_participant.entity';
+import { MessageType } from '../../assets/enums/message.enum';
+import { TbMessage } from './message.entity';
 
 export enum ConversationType {
   RENT = 'RENT',
@@ -22,12 +23,7 @@ export enum ConversationStatus {
 }
 
 @Entity('tb_conversation')
-export class TbConversation {
-  @PrimaryGeneratedColumn({
-    comment: 'Khóa chính của cuộc trò chuyện',
-  })
-  id: number;
-
+export class TbConversation extends BaseEntity {
   @Column({
     type: 'enum',
     enum: ConversationType,
@@ -88,15 +84,11 @@ export class TbConversation {
   })
   status: ConversationStatus;
 
-  @CreateDateColumn({
-    type: 'timestamp',
-    comment: 'Thời điểm tạo cuộc trò chuyện',
-  })
-  createdAt: Date;
+  // ── Relations ──
 
-  @UpdateDateColumn({
-    type: 'timestamp',
-    comment: 'Thời điểm cập nhật gần nhất',
-  })
-  updatedAt: Date;
+  @OneToMany(() => TbConversationParticipant, (p) => p.conversation)
+  participants?: TbConversationParticipant[];
+
+  @OneToMany(() => TbMessage, (m) => m.conversation)
+  messages?: TbMessage[];
 }

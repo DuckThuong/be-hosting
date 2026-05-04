@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
-import { SuccessServiceMessage } from '../assests/messages/service.message';
+import { SuccessServiceMessage } from '@assets/messages/service.message';
 import {
   CreateServiceDto,
   CreateServiceResponseDto,
   ServiceDto,
   UpdateServiceDto,
   UpdateServiceResponseDto,
-} from '../dtos/service.dto';
-import { TbService } from '../entities/service/service.entity';
-import { ServicePricingType } from '../entities/service/service.entity';
-import { randomString } from '../common/helpers/common.helper';
+} from '@dtos/service.dto';
+import { TbService } from '@entities/service/service.entity';
+import { randomString } from '@common/helpers/common.helper';
+
+const DEFAULT_SERVICE_CATEGORY = 'GENERAL';
 
 @Injectable()
 export class ServiceRepository {
@@ -21,26 +21,46 @@ export class ServiceRepository {
     private readonly service: Repository<TbService>,
   ) {}
 
+  private toDto(service: TbService): ServiceDto {
+    return {
+      id: service.id,
+      code: service.code,
+      name: service.name,
+      category: service.category,
+    };
+  }
+
   public async CreateService(
     payload: CreateServiceDto,
   ): Promise<CreateServiceResponseDto> {
+    const code = payload.code?.trim() || randomString();
+
+    // Check duplicate code
+    if (payload.code) {
+      const existingByCode = await this.service.findOneBy({ code });
+      if (existingByCode) {
+        throw new Error('SERVICE_CODE_DUPLICATE');
+      }
+    }
+
+    // Check duplicate name
+    const existingByName = await this.service.findOneBy({
+      name: payload.name.trim(),
+    });
+    if (existingByName) {
+      throw new Error('SERVICE_NAME_DUPLICATE');
+    }
+
     const service = this.service.create({
-      serviceCode: randomString(),
-      serviceName: payload.serviceName,
-      serviceDescription: payload.serviceDescription,
-      serviceLogo: payload.serviceLogo,
-      serviceBackGround: payload.serviceBackGround,
-      servicePrice: 0,
-      serviceDiscount: 0,
-      pricingType: ServicePricingType.FULL,
-      isCustom: 0,
-      createdByUserCode: null,
+      code,
+      name: payload.name.trim(),
+      category: payload.category?.trim() || DEFAULT_SERVICE_CATEGORY,
     });
 
-    const saveType = await this.service.save(service);
+    const saved = await this.service.save(service);
     return {
       message: SuccessServiceMessage.CREATE_SUCCESS,
-      data: plainToInstance(ServiceDto, saveType),
+      data: this.toDto(saved),
     };
   }
 
@@ -49,37 +69,27 @@ export class ServiceRepository {
     payload: UpdateServiceDto,
   ): Promise<UpdateServiceResponseDto> {
     const updatedEntity = this.service.merge(oldData, {
-      serviceCode: oldData.serviceCode,
-      serviceName: payload.serviceName ?? oldData.serviceName,
-      serviceDescription:
-        payload.serviceDescription ?? oldData.serviceDescription,
-      serviceLogo: payload.serviceLogo ?? oldData.serviceLogo,
-      serviceBackGround: payload.serviceBackGround ?? oldData.serviceBackGround,
-      servicePrice: 0,
-      serviceDiscount: 0,
-      pricingType: ServicePricingType.FULL,
+      code: payload.code?.trim() ?? oldData.code,
+      name: payload.name?.trim() ?? oldData.name,
+      category: payload.category?.trim() ?? oldData.category,
     });
 
-    const savedType = await this.service.save(updatedEntity);
+    const saved = await this.service.save(updatedEntity);
     return {
       message: SuccessServiceMessage.UPDATE_SUCCESS,
-      data: plainToInstance(ServiceDto, savedType),
+      data: this.toDto(saved),
     };
   }
 
   public async GetAllService(): Promise<ServiceDto[]> {
-    return await this.service.find({
-      where: {
-        isCustom: 0,
-        servicePrice: 0 as any,
-      },
-      order: {
-        serviceName: 'ASC',
-      },
+    const services = await this.service.find({
+      order: { name: 'ASC' },
     });
+
+    return services.map((item) => this.toDto(item));
   }
 
-  public async GetServiceById(id: number): Promise<ServiceDto | null> {
+  public async GetServiceById(id: number): Promise<TbService | null> {
     return await this.service.findOne({
       where: { id },
     });

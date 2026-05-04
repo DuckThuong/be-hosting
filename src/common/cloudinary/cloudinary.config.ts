@@ -8,4 +8,4 @@ export const configureCloudinary = () => {
   });
 };
 
-export default cloudinary;
+export { v2 as default } from 'cloudinary';

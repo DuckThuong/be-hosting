@@ -1,32 +1,20 @@
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BaseEntity } from '../base.entity';
 import { TbMessage } from './message.entity';
 
 @Entity('tb_message_attachment')
 @Index(['messageId'])
-export class TbMessageAttachment {
-  @PrimaryGeneratedColumn({
-    comment: 'Khóa chính của file đính kèm',
-  })
-  id: number;
-
+export class TbMessageAttachment extends BaseEntity {
   @Column({
     comment: 'ID tin nhắn sở hữu file đính kèm',
   })
   messageId: number;
-
-  @ManyToOne(() => TbMessage, (message) => message.attachments, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'messageId' })
-  message: TbMessage;
 
   @Column({
     comment: 'Tên file hiển thị',
@@ -67,9 +55,11 @@ export class TbMessageAttachment {
   })
   height?: number;
 
-  @CreateDateColumn({
-    type: 'timestamp',
-    comment: 'Thời điểm tạo file đính kèm',
+  // ── Relations ──
+
+  @ManyToOne(() => TbMessage, (message) => message.attachments, {
+    onDelete: 'CASCADE',
   })
-  createdAt: Date;
+  @JoinColumn({ name: 'messageId' })
+  message: TbMessage;
 }

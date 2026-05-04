@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "module": "node16", 
+    "module": "node16",
     "moduleResolution": "Node16", // Nếu chưa sẵn sàng lên Node16, hãy dùng Node10 để tránh lỗi vặt, nhưng Node16 vẫn là tốt nhất
     "target": "ES2023",
-    
+
     "outDir": "./dist",
     "rootDir": "./src",
     
@@ -13,7 +13,7 @@
 
     "types": ["node", "jest"],
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    
+
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -28,6 +28,22 @@
     "strictNullChecks": true,
     "noImplicitAny": false, // Bạn đang để false, có thể giữ nguyên nếu muốn code "thoáng" hơn
     "strictPropertyInitialization": false, // Thường để false trong NestJS để tránh lỗi khi dùng DTO/Entity
+
+    "paths": {
+      "@/*": ["./src/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@common/*": ["./src/common/*"],
+      "@controllers/*": ["./src/controllers/*"],
+      "@dtos/*": ["./src/dtos/*"],
+      "@entities/*": ["./src/entities/*"],
+      "@gateways/*": ["./src/gateways/*"],
+      "@migrations/*": ["./src/migrations/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@repositories/*": ["./src/repositories/*"],
+      "@seeds/*": ["./src/seeds/*"],
+      "@services/*": ["./src/services/*"],
+      "@templates/*": ["./src/templates/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts"]

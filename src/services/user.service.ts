@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ErrorUserMessage } from '../assests/messages/user.message';
+import { ErrorUserMessage } from '../assets/messages/user.message';
 import {
   UserDecoratorDtoResponse,
   UserProfileInformationDto,

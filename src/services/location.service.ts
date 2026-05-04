@@ -3,12 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import {
   COMMENT_TYPE,
   LOCATION_RENT_STATUS,
-} from '../assests/constants/constants';
+} from '../assets/constants/constants';
 import {
   ErrorLocationMessage,
   SuccessLocationMessage,
-} from '../assests/messages/location.message';
-import { ErrorServiceMessage } from '../assests/messages/service.message';
+} from '../assets/messages/location.message';
+import { ErrorServiceMessage } from '../assets/messages/service.message';
 import { validString } from '../common/helpers/common.helper';
 import {
   AddLocationMediaRequestDto,
@@ -397,6 +397,27 @@ export class LocationService {
         if (item.serviceCode.length > 50) {
           throw new HttpException(
             ErrorServiceMessage.SERVICE_CODE_INVALID.toString(),
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        if (item.description && item.description.length > 2000) {
+          throw new HttpException(
+            ErrorServiceMessage.SERVICE_DESCRIPTION_INVALID.toString(),
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        if (item.basePrice !== undefined && Number(item.basePrice) < 0) {
+          throw new HttpException(
+            ErrorServiceMessage.SERVICE_PRICE_INVALID.toString(),
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        if (item.quantity !== undefined && Number(item.quantity) < 1) {
+          throw new HttpException(
+            ErrorServiceMessage.SERVICE_PRICE_INVALID.toString(),
             HttpStatus.BAD_REQUEST,
           );
         }
@@ -1354,11 +1375,14 @@ export class LocationService {
       );
     }
 
-    const currentAddress = await this.locationRepo.GetPrimaryAddressByLocationCode(
-      payload.locationCode,
-    );
+    const currentAddress =
+      await this.locationRepo.GetPrimaryAddressByLocationCode(
+        payload.locationCode,
+      );
     const scopedRegion = currentAddress?.addressRegion?.trim();
-    const scopedCity = scopedRegion ? undefined : currentAddress?.addressCity?.trim();
+    const scopedCity = scopedRegion
+      ? undefined
+      : currentAddress?.addressCity?.trim();
 
     try {
       const result = await this.locationRepo.GetRelatedLocation({

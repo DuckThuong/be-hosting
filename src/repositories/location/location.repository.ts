@@ -6,11 +6,11 @@ import {
   ADDRESS_STATUS,
   ADDRESS_TYPE,
   LOCATION_RENT_STATUS,
-} from '../../assests/constants/constants';
+} from '../../assets/constants/constants';
 import {
   ErrorLocationMessage,
   SuccessLocationMessage,
-} from '../../assests/messages/location.message';
+} from '../../assets/messages/location.message';
 import { randomString, validString } from '../../common/helpers/common.helper';
 import {
   CreateLocationDto,
@@ -145,28 +145,36 @@ export class LocationRepository {
     location: TbLocation,
     payload: AddLocationServicePayload,
   ): Promise<LocationServiceResponse> {
-    const validData = new Array<LocationServiceData>();
     for (const item of payload.data) {
-      const isExist = await this.locationService.findBy({
+      const existing = await this.locationService.findOneBy({
         serviceCode: item.serviceCode,
         locationCode: location.locationCode,
       });
-      if (isExist.length > 0) {
-        continue;
-      } else {
-        validData.push(item);
-      }
-    }
-    if (validData.length > 0) {
-      for (const data of validData) {
-        const newService = this.locationService.create({
-          locationCode: location.locationCode,
-          serviceCode: data.serviceCode,
-        });
 
-        await this.locationService.save(newService);
+      const nextPayload: Partial<TbLocationService> = {
+        locationCode: location.locationCode,
+        serviceCode: item.serviceCode,
+        description: item.description?.trim() ?? existing?.description ?? '',
+        isFree: item.isFree ?? existing?.isFree ?? true,
+        basePrice:
+          item.isFree === true
+            ? 0
+            : (item.basePrice ?? existing?.basePrice ?? 0),
+        unit: item.unit?.trim() ?? existing?.unit ?? 'FULL',
+        quantity: item.quantity ?? existing?.quantity ?? 1,
+        isActive: item.isActive ?? true,
+      };
+
+      if (existing) {
+        await this.locationService.save(
+          this.locationService.merge(existing, nextPayload),
+        );
+        continue;
       }
+
+      await this.locationService.save(this.locationService.create(nextPayload));
     }
+
     return {
       message: SuccessLocationMessage.ADD_SERVICE_SUCCESS,
     };
@@ -177,10 +185,15 @@ export class LocationRepository {
     payload: AddLocationServicePayload,
   ): Promise<LocationServiceResponse> {
     for (const item of payload.data) {
-      await this.locationService.delete({
-        locationCode: location.locationCode,
-        serviceCode: item.serviceCode,
-      });
+      await this.locationService.update(
+        {
+          locationCode: location.locationCode,
+          serviceCode: item.serviceCode,
+        },
+        {
+          isActive: false,
+        },
+      );
     }
 
     return {
@@ -1179,21 +1192,15 @@ export class LocationRepository {
         : undefined;
 
     if (regionFilter) {
-      qb.andWhere(
-        `(TL.typeCode = :typeCode OR ${regionFilter})`,
-        {
-          typeCode: payload.typeCode,
-          addressRegion: `%${payload.addressRegion}%`,
-        },
-      );
+      qb.andWhere(`(TL.typeCode = :typeCode OR ${regionFilter})`, {
+        typeCode: payload.typeCode,
+        addressRegion: `%${payload.addressRegion}%`,
+      });
     } else if (cityFilter) {
-      qb.andWhere(
-        `(TL.typeCode = :typeCode OR ${cityFilter})`,
-        {
-          typeCode: payload.typeCode,
-          addressCity: `%${payload.addressCity}%`,
-        },
-      );
+      qb.andWhere(`(TL.typeCode = :typeCode OR ${cityFilter})`, {
+        typeCode: payload.typeCode,
+        addressCity: `%${payload.addressCity}%`,
+      });
     } else {
       qb.andWhere('TL.typeCode = :typeCode', {
         typeCode: payload.typeCode,
@@ -1326,18 +1333,26 @@ export class LocationRepository {
   ): Promise<LocationServiceDto[]> {
     const result = await this.locationService
       .createQueryBuilder('tls')
-      .leftJoin('tb_service', 'ts', 'tls.serviceCode = ts.serviceCode')
-      .select('ts.serviceCode', 'serviceCode')
-      .addSelect('ts.serviceLogo', 'serviceLogo')
-      .addSelect('ts.serviceBackGround', 'serviceBackGround')
-      .addSelect('ts.serviceName', 'serviceName')
-      .addSelect('ts.servicePrice', 'servicePrice')
-      .addSelect('ts.serviceDescription', 'serviceDescription')
-      .addSelect('ts.serviceDescription', 'serviceNote')
+      .leftJoin('tb_service', 'ts', 'tls.serviceCode = ts.code')
+      .select('ts.code', 'serviceCode')
+      .addSelect('ts.name', 'serviceName')
+      .addSelect('ts.category', 'category')
+      .addSelect('tls.description', 'description')
+      .addSelect('tls.isFree', 'isFree')
+      .addSelect('tls.basePrice', 'basePrice')
+      .addSelect('tls.unit', 'unit')
+      .addSelect('tls.quantity', 'quantity')
+      .addSelect('tls.isActive', 'isActive')
       .where('tls.locationCode = :locationCode', { locationCode })
       .getRawMany<LocationServiceDto>();
 
-    return result;
+    return result.map((item) => ({
+      ...item,
+      isFree: Boolean(Number((item as any).isFree ?? 0)),
+      basePrice: Number((item as any).basePrice ?? 0),
+      quantity: Number((item as any).quantity ?? 1),
+      isActive: Boolean(Number((item as any).isActive ?? 1)),
+    }));
   }
 
   public async GetLocationMedia(

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
-import { ADDRESS_TYPE, LOCATION_RENT_STATUS } from '../../assests/constants/constants';
+import {
+  ADDRESS_TYPE,
+  LOCATION_RENT_STATUS,
+} from '../../assets/constants/constants';
 import {
   LocationAddressResponseDto,
   LocationAvailabilityDto,
@@ -18,7 +21,7 @@ import { TbLocationAddress } from '../../entities/location/locationAddress.entit
 import { TbLocationMedia } from '../../entities/location/locationMedia.entity';
 import { TbLocationService } from '../../entities/location/locationService.entity';
 import { TbLocationType } from '../../entities/location/locationType.entity';
-import { ServicePricingType, TbService } from '../../entities/service/service.entity';
+import { TbService } from '../../entities/service/service.entity';
 
 type BaseLocationRow = {
   locationCode: string;
@@ -85,15 +88,13 @@ export class LocationReadRepository {
 
   public async getServices() {
     return this.serviceRepo.find({
-      where: {
-        isCustom: 0,
-        servicePrice: 0 as any,
-      },
-      order: { serviceName: 'ASC' },
+      order: { name: 'ASC' },
     });
   }
 
-  public async getLocationByCode(locationCode: string): Promise<LocationDetailResponseDto | null> {
+  public async getLocationByCode(
+    locationCode: string,
+  ): Promise<LocationDetailResponseDto | null> {
     const row = await this.createBaseQuery()
       .where('location.locationCode = :locationCode', { locationCode })
       .getRawOne<BaseLocationRow>();
@@ -105,7 +106,9 @@ export class LocationReadRepository {
     return this.toLocationDetail(row);
   }
 
-  public async searchLocations(payload: LocationListQueryDto): Promise<PaginatedLocationResponseDto> {
+  public async searchLocations(
+    payload: LocationListQueryDto,
+  ): Promise<PaginatedLocationResponseDto> {
     const page = payload.page ?? 1;
     const limit = payload.limit ?? 20;
     const offset = (page - 1) * limit;
@@ -126,7 +129,9 @@ export class LocationReadRepository {
     }
 
     if (payload.typeCode) {
-      qb.andWhere('location.typeCode = :typeCode', { typeCode: payload.typeCode });
+      qb.andWhere('location.typeCode = :typeCode', {
+        typeCode: payload.typeCode,
+      });
     }
 
     if (payload.typeName) {
@@ -160,11 +165,15 @@ export class LocationReadRepository {
     }
 
     if (payload.minArea !== undefined) {
-      qb.andWhere('location.locationArea >= :minArea', { minArea: payload.minArea });
+      qb.andWhere('location.locationArea >= :minArea', {
+        minArea: payload.minArea,
+      });
     }
 
     if (payload.maxArea !== undefined) {
-      qb.andWhere('location.locationArea <= :maxArea', { maxArea: payload.maxArea });
+      qb.andWhere('location.locationArea <= :maxArea', {
+        maxArea: payload.maxArea,
+      });
     }
 
     if (payload.isRented !== undefined) {
@@ -214,30 +223,32 @@ export class LocationReadRepository {
 
     const qb = this.createBaseQuery()
       .where('location.locationCode <> :locationCode', { locationCode })
-      .andWhere(new Brackets((inner) => {
-        inner.where('location.typeCode = :typeCode', {
-          typeCode: current.type.code,
-        });
+      .andWhere(
+        new Brackets((inner) => {
+          inner.where('location.typeCode = :typeCode', {
+            typeCode: current.type.code,
+          });
 
-        if (currentRegion) {
-          inner.orWhere(
-            'LOWER(TRIM(primaryAddress.addressRegion)) LIKE LOWER(:region)',
-            {
-              region: `%${currentRegion}%`,
-            },
-          );
-          return;
-        }
+          if (currentRegion) {
+            inner.orWhere(
+              'LOWER(TRIM(primaryAddress.addressRegion)) LIKE LOWER(:region)',
+              {
+                region: `%${currentRegion}%`,
+              },
+            );
+            return;
+          }
 
-        if (currentCity) {
-          inner.orWhere(
-            'LOWER(TRIM(primaryAddress.addressCity)) LIKE LOWER(:city)',
-            {
-              city: `%${currentCity}%`,
-            },
-          );
-        }
-      }));
+          if (currentCity) {
+            inner.orWhere(
+              'LOWER(TRIM(primaryAddress.addressCity)) LIKE LOWER(:city)',
+              {
+                city: `%${currentCity}%`,
+              },
+            );
+          }
+        }),
+      );
 
     const total = await qb.getCount();
     const rows = await qb
@@ -256,21 +267,35 @@ export class LocationReadRepository {
     };
   }
 
-  public async getLocationsByOwner(ownerCode: string): Promise<LocationSummaryResponseDto[]> {
+  public async getLocationsByOwner(
+    ownerCode: string,
+  ): Promise<LocationSummaryResponseDto[]> {
     const rows = await this.createBaseQuery()
       .where('location.ownerCode = :ownerCode', { ownerCode })
       .orderBy('location.locationCode', 'DESC')
       .getRawMany<BaseLocationRow>();
 
-    return   rows.map((row) => this.toLocationSummary(row));
+    return rows.map((row) => this.toLocationSummary(row));
   }
 
   private createBaseQuery() {
     return this.locationRepo
       .createQueryBuilder('location')
-      .leftJoin(TbLocationType, 'locationType', 'locationType.typeCode = location.typeCode')
-      .leftJoin('tb_user_default', 'ownerUser', 'ownerUser.userCode = location.ownerCode')
-      .leftJoin('tb_user_profile', 'ownerProfile', 'ownerProfile.user_id = ownerUser.id')
+      .leftJoin(
+        TbLocationType,
+        'locationType',
+        'locationType.typeCode = location.typeCode',
+      )
+      .leftJoin(
+        'tb_user_default',
+        'ownerUser',
+        'ownerUser.userCode = location.ownerCode',
+      )
+      .leftJoin(
+        'tb_user_profile',
+        'ownerProfile',
+        'ownerProfile.user_id = ownerUser.id',
+      )
       .leftJoin(
         TbLocationAddress,
         'primaryAddress',
@@ -320,7 +345,9 @@ export class LocationReadRepository {
       ]);
   }
 
-  private async toLocationDetail(row: BaseLocationRow): Promise<LocationDetailResponseDto> {
+  private async toLocationDetail(
+    row: BaseLocationRow,
+  ): Promise<LocationDetailResponseDto> {
     const [addresses, services, media] = await Promise.all([
       this.getAddresses(row.locationCode),
       this.getServicesForLocation(row.locationCode),
@@ -343,7 +370,8 @@ export class LocationReadRepository {
       description: row.description ?? undefined,
       note: row.note ?? undefined,
       logo: row.logo ?? undefined,
-      area: row.area === null || row.area === undefined ? null : Number(row.area),
+      area:
+        row.area === null || row.area === undefined ? null : Number(row.area),
       rating: Number(row.rating ?? 0),
       pricing: this.toPricing(row),
       availability: this.toAvailability(row),
@@ -384,7 +412,9 @@ export class LocationReadRepository {
     };
   }
 
-  private toPrimaryAddress(row: BaseLocationRow): LocationAddressResponseDto | null {
+  private toPrimaryAddress(
+    row: BaseLocationRow,
+  ): LocationAddressResponseDto | null {
     if (!row.primaryAddressCode) {
       return null;
     }
@@ -404,7 +434,9 @@ export class LocationReadRepository {
     };
   }
 
-  private async getAddresses(locationCode: string): Promise<LocationAddressResponseDto[]> {
+  private async getAddresses(
+    locationCode: string,
+  ): Promise<LocationAddressResponseDto[]> {
     const rows = await this.addressRepo.find({
       where: { locationCode },
       order: { id: 'ASC' },
@@ -425,41 +457,43 @@ export class LocationReadRepository {
     }));
   }
 
-  private async getServicesForLocation(locationCode: string): Promise<ServiceCatalogItemDto[]> {
+  private async getServicesForLocation(
+    locationCode: string,
+  ): Promise<ServiceCatalogItemDto[]> {
     const rows = await this.locationServiceRepo
       .createQueryBuilder('locationService')
-      .innerJoin(TbService, 'service', 'service.serviceCode = locationService.serviceCode')
+      .innerJoin(
+        TbService,
+        'service',
+        'service.code = locationService.serviceCode',
+      )
       .select([
-        'service.serviceCode AS serviceCode',
-        'service.serviceName AS serviceName',
-        'service.serviceDescription AS serviceDescription',
-        'service.serviceLogo AS serviceLogo',
-        'service.serviceBackGround AS serviceBackGround',
-        'service.servicePrice AS servicePrice',
-        'service.serviceDiscount AS serviceDiscount',
-        'locationService.customPrice AS customPrice',
-        'locationService.pricingType AS pricingType',
-        'service.isCustom AS isCustom',
+        'service.code AS serviceCode',
+        'service.name AS serviceName',
+        'locationService.description AS description',
+        'service.category AS category',
+        'locationService.isActive AS isActive',
+        'locationService.isFree AS isFree',
+        'locationService.basePrice AS basePrice',
+        'locationService.unit AS unit',
+        'locationService.quantity AS quantity',
       ])
       .where('locationService.locationCode = :locationCode', { locationCode })
       .getRawMany<ServiceCatalogItemDto>();
 
     return rows.map((row) => ({
       ...row,
-      servicePrice: Number((row as any).customPrice ?? (row as any).servicePrice ?? 0),
-      serviceDiscount: Number((row as any).serviceDiscount ?? 0),
-      customPrice:
-        (row as any).customPrice === null || (row as any).customPrice === undefined
-          ? undefined
-          : Number((row as any).customPrice),
-      pricingType:
-        ((row as any).pricingType as ServicePricingType | undefined) ??
-        ServicePricingType.FULL,
-      isCustom: Boolean(Number((row as any).isCustom ?? 0)),
+      isActive: Boolean(Number((row as any).isActive ?? 1)),
+      isFree: Boolean(Number((row as any).isFree ?? 0)),
+      basePrice: Number((row as any).basePrice ?? 0),
+      unit: (row as any).unit ?? 'FULL',
+      quantity: Number((row as any).quantity ?? 1),
     }));
   }
 
-  private async getMediaForLocation(locationCode: string): Promise<LocationMediaResponseItemDto[]> {
+  private async getMediaForLocation(
+    locationCode: string,
+  ): Promise<LocationMediaResponseItemDto[]> {
     const rows = await this.mediaRepo.find({
       where: { locationCode },
       order: { displayOrder: 'ASC', id: 'ASC' },

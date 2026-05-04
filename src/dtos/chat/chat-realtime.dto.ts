@@ -1,6 +1,6 @@
 import { ConversationResponseDto } from './chat.dto';
 import { MessageResponseDto } from './message-response.dto';
-import { MessageStatus, MessageType } from '../../entities/chat/message.entity';
+import { MessageStatus, MessageType } from '../../assets/enums/message.enum';
 
 export interface SocketEventMetaDto {
   requestId?: string;

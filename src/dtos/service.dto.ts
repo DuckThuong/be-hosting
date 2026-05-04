@@ -1,114 +1,53 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { ServicePricingType } from '../entities/service/service.entity';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateServiceDto {
-  @ApiProperty({
-    description: 'serviceName',
-    example: '......',
-    required: true,
+  @ApiPropertyOptional({
+    description: 'Service code',
+    example: 'SRV_FREE_WIFI',
   })
-  serviceName: string;
+  code?: string;
 
   @ApiProperty({
-    description: 'serviceDescription',
-    example: '......',
+    description: 'Service name',
+    example: 'Wifi mien phi',
     required: true,
   })
-  serviceDescription: string;
+  name: string;
 
-  @ApiProperty({
-    description: 'serviceLogo',
-    example: '......',
-    required: true,
+  @ApiPropertyOptional({
+    description: 'Service category',
+    example: 'GENERAL',
   })
-  serviceLogo: string;
-
-  @ApiProperty({
-    description: 'serviceBackGround',
-    example: '......',
-    required: true,
-  })
-  serviceBackGround: string;
-
-  @ApiProperty({
-    description: 'servicePrice',
-    example: '......',
-    required: true,
-  })
-  servicePrice: number;
-
-  @ApiProperty({
-    description: 'serviceDiscount',
-    example: '......',
-    required: true,
-  })
-  serviceDiscount: number;
-
-  @ApiProperty({
-    description: 'pricingType',
-    enum: ServicePricingType,
-    required: false,
-  })
-  pricingType?: ServicePricingType;
+  category?: string;
 }
 
 export class UpdateServiceDto {
   @ApiProperty({
-    description: 'id',
-    example: '......',
+    description: 'Service id',
+    example: 1,
     required: true,
   })
   id: number;
 
-  @ApiProperty({
-    description: 'serviceName',
-    example: '......',
-    required: true,
+  @ApiPropertyOptional({
+    description: 'Service code',
+    example: 'SRV_FREE_WIFI',
   })
-  serviceName: string;
+  code?: string;
 
-  @ApiProperty({
-    description: 'serviceDescription',
-    example: '......',
-    required: true,
+  @ApiPropertyOptional({
+    description: 'Service name',
+    example: 'Wifi mien phi',
   })
-  serviceDescription: string;
+  name?: string;
 
-  @ApiProperty({
-    description: 'serviceLogo',
-    example: '......',
-    required: true,
+  @ApiPropertyOptional({
+    description: 'Service category',
+    example: 'GENERAL',
   })
-  serviceLogo: string;
-
-  @ApiProperty({
-    description: 'serviceBackGround',
-    example: '......',
-    required: true,
-  })
-  serviceBackGround: string;
-
-  @ApiProperty({
-    description: 'servicePrice',
-    example: '......',
-    required: true,
-  })
-  servicePrice: number;
-
-  @ApiProperty({
-    description: 'serviceDiscount',
-    example: '......',
-    required: true,
-  })
-  serviceDiscount: number;
-
-  @ApiProperty({
-    description: 'pricingType',
-    enum: ServicePricingType,
-    required: false,
-  })
-  pricingType?: ServicePricingType;
+  category?: string;
 }
+
 export class CreateServiceResponseDto {
   message: string;
   data: ServiceDto;
@@ -121,14 +60,7 @@ export class UpdateServiceResponseDto {
 
 export class ServiceDto {
   id: number;
-  serviceCode: string;
-  serviceName: string;
-  serviceDescription: string;
-  serviceLogo: string;
-  serviceBackGround: string;
-  servicePrice: number;
-  serviceDiscount: number;
-  pricingType: ServicePricingType;
-  isCustom: number;
-  createdByUserCode: string | null;
+  code: string;
+  name: string;
+  category: string;
 }

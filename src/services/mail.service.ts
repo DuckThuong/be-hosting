@@ -2,14 +2,14 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
-import { MAIL_CONFIG } from '../assests/constants/mail.constant';
+import { MAIL_CONFIG } from '../assets/constants/mail.constant';
 
 import { isEmail } from 'class-validator';
 import {
   ErrorLoginMessage,
   MailErrorMessage,
   MailSuccessMessage,
-} from '../assests/messages/auth.message';
+} from '../assets/messages/auth.message';
 import { OtpHelper } from '../common/helpers/otp.helper';
 import {
   OtpData,

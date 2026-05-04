@@ -1,13 +1,14 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { BaseEntity } from '../base.entity';
+import { TbUserDefault } from '../user/user_default.entity';
+import { TbLocationType } from './locationType.entity';
+import { TbLocationAddress } from './locationAddress.entity';
+import { TbLocationService } from './locationService.entity';
 import { TbLocationMedia } from './locationMedia.entity';
+import { TbLocationFavorite } from './locationFavorite.entity';
 
 @Entity('tb_location')
-export class TbLocation {
-  @PrimaryGeneratedColumn('increment', {
-    comment: 'Primary key',
-  })
-  id: number;
-
+export class TbLocation extends BaseEntity {
   @Column({ type: 'varchar', length: 50, unique: false })
   typeCode: string;
 
@@ -59,6 +60,25 @@ export class TbLocation {
   @Column({ type: 'int', unique: false, nullable: true })
   locationRate: number;
 
+  // ── Relations ──
+
+  @ManyToOne(() => TbLocationType, (type) => type.locations)
+  @JoinColumn({ name: 'typeCode', referencedColumnName: 'typeCode' })
+  type?: TbLocationType;
+
+  @ManyToOne(() => TbUserDefault)
+  @JoinColumn({ name: 'ownerCode', referencedColumnName: 'userCode' })
+  owner?: TbUserDefault;
+
+  @OneToMany(() => TbLocationAddress, (addr) => addr.location)
+  addresses?: TbLocationAddress[];
+
+  @OneToMany(() => TbLocationService, (svc) => svc.location)
+  locationServices?: TbLocationService[];
+
   @OneToMany(() => TbLocationMedia, (media) => media.location)
   media?: TbLocationMedia[];
+
+  @OneToMany(() => TbLocationFavorite, (fav) => fav.location)
+  favorites?: TbLocationFavorite[];
 }

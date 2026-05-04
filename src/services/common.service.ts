@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   LOCATION_RENT_STATUS,
   RESOURCE_TYPE,
-} from '../assests/constants/constants';
+} from '../assets/constants/constants';
 import {
   CommonMetadataListResponseDto,
   CommonMetadataOptionDto,
@@ -83,7 +83,9 @@ export class CommonService {
     );
   }
 
-  public async GetLocationFilterTypesData(): Promise<CommonMetadataOptionDto[]> {
+  public async GetLocationFilterTypesData(): Promise<
+    CommonMetadataOptionDto[]
+  > {
     const locationTypes = await this.locationService.GetAllLocationType();
 
     return locationTypes.map((item, index) =>
@@ -91,7 +93,9 @@ export class CommonService {
     );
   }
 
-  public async GetLocationFilterServicesData(): Promise<CommonMetadataOptionDto[]> {
+  public async GetLocationFilterServicesData(): Promise<
+    CommonMetadataOptionDto[]
+  > {
     const services = await this.serviceService.GetAllService();
     const amenityKeyByServiceCode: Record<string, string> = {
       SRV_FREE_WIFI: 'wifi',
@@ -105,9 +109,9 @@ export class CommonService {
 
     return services.map((item, index) =>
       this.mapOption(
-        amenityKeyByServiceCode[item.serviceCode] ?? item.serviceCode,
-        item.serviceName,
-        item.serviceCode,
+        amenityKeyByServiceCode[item.code] ?? item.code,
+        item.name,
+        item.code,
         index + 1,
       ),
     );
@@ -222,11 +226,7 @@ export class CommonService {
 
     return {
       message: 'Lấy metadata khoảng giá thành công.',
-      data: this.buildMarkers(
-        minValue,
-        maxValue,
-        this.defaultPriceMarkers,
-      ),
+      data: this.buildMarkers(minValue, maxValue, this.defaultPriceMarkers),
     };
   }
 

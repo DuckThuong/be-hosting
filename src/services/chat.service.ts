@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ErrorChatMessage } from '../assests/messages/chat.message';
+import { ErrorChatMessage } from '../assets/messages/chat.message';
 import {
   ContactToUserDto,
   ContactToUserPayloadDto,
@@ -17,7 +17,7 @@ import {
   SetConversationNicknameDto,
 } from '../dtos/chat/chat.dto';
 import { MarkMessageReadSocketPayloadDto } from '../dtos/chat/chat-realtime.dto';
-import { MessageStatus } from '../entities/chat/message.entity';
+import { MessageStatus } from '../assets/enums/message.enum';
 import { ChatRepository } from '../repositories/chat.repository';
 import { UserRepository } from '../repositories/user.repository';
 import {
@@ -34,7 +34,7 @@ export class ChatService {
     private readonly chatRepository: ChatRepository,
     private readonly userRepository: UserRepository,
     private readonly chatRealtimeService: ChatRealtimeService,
-  ) {}
+  ) { }
 
   private async validateParticipantAccess(
     conversationId: number,
@@ -65,36 +65,26 @@ export class ChatService {
     attachmentId: number,
     userId: number,
   ): Promise<TbMessageAttachment> {
-    const attachment = await this.chatRepository.findAttachmentById(attachmentId);
+    const attachment =
+      await this.chatRepository.findAttachmentById(attachmentId);
 
     if (!attachment?.message?.conversationId) {
       throw new NotFoundException('File dinh kem khong ton tai.');
     }
 
-    await this.validateParticipantAccess(attachment.message.conversationId, userId);
+    await this.validateParticipantAccess(
+      attachment.message.conversationId,
+      userId,
+    );
 
     return attachment;
   }
 
   public async fetchAttachmentContent(
     attachment: TbMessageAttachment,
-  ): Promise<Buffer> {
-    try {
-      const response = await fetch(attachment.url);
-
-      if (!response.ok) {
-        throw new BadGatewayException('Khong the doc file dinh kem.');
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      return Buffer.from(arrayBuffer);
-    } catch (error) {
-      if (error instanceof BadGatewayException) {
-        throw error;
-      }
-
-      throw new BadGatewayException('Khong the doc file dinh kem.');
-    }
+  ): Promise<{ url: string } | Buffer> {
+    // Return the direct URL for redirect instead of proxying through server
+    return { url: attachment.url };
   }
 
   private resolveMuteUntil(preset: MuteConversationPreset): Date {
@@ -134,8 +124,7 @@ export class ChatService {
           this.userRepository.GetUserInfomation(payload.toUserCd),
         ]);
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
       throw new NotFoundException(ErrorChatMessage.TO_USER_NOT_FOUND);
     }
     if (!fromUser)
