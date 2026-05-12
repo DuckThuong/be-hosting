@@ -31,8 +31,8 @@ type BaseLocationRow = {
   logo?: string | null;
   area?: string | number | null;
   rating?: string | number | null;
-  priceStart?: string | number | null;
-  priceEnd?: string | number | null;
+  price?: string | number | null;
+  priceUnit?: string | null;
   priceAfterDeal?: string | number | null;
   minTimeLimit?: string | null;
   maxTimeLimit?: string | null;
@@ -129,9 +129,12 @@ export class LocationReadRepository {
     }
 
     if (payload.typeCode) {
-      qb.andWhere('location.typeCode = :typeCode', {
-        typeCode: payload.typeCode,
-      });
+      const typeCodes = payload.typeCode.split(',').map((c) => c.trim()).filter(Boolean);
+      if (typeCodes.length > 0) {
+        qb.andWhere('location.typeCode IN (:...typeCodes)', {
+          typeCodes,
+        });
+      }
     }
 
     if (payload.typeName) {
@@ -184,14 +187,27 @@ export class LocationReadRepository {
       });
     }
 
-    const total = await qb.getCount();
+    const total = await qb.clone()
+      .select('COUNT(DISTINCT location.locationCode)', 'count')
+      .getRawOne()
+      .then((row) => Number(row?.count ?? 0));
     const rows = await qb
       .orderBy('location.locationCode', 'DESC')
       .offset(offset)
       .limit(limit)
       .getRawMany<BaseLocationRow>();
 
-    const data = rows.map((row) => this.toLocationSummary(row));
+    // Deduplicate rows — LEFT JOIN on primaryAddress can produce
+    // multiple rows per location when duplicate addresses exist.
+    const uniqueMap = new Map<string, BaseLocationRow>();
+    for (const row of rows) {
+      if (!uniqueMap.has(row.locationCode)) {
+        uniqueMap.set(row.locationCode, row);
+      }
+    }
+    const data = Array.from(uniqueMap.values()).map((row) =>
+      this.toLocationSummary(row),
+    );
 
     return {
       data,
@@ -310,8 +326,8 @@ export class LocationReadRepository {
         'location.locationLogo AS logo',
         'location.locationArea AS area',
         'location.locationRate AS rating',
-        'location.locationPriceStart AS priceStart',
-        'location.locationPriceEnd AS priceEnd',
+        'location.locationPrice AS price',
+        'location.locationPriceUnit AS priceUnit',
         'location.locationPriceAfterDeal AS priceAfterDeal',
         'location.minTimeLimit AS minTimeLimit',
         'location.maxTimeLimit AS maxTimeLimit',
@@ -397,8 +413,8 @@ export class LocationReadRepository {
 
   private toPricing(row: BaseLocationRow): LocationPricingDto {
     return {
-      priceStart: Number(row.priceStart ?? 0),
-      priceEnd: Number(row.priceEnd ?? row.priceStart ?? 0),
+      price: Number(row.price ?? 0),
+      priceUnit: row.priceUnit ?? '',
       priceAfterDeal: Number(row.priceAfterDeal ?? 0),
     };
   }

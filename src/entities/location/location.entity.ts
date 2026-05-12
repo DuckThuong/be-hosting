@@ -31,10 +31,10 @@ export class TbLocation extends BaseEntity {
   maxTimeLimit: string;
 
   @Column({ type: 'decimal', unique: false, nullable: true })
-  locationPriceStart: number;
+  locationPrice: number;
 
-  @Column({ type: 'decimal', unique: false, nullable: true })
-  locationPriceEnd: number;
+  @Column({ type: 'varchar', length: 50, unique: false, nullable: true })
+  locationPriceUnit: string;
 
   @Column({ type: 'decimal', unique: false, nullable: true })
   locationPriceAfterDeal: number;
@@ -57,7 +57,7 @@ export class TbLocation extends BaseEntity {
   @Column({ type: 'int', unique: false, nullable: false })
   locationStatus: number;
 
-  @Column({ type: 'int', unique: false, nullable: true })
+  @Column({ type: 'float', unique: false, nullable: true })
   locationRate: number;
 
   // ── Relations ──

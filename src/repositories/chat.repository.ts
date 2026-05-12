@@ -328,8 +328,8 @@ export class ChatRepository {
         content: RentLocationMessageTemplate({
           imgUrl: location?.locationLogo as string,
           locationName: location?.locationName || '',
-          locationPriceStart: String(location?.locationPriceStart || '0'),
-          locationPriceEnd: String(location?.locationPriceEnd || '0'),
+          locationPrice: String(location?.locationPrice || '0'),
+          locationPriceUnit: location?.locationPriceUnit || '/tháng',
           typeName: location?.typeName as string,
           time: new Date().toLocaleString('vi-VN', {
             timeZone: 'Asia/Ho_Chi_Minh',
@@ -352,8 +352,8 @@ export class ChatRepository {
         content: ContactMessageTemplate({
           imgUrl: location?.locationLogo as string,
           locationName: location?.locationName || '',
-          locationPriceStart: String(location?.locationPriceStart || '0'),
-          locationPriceEnd: String(location?.locationPriceEnd || '0'),
+          locationPrice: String(location?.locationPrice || '0'),
+          locationPriceUnit: location?.locationPriceUnit || '/tháng',
           typeName: location?.typeName as string,
         }),
         type: MessageType.SYSTEM,

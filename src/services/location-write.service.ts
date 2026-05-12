@@ -118,8 +118,7 @@ export class LocationWriteService {
 
     if (
       payload.pricing &&
-      payload.pricing.priceAfterDeal >
-        (payload.pricing.priceEnd ?? payload.pricing.priceStart)
+      payload.pricing.priceAfterDeal > payload.pricing.price
     ) {
       throw new HttpException(
         ErrorLocationMessage.LOCATION_PRICE_INVALID.toString(),

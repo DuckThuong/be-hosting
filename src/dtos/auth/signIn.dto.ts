@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SignInPayload {
   @ApiProperty({
@@ -14,9 +14,16 @@ export class SignInPayload {
     required: true,
   })
   password: string;
+
+  @ApiPropertyOptional({
+    description: 'Ghi nhớ đăng nhập — nếu true sẽ cấp thêm refresh token dài hạn',
+    example: false,
+  })
+  rememberMe?: boolean;
 }
 
 export class SignInDtoResponse {
   message: string;
   access_token: string;
+  refresh_token?: string;
 }

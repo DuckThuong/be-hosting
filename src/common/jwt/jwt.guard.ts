@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '@common/jwt/public.decorator';
 
 @Injectable()
@@ -17,41 +16,48 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
 
+  /**
+   * canActivate: Quyết định xem request có được phép đi tiếp hay không.
+   */
   canActivate(context: ExecutionContext) {
+    // 1. Kiểm tra xem Route hiện tại có được đánh dấu là @Public() không
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
+    // 2. Nếu là route công khai, cho phép truy cập ngay không cần token
     if (isPublic) {
-      this.logger.log('===== JWT AUTH GUARD (PUBLIC ROUTE) =====');
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-
-    this.logger.log('===== JWT AUTH GUARD =====');
-    this.logger.log(
-      `Authorization Header: ${request.headers.authorization ?? 'None'}`,
-    );
-    this.logger.log(`Request URL: ${request.url}`);
-    this.logger.log(`Request Method: ${request.method}`);
-
+    // 3. Nếu không, gọi canActivate của AuthGuard('jwt') để kích hoạt JwtStrategy
     return super.canActivate(context);
   }
 
+  /**
+   * handleRequest: Xử lý kết quả sau khi Passport (JwtStrategy) đã xác thực xong.
+   */
   handleRequest<TUser = any>(err: any, user: any, info: any): TUser {
-    this.logger.log('===== HANDLE REQUEST =====');
-    this.logger.error('Error: ' + (err ? JSON.stringify(err) : 'None'));
-    this.logger.log('User: ' + JSON.stringify(user));
-    this.logger.warn('Info: ' + JSON.stringify(info));
-
+    // Nếu có lỗi xác thực hoặc không tìm thấy user (token sai/hết hạn)
     if (err || !user) {
       this.logger.error('Authentication failed!');
+      
+      // Log thêm thông tin chi tiết nếu có (ví dụ: "jwt expired")
+      if (info) {
+        this.logger.error('Auth Info: ' + JSON.stringify(info));
+      }
+      
+      // Log lỗi kỹ thuật nếu có
+      if (err) {
+        this.logger.error('Auth Error: ' + JSON.stringify(err));
+      }
+      
+      // Ném lỗi 401 Unauthorized về phía Client
       throw err ?? new UnauthorizedException('Authentication failed');
     }
 
-    this.logger.log('✅ Authentication successful!');
+    // Nếu mọi thứ hợp lệ, trả về object user (sẽ được Nest gán vào request.user)
     return user as TUser;
   }
 }

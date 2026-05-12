@@ -18,6 +18,10 @@ import {
   ResetPasswordResponse,
 } from '../dtos/auth/resetPassword.dto';
 import { SignInDtoResponse, SignInPayload } from '../dtos/auth/signIn.dto';
+import {
+  RefreshTokenPayload,
+  RefreshTokenResponse,
+} from '../dtos/auth/refreshToken.dto';
 import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { AuthService } from '../services/auth.service';
@@ -46,6 +50,15 @@ export class AuthController {
     @Body() payload: SignInPayload,
   ): Promise<SignInDtoResponse> {
     return this.authService.SignIn(payload);
+  }
+
+  @ApiOperation({ summary: 'Refresh Access Token' })
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  public async refreshToken(
+    @Body() payload: RefreshTokenPayload,
+  ): Promise<RefreshTokenResponse> {
+    return this.authService.RefreshToken(payload);
   }
 
   @ApiOperation({ summary: 'User Forgot Password' })

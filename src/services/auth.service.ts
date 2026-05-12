@@ -1,9 +1,14 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ROUND } from '../assets/constants/constants';
 import { isEmail } from '../common/validators/validator';
 import { SignInDtoResponse, SignInPayload } from '../dtos/auth/signIn.dto';
+import {
+  RefreshTokenPayload,
+  RefreshTokenResponse,
+} from '../dtos/auth/refreshToken.dto';
 import { SignUpDtoResponse, SignUpPayload } from '../dtos/auth/signUp.dto';
 import {
   UserDecoratorDtoResponse,
@@ -37,6 +42,7 @@ import { JwtPayload } from '../dtos/jwt/jwt.dto';
 export class AuthService {
   constructor(
     private jwtService: JwtService,
+    private configService: ConfigService,
     private authRepository: AuthRepository,
     private mailService: MailService,
   ) {}
@@ -82,7 +88,8 @@ export class AuthService {
     }
 
     try {
-      const payload: JwtPayload = {
+      // 1. Tạo payload cho JWT từ thông tin user
+      const jwtPayload: JwtPayload = {
         sub: user.id,
         userCode: user.userCode,
         username: user.username,
@@ -93,10 +100,33 @@ export class AuthService {
         isEmailVerified: user.isEmailVerified,
       };
 
-      return {
+      const rememberMe = payload.rememberMe === true;
+
+      // 2. Cấu hình thời hạn của Access Token
+      // - Nếu chọn "Remember Me": Token ngắn hạn (15 phút) để tăng tính bảo mật, cần Refresh Token để duy trì.
+      // - Nếu không chọn: Token dài hạn (1 ngày) và không cấp Refresh Token.
+      const access_token = this.jwtService.sign(jwtPayload, {
+        expiresIn: rememberMe ? '1h' : '1d',
+      });
+
+      const result: SignInDtoResponse = {
         message: 'Đăng nhập thành công',
-        access_token: this.jwtService.sign(payload),
+        access_token,
       };
+
+      // 3. Nếu có "Remember Me", tạo thêm Refresh Token (thời hạn 30 ngày)
+      if (rememberMe) {
+        const refreshPayload = {
+          sub: user.id,
+          userCode: user.userCode,
+          type: 'refresh', // Đánh dấu đây là token dùng để refresh
+        };
+        result.refresh_token = this.jwtService.sign(refreshPayload, {
+          expiresIn: '30d',
+        });
+      }
+
+      return result;
     } catch (error) {
       console.error('Error during JWT signing:', error);
       throw new HttpException(
@@ -296,6 +326,71 @@ export class AuthService {
       throw new HttpException(
         ErrorResetPasswordMessage.RESET_ERROR.toString(),
         HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  public async RefreshToken(
+    payload: RefreshTokenPayload,
+  ): Promise<RefreshTokenResponse> {
+    if (!payload.refresh_token) {
+      throw new HttpException(
+        'Refresh token là bắt buộc',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      // 1. Kiểm tra tính hợp lệ và chữ ký của Refresh Token
+      const decoded = this.jwtService.verify(payload.refresh_token, {
+        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      });
+
+      // 2. Đảm bảo token này có đúng mục đích là 'refresh'
+      if (decoded.type !== 'refresh') {
+        throw new HttpException(
+          'Token không hợp lệ',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      // 3. Truy vấn User từ DB để đảm bảo tài khoản vẫn tồn tại và hoạt động
+      const user = await this.authRepository.findById(decoded.sub);
+      if (!user) {
+        throw new HttpException(
+          ErrorLoginMessage.USER_NOT_FOUND.toString(),
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      // 4. Tạo Access Token mới với thông tin user cập nhật nhất
+      const jwtPayload: JwtPayload = {
+        sub: user.id,
+        userCode: user.userCode,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        status: user.status,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+      };
+      Logger.log('Access Token Payload:', jwtPayload);
+
+      return {
+        message: 'Làm mới token thành công',
+        access_token: this.jwtService.sign(jwtPayload, {
+          expiresIn: '1h', // Access token mới vẫn duy trì thời hạn ngắn (1 giờ)
+        }),
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      console.error('Error during token refresh:', error);
+      throw new HttpException(
+        'Refresh token không hợp lệ hoặc đã hết hạn',
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }

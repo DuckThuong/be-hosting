@@ -75,8 +75,7 @@ export class LocationWriteRepository {
     service: LocationServiceSelectionDto,
   ): Partial<TbLocationService> {
     const basePrice = Number(service.basePrice ?? 0);
-    const isFree =
-      service.isFree !== undefined ? service.isFree : Number(basePrice) <= 0;
+    const isFree = service.isFree;
 
     return {
       locationCode,
@@ -128,9 +127,8 @@ export class LocationWriteRepository {
         typeCode: payload.typeCode,
         locationName: payload.name,
         locationLogo: logoMedia?.url ?? '',
-        locationPriceStart: payload.pricing.priceStart,
-        locationPriceEnd:
-          payload.pricing.priceEnd ?? payload.pricing.priceStart,
+        locationPrice: payload.pricing.price,
+        locationPriceUnit: payload.pricing.priceUnit,
         locationPriceAfterDeal: payload.pricing.priceAfterDeal,
         locationArea: payload.area,
         minTimeLimit:
@@ -195,7 +193,11 @@ export class LocationWriteRepository {
           locationServices.push(
             queryRunner.manager.create(
               TbLocationService,
-              this.getLocationServicePayload(locationCode, serviceCode, service),
+              this.getLocationServicePayload(
+                locationCode,
+                serviceCode,
+                service,
+              ),
             ),
           );
         }
@@ -252,12 +254,9 @@ export class LocationWriteRepository {
           typeCode: nextTypeCode,
           locationName: payload.name ?? location.locationName,
           locationLogo: logoMedia?.url ?? location.locationLogo,
-          locationPriceStart:
-            payload.pricing?.priceStart ?? location.locationPriceStart,
-          locationPriceEnd:
-            payload.pricing?.priceEnd ??
-            payload.pricing?.priceStart ??
-            location.locationPriceEnd,
+          locationPrice: payload.pricing?.price ?? location.locationPrice,
+          locationPriceUnit:
+            payload.pricing?.priceUnit ?? location.locationPriceUnit,
           locationPriceAfterDeal:
             payload.pricing?.priceAfterDeal ?? location.locationPriceAfterDeal,
           locationArea: payload.area ?? location.locationArea,

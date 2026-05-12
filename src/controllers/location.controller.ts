@@ -23,6 +23,9 @@ import {
   UpdatelocationPayloadDto,
   UpdateRentStatusDto,
   UpdateRentStatusResponseDto,
+  FavoriteLocationListResponseDto,
+  ToggleFavoriteRequestDto,
+  ToggleFavoriteResponseDto,
 } from '../dtos/location/location.dto';
 import { DeleteLocationAddressesDto } from '../dtos/location/locationAddress.dto';
 import {
@@ -211,6 +214,25 @@ export class LocationController {
     @Body() payload: LocationCommentPayloadDto,
   ): Promise<any> {
     return this.locationService.createNewComment(user, payload);
+  }
+
+  @ApiOperation({ summary: 'Thêm/Xóa địa điểm yêu thích' })
+  @UseGuards(JwtAuthGuard)
+  @Post('toggle-favorite')
+  public async toggleFavorite(
+    @User() user: UserDecoratorDtoResponse,
+    @Body() payload: ToggleFavoriteRequestDto,
+  ): Promise<ToggleFavoriteResponseDto> {
+    return this.locationService.ToggleFavorite(user, payload);
+  }
+
+  @ApiOperation({ summary: 'Lấy danh sách địa điểm yêu thích' })
+  @UseGuards(JwtAuthGuard)
+  @Get('get-my-favorite')
+  public async getMyFavoriteLocation(
+    @User() user: UserDecoratorDtoResponse,
+  ): Promise<FavoriteLocationListResponseDto> {
+    return this.locationService.GetMyFavoriteLocation(user);
   }
 }
 

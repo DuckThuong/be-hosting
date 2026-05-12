@@ -1,8 +1,8 @@
 export const ContactMessageTemplate = (data: {
   imgUrl: string;
   locationName: string;
-  locationPriceEnd: any;
-  locationPriceStart: any;
+  locationPrice: any;
+  locationPriceUnit: string;
   typeName: string;
 }) => `
 <div style="
@@ -83,14 +83,10 @@ export const ContactMessageTemplate = (data: {
       margin-bottom: 10px;
     ">
       <span style="color: #e65100; font-weight: 700;">
-        ${Number(data.locationPriceStart).toLocaleString('vi-VN')}đ
-      </span>
-      <span style="color: #ccc;">—</span>
-      <span style="color: #e65100; font-weight: 700;">
-        ${Number(data.locationPriceEnd).toLocaleString('vi-VN')}đ
+        ${Number(data.locationPrice).toLocaleString('vi-VN')}đ
       </span>
       <span style="color: #aaa; font-size: 11px;">
-        /tháng
+        ${data.locationPriceUnit}
       </span>
     </div>
 
@@ -112,8 +108,8 @@ export const ContactMessageTemplate = (data: {
 export const RentLocationMessageTemplate = (data: {
   imgUrl: string;
   locationName: string;
-  locationPriceEnd: any;
-  locationPriceStart: any;
+  locationPrice: any;
+  locationPriceUnit: string;
   typeName: string;
   time: string;
 }) => `
@@ -189,14 +185,10 @@ export const RentLocationMessageTemplate = (data: {
       font-size: 13px;
     ">
       <span style="color: #e65100; font-weight: 700;">
-       ${Number(data.locationPriceStart).toLocaleString('vi-VN')}đ
-      </span>
-      <span style="color: #ccc;">—</span>
-      <span style="color: #e65100; font-weight: 700;">
-        ${Number(data.locationPriceEnd).toLocaleString('vi-VN')}đ
+       ${Number(data.locationPrice).toLocaleString('vi-VN')}đ
       </span>
       <span style="color: #aaa; font-size: 11px;">
-        /tháng
+        ${data.locationPriceUnit}
       </span>
     </div>
   </div>

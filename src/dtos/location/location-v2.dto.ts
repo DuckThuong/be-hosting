@@ -22,13 +22,13 @@ export class LocationPricingDto {
   @ApiProperty({ example: 1000000 })
   @IsNumber()
   @Min(0)
-  priceStart: number;
+  price: number;
 
-  @ApiPropertyOptional({ example: 1200000 })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  priceEnd?: number;
+  @ApiProperty({ example: '/tháng' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  priceUnit: string;
 
   @ApiProperty({ example: 900000 })
   @IsNumber()

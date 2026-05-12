@@ -482,8 +482,8 @@ export class LocationRepository {
       locationName: payload.locationName,
       locationLogo: payload.locationLogo,
       ownerCode: payload.ownerCode,
-      locationPriceStart: payload.locationPriceStart,
-      locationPriceEnd: payload.locationPriceEnd,
+      locationPrice: payload.locationPrice,
+      locationPriceUnit: payload.locationPriceUnit,
       locationPriceAfterDeal: payload.locationPriceAfterDeal,
       locationArea: payload.locationArea,
       minTimeLimit: payload.minTimeLimit,
@@ -544,11 +544,11 @@ export class LocationRepository {
         updateData.locationRate = payload.data.locationRate;
       }
 
-      if (payload.data.locationPriceStart !== undefined) {
-        updateData.locationPriceStart = payload.data.locationPriceStart;
+      if (payload.data.locationPrice !== undefined) {
+        updateData.locationPrice = payload.data.locationPrice;
       }
-      if (payload.data.locationPriceEnd !== undefined) {
-        updateData.locationPriceEnd = payload.data.locationPriceEnd;
+      if (payload.data.locationPriceUnit !== undefined) {
+        updateData.locationPriceUnit = payload.data.locationPriceUnit;
       }
       if (payload.data.locationPriceAfterDeal !== undefined) {
         updateData.locationPriceAfterDeal = payload.data.locationPriceAfterDeal;
@@ -651,8 +651,8 @@ export class LocationRepository {
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationNote', 'locationNote')
       .addSelect('TL.locationLogo', 'locationLogo')
-      .addSelect('TL.locationPriceStart', 'locationPriceStart')
-      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPrice', 'locationPrice')
+      .addSelect('TL.locationPriceUnit', 'locationPriceUnit')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
       .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
@@ -700,8 +700,8 @@ export class LocationRepository {
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationLogo', 'locationLogo')
       .addSelect('TL.locationNote', 'locationNote')
-      .addSelect('TL.locationPriceStart', 'locationPriceStart')
-      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPrice', 'locationPrice')
+      .addSelect('TL.locationPriceUnit', 'locationPriceUnit')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
       .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
@@ -750,8 +750,8 @@ export class LocationRepository {
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationLogo', 'locationLogo')
       .addSelect('TL.locationNote', 'locationNote')
-      .addSelect('TL.locationPriceStart', 'locationPriceStart')
-      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPrice', 'locationPrice')
+      .addSelect('TL.locationPriceUnit', 'locationPriceUnit')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
       .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
@@ -800,8 +800,8 @@ export class LocationRepository {
       .addSelect('TL.locationDescription', 'locationDescription')
       .addSelect('TL.locationLogo', 'locationLogo')
       .addSelect('TL.locationNote', 'locationNote')
-      .addSelect('TL.locationPriceStart', 'locationPriceStart')
-      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPrice', 'locationPrice')
+      .addSelect('TL.locationPriceUnit', 'locationPriceUnit')
       .addSelect('TL.locationPriceAfterDeal', 'locationPriceAfterDeal')
       .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.minTimeLimit', 'minTime')
@@ -886,8 +886,8 @@ export class LocationRepository {
       .select('TL.locationCode', 'locationCode')
       .addSelect('TL.locationName', 'locationName')
       .addSelect('TL.locationLogo', 'locationLogo')
-      .addSelect('TL.locationPriceStart', 'locationPriceStart')
-      .addSelect('TL.locationPriceEnd', 'locationPriceEnd')
+      .addSelect('TL.locationPrice', 'locationPrice')
+      .addSelect('TL.locationPriceUnit', 'locationPriceUnit')
       .addSelect('TL.locationArea', 'locationArea')
       .addSelect('TL.hasRent', 'hasRent')
       .addSelect('TL.typeCode', 'typeCode')
@@ -948,8 +948,8 @@ export class LocationRepository {
         'TL.hasRent AS hasRent',
         'TL.locationRate AS locationRate',
         'TL.typeCode AS typeCode',
-        'TL.locationPriceStart AS locationPriceStart',
-        'TL.locationPriceEnd AS locationPriceEnd',
+        'TL.locationPrice AS locationPrice',
+        'TL.locationPriceUnit AS locationPriceUnit',
         'TL.locationPriceAfterDeal AS locationPriceAfterDeal',
         'TL.locationArea AS locationArea',
 
@@ -1141,8 +1141,8 @@ export class LocationRepository {
         'TL.hasRent AS hasRent',
         'TL.locationRate AS locationRate',
         'TL.typeCode AS typeCode',
-        'TL.locationPriceStart AS locationPriceStart',
-        'TL.locationPriceEnd AS locationPriceEnd',
+        'TL.locationPrice AS locationPrice',
+        'TL.locationPriceUnit AS locationPriceUnit',
         'TL.locationPriceAfterDeal AS locationPriceAfterDeal',
         'TL.locationArea AS locationArea',
 
@@ -1375,15 +1375,15 @@ export class LocationRepository {
     const raw = await this.location
       .createQueryBuilder('TL')
       .select(
-        `MIN(LEAST(COALESCE(TL.locationPriceStart, TL.locationPriceEnd), COALESCE(TL.locationPriceEnd, TL.locationPriceStart)))`,
+        `MIN(LEAST(COALESCE(TL.locationPrice, TL.locationPriceUnit), COALESCE(TL.locationPriceUnit, TL.locationPrice)))`,
         'minValue',
       )
       .addSelect(
-        `MAX(GREATEST(COALESCE(TL.locationPriceStart, TL.locationPriceEnd), COALESCE(TL.locationPriceEnd, TL.locationPriceStart)))`,
+        `MAX(GREATEST(COALESCE(TL.locationPrice, TL.locationPriceUnit), COALESCE(TL.locationPriceUnit, TL.locationPrice)))`,
         'maxValue',
       )
       .where(
-        'TL.locationPriceStart IS NOT NULL OR TL.locationPriceEnd IS NOT NULL',
+        'TL.locationPrice IS NOT NULL OR TL.locationPriceUnit IS NOT NULL',
       )
       .getRawOne<{
         minValue: string | number | null;

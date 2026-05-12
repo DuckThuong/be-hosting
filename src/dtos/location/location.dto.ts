@@ -95,21 +95,21 @@ export class CreateLocationDto {
   maxTimeLimit?: string;
 
   @ApiProperty({
-    description: 'Giá bắt đầu',
+    description: 'Giá địa điểm',
     example: 30,
     required: false,
   })
   @IsOptional()
   @IsInt()
-  locationPriceStart?: number;
+  locationPrice?: number;
 
   @ApiProperty({
-    description: 'Giá cuối',
+    description: 'Đơn vị tính',
     example: 30,
     required: false,
   })
-  @IsInt()
-  locationPriceEnd?: number;
+  @IsString()
+  locationPriceUnit?: string;
 
   @ApiProperty({
     description: 'Giá sau thương lượng',
@@ -228,21 +228,21 @@ export class UpdateLocationDto {
   locationName: string;
 
   @ApiProperty({
-    description: 'Giá bắt đầu',
+    description: 'Giá địa điểm',
     example: 30,
     required: false,
   })
   @IsOptional()
   @IsInt()
-  locationPriceStart?: number;
+  locationPrice?: number;
 
   @ApiProperty({
-    description: 'Giá cuối',
+    description: 'Đơn vị tính',
     example: 30,
     required: false,
   })
-  @IsInt()
-  locationPriceEnd?: number;
+  @IsString()
+  locationPriceUnit?: string;
 
   @ApiProperty({
     description: 'Giá sau thương lượng',
@@ -607,16 +607,16 @@ export class LocationListDto {
   locationLogo?: string;
 
   @ApiProperty({
-    description: 'Giá thuê bắt đầu',
+    description: 'Giá thuê địa điểm',
     example: 100000,
   })
-  locationPriceStart: number;
+  locationPrice: number;
 
   @ApiProperty({
-    description: 'Giá thuê kết thúc',
-    example: 500000,
+    description: 'Đơn vị tính',
+    example: '/ngày',
   })
-  locationPriceEnd: number;
+  locationPriceUnit: string;
 
   @ApiProperty({
     description: 'Giá thuê sau khi thỏa thuận',
@@ -904,18 +904,19 @@ export class FavoriteLocationSummaryDto {
   fullAddress?: string;
 
   @ApiProperty({
-    description: 'Giá bắt đầu',
+    description: 'Giá địa điểm',
     example: 3000000,
     required: false,
   })
-  locationPriceStart?: number;
+  locationPrice?: number;
 
   @ApiProperty({
-    description: 'Giá kết thúc',
-    example: 5000000,
+    description: 'Đơn vị tính',
+    example: '/tháng',
     required: false,
   })
-  locationPriceEnd?: number;
+  @IsString()
+  locationPriceUnit?: string;
 
   @ApiProperty({
     description: 'Diện tích khu vực',
