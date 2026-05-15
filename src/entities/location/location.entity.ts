@@ -6,6 +6,7 @@ import { TbLocationAddress } from './locationAddress.entity';
 import { TbLocationService } from './locationService.entity';
 import { TbLocationMedia } from './locationMedia.entity';
 import { TbLocationFavorite } from './locationFavorite.entity';
+import { TbBooking } from '../booking/booking.entity';
 
 @Entity('tb_location')
 export class TbLocation extends BaseEntity {
@@ -46,7 +47,7 @@ export class TbLocation extends BaseEntity {
   hasRent: number;
 
   @Column({ type: 'varchar', length: 50, unique: false, nullable: true })
-  userRentCd: string;
+  userRentCd: string | null;
 
   @Column({ type: 'varchar', length: 2000, unique: false, nullable: true })
   locationDescription: string;
@@ -59,6 +60,12 @@ export class TbLocation extends BaseEntity {
 
   @Column({ type: 'float', unique: false, nullable: true })
   locationRate: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  cancellationFeePercent: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  rescheduleFeePercent: number;
 
   // ── Relations ──
 
@@ -81,4 +88,7 @@ export class TbLocation extends BaseEntity {
 
   @OneToMany(() => TbLocationFavorite, (fav) => fav.location)
   favorites?: TbLocationFavorite[];
+
+  @OneToMany(() => TbBooking, (booking) => booking.location)
+  bookings?: TbBooking[];
 }

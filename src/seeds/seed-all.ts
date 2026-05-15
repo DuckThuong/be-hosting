@@ -72,6 +72,8 @@ type SeedLocation = {
   locationNote: string | null;
   locationStatus: number;
   locationRate: number;
+  cancellationFeePercent?: number;
+  rescheduleFeePercent?: number;
 };
 
 type SeedAddress = {
@@ -301,10 +303,10 @@ async function seedServices(items: SeedService[]): Promise<void> {
     const category = item.category ?? 'GENERAL';
 
     await dataSource.query(
-      `INSERT INTO \`tb_service\` (\`code\`, \`name\`, \`description\`, \`category\`)
-       SELECT ?, ?, ?, ?
+      `INSERT INTO \`tb_service\` (\`code\`, \`name\`, \`category\`)
+       SELECT ?, ?, ?
        WHERE NOT EXISTS (SELECT 1 FROM \`tb_service\` WHERE \`code\` = ?)`,
-      [code, name, description, category, code],
+      [code, name, category, code],
     );
   }
 }
@@ -368,8 +370,13 @@ async function seedProfiles(items: SeedProfile[]): Promise<void> {
 async function seedLocations(items: SeedLocation[]): Promise<void> {
   for (const item of items) {
     await dataSource.query(
-      `INSERT INTO \`tb_location\` (\`typeCode\`, \`locationName\`, \`locationLogo\`, \`ownerCode\`, \`locationCode\`, \`minTimeLimit\`, \`maxTimeLimit\`, \`locationPriceStart\`, \`locationPriceEnd\`, \`locationPriceAfterDeal\`, \`locationArea\`, \`hasRent\`, \`userRentCd\`, \`locationDescription\`, \`locationNote\`, \`locationStatus\`, \`locationRate\`)
-       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      `INSERT INTO \`tb_location\` (
+        \`typeCode\`, \`locationName\`, \`locationLogo\`, \`ownerCode\`, \`locationCode\`, 
+        \`minTimeLimit\`, \`maxTimeLimit\`, \`locationPrice\`, \`locationPriceUnit\`, \`locationPriceAfterDeal\`, 
+        \`locationArea\`, \`hasRent\`, \`userRentCd\`, \`locationDescription\`, \`locationNote\`, 
+        \`locationStatus\`, \`locationRate\`, \`cancellationFeePercent\`, \`rescheduleFeePercent\`
+      )
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
        WHERE NOT EXISTS (SELECT 1 FROM \`tb_location\` WHERE \`locationCode\` = ?)`,
       [
         item.typeCode,
@@ -380,7 +387,7 @@ async function seedLocations(items: SeedLocation[]): Promise<void> {
         item.minTimeLimit,
         item.maxTimeLimit,
         item.locationPriceStart,
-        item.locationPriceEnd,
+        'tháng',
         item.locationPriceAfterDeal,
         item.locationArea,
         item.hasRent,
@@ -389,6 +396,8 @@ async function seedLocations(items: SeedLocation[]): Promise<void> {
         item.locationNote,
         item.locationStatus,
         item.locationRate,
+        item.cancellationFeePercent ?? 0,
+        item.rescheduleFeePercent ?? 0,
         item.locationCode,
       ],
     );
@@ -450,13 +459,17 @@ async function seedLocationServices(
       });
 
     for (const service of locationServices) {
+      const srv = serviceByCode.get(service.serviceCode);
+      const description = srv?.description ?? srv?.name ?? service.serviceCode;
+
       await dataSource.query(
-        `INSERT INTO \`tb_location-service\` (\`locationCode\`, \`serviceCode\`, \`isFree\`, \`basePrice\`, \`unit\`, \`quantity\`, \`isActive\`)
-         SELECT ?, ?, ?, ?, ?, ?, ?
+        `INSERT INTO \`tb_location-service\` (\`locationCode\`, \`serviceCode\`, \`description\`, \`isFree\`, \`basePrice\`, \`unit\`, \`quantity\`, \`isActive\`)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?
          WHERE NOT EXISTS (SELECT 1 FROM \`tb_location-service\` WHERE \`locationCode\` = ? AND \`serviceCode\` = ?)`,
         [
           item.locationCode,
           service.serviceCode,
+          description,
           (service.isFree ?? Number(service.basePrice ?? 0) <= 0) ? 1 : 0,
           service.isFree ? 0 : Number(service.basePrice ?? 0),
           service.unit ?? 'FULL',

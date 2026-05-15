@@ -24,10 +24,12 @@ import { CloudinaryModule } from './cloudinary.module';
 import { TbLocationMedia } from '../entities/location/locationMedia.entity';
 import { LocationQueryService } from '../services/location-query.service';
 import { LocationWriteService } from '../services/location-write.service';
+import { PaymentModule } from './payment.module';
 
 @Module({
   imports: [
     CloudinaryModule,
+    PaymentModule,
     TypeOrmModule.forFeature([
       TbLocation,
       TbLocationFavorite,

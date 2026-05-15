@@ -12,12 +12,14 @@ import {
 import { UserDecoratorDtoResponse } from '../dtos/user/user.dto';
 import { LocationReadRepository } from '../repositories/location/location-read.repository';
 import { LocationWriteRepository } from '../repositories/location/location-write.repository';
+import { PaymentRepository } from '../repositories/payment.repository';
 
 @Injectable()
 export class LocationWriteService {
   constructor(
     private readonly locationWriteRepository: LocationWriteRepository,
     private readonly locationReadRepository: LocationReadRepository,
+    private readonly paymentRepository: PaymentRepository,
   ) {}
 
   public async createLocation(
@@ -25,6 +27,7 @@ export class LocationWriteService {
     payload: CreateLocationRequestDto,
   ): Promise<LocationMutationResponseDto> {
     await this.ensureValidPayload(payload);
+    await this.ensureListingQuota(user.userCode);
 
     const locationCode = await this.locationWriteRepository.createLocation(
       user.userCode,
@@ -69,6 +72,7 @@ export class LocationWriteService {
     }
 
     await this.ensureValidPayload(payload);
+    await this.ensureListingQuota(user.userCode, location.locationCode);
     await this.locationWriteRepository.updateLocation(location, payload);
 
     const updated =
@@ -178,6 +182,39 @@ export class LocationWriteService {
           HttpStatus.BAD_REQUEST,
         );
       }
+    }
+  }
+
+  private async ensureListingQuota(
+    ownerUserCode: string,
+    excludeLocationCode?: string,
+  ): Promise<void> {
+    let subscription;
+    try {
+      subscription =
+        await this.paymentRepository.getActiveListingSubscription(ownerUserCode);
+    } catch (error: any) {
+      if (error.message === 'LISTING_PACKAGE_REQUIRED') {
+        throw new HttpException(
+          'Goi mien phi da het han. Vui long mua goi dang tin de bai duoc hien thi.',
+          HttpStatus.PAYMENT_REQUIRED,
+        );
+      }
+      throw error;
+    }
+
+    const activeListings =
+      await this.paymentRepository.countActiveListings(
+        ownerUserCode,
+        excludeLocationCode,
+      );
+    const maxActiveListings = subscription.plan?.maxActiveListings ?? 0;
+
+    if (activeListings >= maxActiveListings) {
+      throw new HttpException(
+        `Ban da dat gioi han ${maxActiveListings} tin dang hien thi cho goi hien tai.`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }

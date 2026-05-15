@@ -320,7 +320,10 @@ export class UpdateLocationRequestDto {
 }
 
 export class LocationListQueryDto {
-  @ApiPropertyOptional({ example: 'q1 phong tro' })
+  @ApiPropertyOptional({
+    description: 'Từ khóa tìm kiếm theo vị trí địa lý',
+    example: 'q1 phong tro',
+  })
   @IsOptional()
   @IsString()
   keyword?: string;
@@ -340,7 +343,10 @@ export class LocationListQueryDto {
   @IsString()
   addressCity?: string;
 
-  @ApiPropertyOptional({ example: 'District 1' })
+  @ApiPropertyOptional({
+    example: 'Miền Bắc',
+    description: 'Chỉ nhận giá trị chuẩn: Miền Bắc, Miền Trung, Miền Nam.',
+  })
   @IsOptional()
   @IsString()
   addressRegion?: string;

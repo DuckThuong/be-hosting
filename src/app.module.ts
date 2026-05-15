@@ -19,6 +19,12 @@ import { TbMessage } from './entities/chat/message.entity';
 import { TbConversationParticipant } from './entities/chat/conversation_participant.entity';
 import { TbConversation } from './entities/chat/conversation.entity';
 import { TbLocationMedia } from './entities/location/locationMedia.entity';
+import { TbBooking } from './entities/booking/booking.entity';
+import { BookingModule } from './modules/booking.module';
+import { PaymentModule } from './modules/payment.module';
+import { TbPaymentTransaction } from './entities/payment/payment-transaction.entity';
+import { TbOwnerPackagePlan } from './entities/payment/owner-package-plan.entity';
+import { TbOwnerPackageSubscription } from './entities/payment/owner-package-subscription.entity';
 
 @Module({
   imports: [
@@ -58,6 +64,10 @@ import { TbLocationMedia } from './entities/location/locationMedia.entity';
           TbConversation,
           TbConversationParticipant,
           TbMessage,
+          TbBooking,
+          TbPaymentTransaction,
+          TbOwnerPackagePlan,
+          TbOwnerPackageSubscription,
         ],
         migrations: [__dirname + '/../migrations/*{.ts,.js}'],
         migrationsRun: false,
@@ -71,6 +81,8 @@ import { TbLocationMedia } from './entities/location/locationMedia.entity';
     CloudinaryModule,
     ChatModule,
     CommonModule,
+    BookingModule,
+    PaymentModule,
   ],
   controllers: [],
   providers: [],

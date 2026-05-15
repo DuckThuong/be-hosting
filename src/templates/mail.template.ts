@@ -26,3 +26,22 @@ export const SendOtpTemplate = (otp: string) => `
         </div>
       </div>
     `;
+
+export const ListingTrialReminderTemplate = (expiresAt: Date) => `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: #111827; color: white; padding: 24px; border-radius: 8px 8px 0 0;">
+          <h1 style="margin: 0; font-size: 22px;">Goi dung thu sap het han</h1>
+        </div>
+        <div style="background: #ffffff; padding: 24px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
+          <p style="font-size: 16px; color: #111827;">Xin chao,</p>
+          <p style="font-size: 16px; color: #111827;">
+            Goi dung thu dang tin cua ban se het han vao ngay
+            <strong>${expiresAt.toLocaleDateString('vi-VN')}</strong>.
+          </p>
+          <p style="font-size: 16px; color: #111827;">
+            Vui long mua goi dang tin truoc ngay nay de cac bai dang tiep tuc hien thi.
+            Neu chua thanh toan khi trial het han, bai dang se bi xoa mem.
+          </p>
+        </div>
+      </div>
+    `;

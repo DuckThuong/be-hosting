@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 import {
   ADDRESS_TYPE,
   LOCATION_RENT_STATUS,
@@ -22,6 +22,9 @@ import { TbLocationMedia } from '../../entities/location/locationMedia.entity';
 import { TbLocationService } from '../../entities/location/locationService.entity';
 import { TbLocationType } from '../../entities/location/locationType.entity';
 import { TbService } from '../../entities/service/service.entity';
+import { LocationStatus } from '../../assets/enums/location.enum';
+import { OwnerPackageSubscriptionStatus } from '../../entities/payment/owner-package-subscription.entity';
+import { RentalClass } from '../../common/rental-classification';
 
 type BaseLocationRow = {
   locationCode: string;
@@ -92,12 +95,27 @@ export class LocationReadRepository {
     });
   }
 
+  /**
+   * Returns the raw TbLocation entity for booking/payment validation.
+   */
+  public async getLocationRaw(
+    locationCode: string,
+  ): Promise<TbLocation | null> {
+    return this.locationRepo.findOne({
+      where: { locationCode },
+      relations: ['type', 'owner', 'owner.profile'],
+    });
+  }
+
   public async getLocationByCode(
     locationCode: string,
   ): Promise<LocationDetailResponseDto | null> {
-    const row = await this.createBaseQuery()
-      .where('location.locationCode = :locationCode', { locationCode })
-      .getRawOne<BaseLocationRow>();
+    const qb = this.createBaseQuery().where(
+      'location.locationCode = :locationCode',
+      { locationCode },
+    );
+    this.applyPublicVisibilityFilter(qb);
+    const row = await qb.getRawOne<BaseLocationRow>();
 
     if (!row) {
       return null;
@@ -114,80 +132,12 @@ export class LocationReadRepository {
     const offset = (page - 1) * limit;
 
     const qb = this.createBaseQuery();
+    this.applyPublicVisibilityFilter(qb);
 
-    if (payload.keyword) {
-      const keyword = `%${payload.keyword}%`;
-      qb.andWhere(
-        new Brackets((inner) => {
-          inner
-            .where('location.locationName LIKE :keyword', { keyword })
-            .orWhere('location.locationDescription LIKE :keyword', { keyword })
-            .orWhere('locationType.typeName LIKE :keyword', { keyword })
-            .orWhere('primaryAddress.fullAddress LIKE :keyword', { keyword });
-        }),
-      );
-    }
+    this.applyLocationSearchFilters(qb, payload);
 
-    if (payload.typeCode) {
-      const typeCodes = payload.typeCode.split(',').map((c) => c.trim()).filter(Boolean);
-      if (typeCodes.length > 0) {
-        qb.andWhere('location.typeCode IN (:...typeCodes)', {
-          typeCodes,
-        });
-      }
-    }
-
-    if (payload.typeName) {
-      qb.andWhere('locationType.typeName LIKE :typeName', {
-        typeName: `%${payload.typeName}%`,
-      });
-    }
-
-    if (payload.addressCity) {
-      qb.andWhere('primaryAddress.addressCity LIKE :addressCity', {
-        addressCity: `%${payload.addressCity}%`,
-      });
-    }
-
-    if (payload.addressRegion) {
-      qb.andWhere('primaryAddress.addressRegion LIKE :addressRegion', {
-        addressRegion: `%${payload.addressRegion}%`,
-      });
-    }
-
-    if (payload.minPrice !== undefined) {
-      qb.andWhere('location.locationPriceAfterDeal >= :minPrice', {
-        minPrice: payload.minPrice,
-      });
-    }
-
-    if (payload.maxPrice !== undefined) {
-      qb.andWhere('location.locationPriceAfterDeal <= :maxPrice', {
-        maxPrice: payload.maxPrice,
-      });
-    }
-
-    if (payload.minArea !== undefined) {
-      qb.andWhere('location.locationArea >= :minArea', {
-        minArea: payload.minArea,
-      });
-    }
-
-    if (payload.maxArea !== undefined) {
-      qb.andWhere('location.locationArea <= :maxArea', {
-        maxArea: payload.maxArea,
-      });
-    }
-
-    if (payload.isRented !== undefined) {
-      qb.andWhere('location.hasRent = :hasRent', {
-        hasRent: payload.isRented
-          ? LOCATION_RENT_STATUS.HAS_RENT
-          : LOCATION_RENT_STATUS.READY,
-      });
-    }
-
-    const total = await qb.clone()
+    const total = await qb
+      .clone()
       .select('COUNT(DISTINCT location.locationCode)', 'count')
       .getRawOne()
       .then((row) => Number(row?.count ?? 0));
@@ -216,6 +166,255 @@ export class LocationReadRepository {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  private applyLocationSearchFilters(
+    qb: SelectQueryBuilder<TbLocation>,
+    payload: LocationListQueryDto,
+  ) {
+    this.applyGeographicKeywordFilter(qb, payload.keyword);
+    this.applyTypeCodeFilter(qb, payload.typeCode);
+    this.applyTypeNameFilter(qb, payload.typeName);
+    this.applyAddressCityFilter(qb, payload.addressCity);
+    this.applyAddressRegionFilter(qb, payload.addressRegion);
+    this.applyMinPriceFilter(qb, payload.minPrice);
+    this.applyMaxPriceFilter(qb, payload.maxPrice);
+    this.applyMinAreaFilter(qb, payload.minArea);
+    this.applyMaxAreaFilter(qb, payload.maxArea);
+    this.applyRentFilter(qb, payload.isRented);
+  }
+
+  private applyGeographicKeywordFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    keywordInput?: string,
+  ) {
+    if (!keywordInput) {
+      return;
+    }
+
+    const normalizedKeyword = this.normalizeGeographicInput(keywordInput);
+
+    if (!normalizedKeyword) {
+      return;
+    }
+
+    const regionFilterValues =
+      this.resolveRegionFilterValues(normalizedKeyword);
+
+    if (regionFilterValues) {
+      qb.andWhere(
+        new Brackets((inner) => {
+          inner.where(
+            'LOWER(TRIM(primaryAddress.addressRegion)) IN (:...regionFilterValues)',
+            {
+              regionFilterValues,
+            },
+          );
+        }),
+      );
+      return;
+    }
+
+    if (this.isForbiddenLegacyRegionTerm(normalizedKeyword)) {
+      qb.andWhere('1 = 0');
+      return;
+    }
+
+    const keyword = `%${normalizedKeyword}%`;
+
+    qb.andWhere(
+      new Brackets((inner) => {
+        inner
+          .where('LOWER(TRIM(primaryAddress.addressCity)) LIKE :keyword', {
+            keyword,
+          })
+          .orWhere(
+            'LOWER(TRIM(primaryAddress.addressProvince)) LIKE :keyword',
+            {
+              keyword,
+            },
+          )
+          .orWhere(
+            'LOWER(TRIM(primaryAddress.addressDistrict)) LIKE :keyword',
+            {
+              keyword,
+            },
+          )
+          .orWhere('LOWER(TRIM(primaryAddress.addressWard)) LIKE :keyword', {
+            keyword,
+          })
+          .orWhere('LOWER(TRIM(primaryAddress.fullAddress)) LIKE :keyword', {
+            keyword,
+          })
+          .orWhere('LOWER(TRIM(primaryAddress.addressName)) LIKE :keyword', {
+            keyword,
+          });
+      }),
+    );
+  }
+
+  private applyTypeCodeFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    typeCode?: string,
+  ) {
+    if (!typeCode) {
+      return;
+    }
+
+    const typeCodes = typeCode
+      .split(',')
+      .map((code) => code.trim())
+      .filter(Boolean);
+
+    if (typeCodes.length > 0) {
+      qb.andWhere('location.typeCode IN (:...typeCodes)', {
+        typeCodes,
+      });
+    }
+  }
+
+  private applyTypeNameFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    typeName?: string,
+  ) {
+    if (!typeName) {
+      return;
+    }
+
+    qb.andWhere('LOWER(TRIM(locationType.typeName)) LIKE :typeName', {
+      typeName: `%${typeName.trim().toLowerCase()}%`,
+    });
+  }
+
+  private applyAddressCityFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    addressCity?: string,
+  ) {
+    if (!addressCity) {
+      return;
+    }
+
+    qb.andWhere('LOWER(TRIM(primaryAddress.addressCity)) LIKE :addressCity', {
+      addressCity: `%${addressCity.trim().toLowerCase()}%`,
+    });
+  }
+
+  private applyAddressRegionFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    addressRegion?: string,
+  ) {
+    if (!addressRegion) {
+      return;
+    }
+
+    const normalizedRegion = this.normalizeGeographicInput(addressRegion);
+    if (!normalizedRegion) {
+      return;
+    }
+
+    const regionFilterValues = this.resolveRegionFilterValues(normalizedRegion);
+    if (!regionFilterValues) {
+      qb.andWhere('1 = 0');
+      return;
+    }
+
+    qb.andWhere(
+      'LOWER(TRIM(primaryAddress.addressRegion)) IN (:...regionFilterValues)',
+      {
+        regionFilterValues,
+      },
+    );
+  }
+
+  private normalizeGeographicInput(value: string): string {
+    return value.trim().toLowerCase();
+  }
+
+  private resolveRegionFilterValues(normalizedInput: string): string[] | null {
+    switch (normalizedInput) {
+      case 'north':
+      case 'miền bắc':
+        return ['north', 'miền bắc'];
+      case 'central':
+      case 'miền trung':
+        return ['central', 'miền trung'];
+      case 'south':
+      case 'miền nam':
+        return ['south', 'miền nam'];
+      default:
+        return null;
+    }
+  }
+
+  private isForbiddenLegacyRegionTerm(normalizedInput: string): boolean {
+    return normalizedInput === 'nội thành';
+  }
+
+  private applyMinPriceFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    minPrice?: number,
+  ) {
+    if (minPrice === undefined) {
+      return;
+    }
+
+    qb.andWhere('location.locationPriceAfterDeal >= :minPrice', {
+      minPrice,
+    });
+  }
+
+  private applyMaxPriceFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    maxPrice?: number,
+  ) {
+    if (maxPrice === undefined) {
+      return;
+    }
+
+    qb.andWhere('location.locationPriceAfterDeal <= :maxPrice', {
+      maxPrice,
+    });
+  }
+
+  private applyMinAreaFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    minArea?: number,
+  ) {
+    if (minArea === undefined) {
+      return;
+    }
+
+    qb.andWhere('location.locationArea >= :minArea', {
+      minArea,
+    });
+  }
+
+  private applyMaxAreaFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    maxArea?: number,
+  ) {
+    if (maxArea === undefined) {
+      return;
+    }
+
+    qb.andWhere('location.locationArea <= :maxArea', {
+      maxArea,
+    });
+  }
+
+  private applyRentFilter(
+    qb: SelectQueryBuilder<TbLocation>,
+    isRented?: boolean,
+  ) {
+    if (isRented === undefined) {
+      return;
+    }
+
+    qb.andWhere('location.hasRent = :hasRent', {
+      hasRent: isRented
+        ? LOCATION_RENT_STATUS.HAS_RENT
+        : LOCATION_RENT_STATUS.READY,
+    });
   }
 
   public async getRelatedLocations(
@@ -265,6 +464,7 @@ export class LocationReadRepository {
           }
         }),
       );
+    this.applyPublicVisibilityFilter(qb);
 
     const total = await qb.getCount();
     const rows = await qb
@@ -295,7 +495,7 @@ export class LocationReadRepository {
   }
 
   private createBaseQuery() {
-    return this.locationRepo
+    const qb = this.locationRepo
       .createQueryBuilder('location')
       .leftJoin(
         TbLocationType,
@@ -359,6 +559,33 @@ export class LocationReadRepository {
         'primaryAddress.addressDescription AS primaryDescription',
         'primaryAddress.addressNote AS primaryNote',
       ]);
+
+    return qb;
+  }
+
+  private applyPublicVisibilityFilter(qb: SelectQueryBuilder<TbLocation>) {
+    qb.andWhere('location.locationStatus = :activeLocationStatus', {
+      activeLocationStatus: LocationStatus.ACTIVE,
+    }).andWhere((builder) => {
+      const subQuery = builder
+        .subQuery()
+        .select('1')
+        .from('tb_owner_package_subscription', 'subscription')
+        .where('subscription.ownerUserCode = location.ownerCode')
+        .andWhere('subscription.rentalClass = :listingRentalClass')
+        .andWhere('subscription.status = :activeSubscriptionStatus')
+        .andWhere(
+          '(subscription.expiresAt > CURRENT_TIMESTAMP OR subscription.expiresAt IS NULL)',
+        )
+        .getQuery();
+
+      return `EXISTS ${subQuery}`;
+    });
+
+    qb.setParameters({
+      listingRentalClass: RentalClass.LONG_TERM,
+      activeSubscriptionStatus: OwnerPackageSubscriptionStatus.ACTIVE,
+    });
   }
 
   private async toLocationDetail(

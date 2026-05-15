@@ -18,7 +18,10 @@ import {
   SendOtpResponse,
 } from '../dtos/auth/mail.dto';
 import { AuthRepository } from '../repositories/auth.repository';
-import { SendOtpTemplate } from './../templates/mail.template';
+import {
+  ListingTrialReminderTemplate,
+  SendOtpTemplate,
+} from './../templates/mail.template';
 import { OtpStorageService } from './otp.service';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from '../dtos/jwt/jwt.dto';
@@ -274,5 +277,17 @@ export class MailService {
     } catch (error) {
       this.logger.error('Error cleaning expired OTPs:', error);
     }
+  }
+
+  public async sendListingTrialReminder(
+    email: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    this.validateEmail(email);
+    await this.sendEmail({
+      to: email,
+      subject: 'Goi dung thu dang tin sap het han',
+      html: ListingTrialReminderTemplate(expiresAt),
+    });
   }
 }
