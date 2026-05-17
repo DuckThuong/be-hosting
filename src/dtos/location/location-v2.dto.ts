@@ -399,6 +399,39 @@ export class LocationListQueryDto {
   @Min(1)
   @Max(100)
   limit?: number;
+
+  @ApiPropertyOptional({
+    example: 21.0285,
+    description: 'Latitude of the search center for radius search.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  lat?: number;
+
+  @ApiPropertyOptional({
+    example: 105.8542,
+    description: 'Longitude of the search center for radius search.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  lng?: number;
+
+  @ApiPropertyOptional({
+    example: 3,
+    description: 'Search radius in kilometers.',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0.1)
+  @Max(100)
+  radiusKm?: number;
 }
 
 export class RelatedLocationsQueryDto {
@@ -595,6 +628,12 @@ export class LocationSummaryResponseDto {
 
   @ApiProperty({ type: () => LocationOwnerSummaryDto })
   owner: LocationOwnerSummaryDto;
+
+  @ApiPropertyOptional({
+    example: 1.42,
+    description: 'Distance from search center in kilometers.',
+  })
+  distanceKm?: number;
 }
 
 export class LocationDetailResponseDto extends LocationSummaryResponseDto {

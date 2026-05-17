@@ -17,6 +17,8 @@ type SeedRefs = {
   mediaCodes: string[];
   locationTypeCodes: string[];
   serviceCodes: string[];
+  planCodes: string[];
+  subscriptionOwnerCodes: string[];
   conversationKeys: string[];
   conversationNames: Array<string | null>;
   conversationCreatorCodes: string[];
@@ -31,6 +33,14 @@ type SeedConversation = {
   avatar: string | null;
   createdByUserCode: string;
   status: string;
+};
+
+type SeedOwnerPackagePlan = {
+  planCode: string;
+};
+
+type SeedOwnerPackageSubscription = {
+  ownerUserCode: string;
 };
 
 type SeedMessage = {
@@ -55,7 +65,7 @@ const FIXTURE_ROOT = path.join(__dirname, 'data');
 function readJsonArrayFile(filePath: string): unknown[] {
   const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
   if (!Array.isArray(parsed)) {
-    throw new Error(`Fixture "${filePath}" must contain an array.`);
+    throw new TypeError(`Fixture "${filePath}" must contain an array.`);
   }
   return parsed;
 }
@@ -90,6 +100,8 @@ function loadMessages(): SeedMessage[] {
 function loadSeedRefs(): SeedRefs {
   const conversations = loadConversations();
   const messages = loadMessages();
+  const plans = readJsonArrayFile(path.join(FIXTURE_ROOT, 'tb_owner_package_plan.json')) as SeedOwnerPackagePlan[];
+  const subscriptions = readJsonArrayFile(path.join(FIXTURE_ROOT, 'tb_owner_package_subscription.json')) as SeedOwnerPackageSubscription[];
 
   return {
     userCodes: loadCodes('tb_user_default', 'userCode'),
@@ -98,6 +110,10 @@ function loadSeedRefs(): SeedRefs {
     mediaCodes: loadCodes('tb_location-media', 'mediaCode'),
     locationTypeCodes: loadCodes('tb_location-type', 'typeCode'),
     serviceCodes: loadCodes('tb_service', 'code'),
+    planCodes: Array.from(new Set(plans.map((item) => item.planCode))),
+    subscriptionOwnerCodes: Array.from(
+      new Set(subscriptions.map((item) => item.ownerUserCode)),
+    ),
     conversationKeys: conversations.map((item) => item.seedKey),
     conversationNames: conversations.map((item) => item.name),
     conversationCreatorCodes: conversations.map((item) => item.createdByUserCode),
@@ -266,6 +282,18 @@ function buildTargets(refs: SeedRefs): SeedTarget[] {
       countSql: `SELECT COUNT(*) AS total FROM \`tb_service\` WHERE \`code\` IN (${serviceCodePlaceholders})`,
       deleteSql: `DELETE FROM \`tb_service\` WHERE \`code\` IN (${serviceCodePlaceholders})`,
       params: refs.serviceCodes,
+    },
+    {
+      table: 'tb_owner_package_subscription',
+      countSql: `SELECT COUNT(*) AS total FROM \`tb_owner_package_subscription\` WHERE \`ownerUserCode\` IN (${placeholders(refs.subscriptionOwnerCodes)})`,
+      deleteSql: `DELETE FROM \`tb_owner_package_subscription\` WHERE \`ownerUserCode\` IN (${placeholders(refs.subscriptionOwnerCodes)})`,
+      params: refs.subscriptionOwnerCodes,
+    },
+    {
+      table: 'tb_owner_package_plan',
+      countSql: `SELECT COUNT(*) AS total FROM \`tb_owner_package_plan\` WHERE \`planCode\` IN (${placeholders(refs.planCodes)})`,
+      deleteSql: `DELETE FROM \`tb_owner_package_plan\` WHERE \`planCode\` IN (${placeholders(refs.planCodes)})`,
+      params: refs.planCodes,
     },
     {
       table: 'tb_location-type',

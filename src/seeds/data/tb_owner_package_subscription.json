@@ -1,0 +1,47 @@
+[
+  {
+    "ownerUserCode": "owner-01",
+    "planCode": "LONG_BASIC",
+    "rentalClass": "LONG_TERM",
+    "startsAt": "2026-01-01 00:00:00",
+    "expiresAt": "2027-01-01 00:00:00",
+    "trialReminderSentAt": null,
+    "status": "ACTIVE"
+  },
+  {
+    "ownerUserCode": "owner-02",
+    "planCode": "LONG_BASIC",
+    "rentalClass": "LONG_TERM",
+    "startsAt": "2026-01-01 00:00:00",
+    "expiresAt": "2027-01-01 00:00:00",
+    "trialReminderSentAt": null,
+    "status": "ACTIVE"
+  },
+  {
+    "ownerUserCode": "MOCK_OWNER_01",
+    "planCode": "LONG_BASIC",
+    "rentalClass": "LONG_TERM",
+    "startsAt": "2026-01-01 00:00:00",
+    "expiresAt": "2027-01-01 00:00:00",
+    "trialReminderSentAt": null,
+    "status": "ACTIVE"
+  },
+  {
+    "ownerUserCode": "MOCK_OWNER_04",
+    "planCode": "LONG_BASIC",
+    "rentalClass": "LONG_TERM",
+    "startsAt": "2026-01-01 00:00:00",
+    "expiresAt": "2027-01-01 00:00:00",
+    "trialReminderSentAt": null,
+    "status": "ACTIVE"
+  },
+  {
+    "ownerUserCode": "MOCK_OWNER_07",
+    "planCode": "LONG_BASIC",
+    "rentalClass": "LONG_TERM",
+    "startsAt": "2026-01-01 00:00:00",
+    "expiresAt": "2027-01-01 00:00:00",
+    "trialReminderSentAt": null,
+    "status": "ACTIVE"
+  }
+]

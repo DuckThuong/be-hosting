@@ -66,6 +66,7 @@ type BaseLocationRow = {
   primaryLongitude?: string | number | null;
   primaryDescription?: string | null;
   primaryNote?: string | null;
+  distanceKm?: string | number | null;
 };
 
 @Injectable()
@@ -127,14 +128,17 @@ export class LocationReadRepository {
   public async searchLocations(
     payload: LocationListQueryDto,
   ): Promise<PaginatedLocationResponseDto> {
-    const page = payload.page ?? 1;
-    const limit = payload.limit ?? 20;
+    const normalizedPayload = this.normalizeListQuery(payload);
+    const page = normalizedPayload.page ?? 1;
+    const limit = normalizedPayload.limit ?? 20;
     const offset = (page - 1) * limit;
 
     const qb = this.createBaseQuery();
     this.applyPublicVisibilityFilter(qb);
 
-    this.applyLocationSearchFilters(qb, payload);
+    this.applyLocationSearchFilters(qb, normalizedPayload);
+    const hasRadiusSearch = this.applyRadiusSearch(qb, normalizedPayload);
+    const distanceSelect = this.getDistanceSelectExpression();
 
     const total = await qb
       .clone()
@@ -142,7 +146,11 @@ export class LocationReadRepository {
       .getRawOne()
       .then((row) => Number(row?.count ?? 0));
     const rows = await qb
-      .orderBy('location.locationCode', 'DESC')
+      .orderBy(
+        hasRadiusSearch ? distanceSelect : 'location.locationCode',
+        hasRadiusSearch ? 'ASC' : 'DESC',
+      )
+      .addOrderBy('location.locationCode', 'DESC')
       .offset(offset)
       .limit(limit)
       .getRawMany<BaseLocationRow>();
@@ -182,6 +190,134 @@ export class LocationReadRepository {
     this.applyMinAreaFilter(qb, payload.minArea);
     this.applyMaxAreaFilter(qb, payload.maxArea);
     this.applyRentFilter(qb, payload.isRented);
+  }
+
+  private normalizeListQuery(
+    payload: LocationListQueryDto,
+  ): LocationListQueryDto {
+    return {
+      ...payload,
+      minPrice: this.toOptionalNumber(payload.minPrice),
+      maxPrice: this.toOptionalNumber(payload.maxPrice),
+      minArea: this.toOptionalNumber(payload.minArea),
+      maxArea: this.toOptionalNumber(payload.maxArea),
+      isRented: this.toOptionalBoolean(payload.isRented),
+      page: this.toOptionalInteger(payload.page, 1, Number.MAX_SAFE_INTEGER),
+      limit: this.toOptionalInteger(payload.limit, 1, 100),
+      lat: this.toOptionalNumber(payload.lat, -90, 90),
+      lng: this.toOptionalNumber(payload.lng, -180, 180),
+      radiusKm: this.toOptionalNumber(payload.radiusKm, 0.1, 100),
+    };
+  }
+
+  private toOptionalNumber(
+    value: unknown,
+    min?: number,
+    max?: number,
+  ): number | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    const numberValue =
+      typeof value === 'number' ? value : Number(String(value).trim());
+
+    if (!Number.isFinite(numberValue)) {
+      return undefined;
+    }
+
+    if (min !== undefined && numberValue < min) {
+      return undefined;
+    }
+
+    if (max !== undefined && numberValue > max) {
+      return undefined;
+    }
+
+    return numberValue;
+  }
+
+  private toOptionalInteger(
+    value: unknown,
+    min: number,
+    max: number,
+  ): number | undefined {
+    const numberValue = this.toOptionalNumber(value, min, max);
+    return numberValue === undefined ? undefined : Math.trunc(numberValue);
+  }
+
+  private toOptionalBoolean(value: unknown): boolean | undefined {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    const normalizedValue = String(value).trim().toLowerCase();
+
+    if (['true', '1'].includes(normalizedValue)) {
+      return true;
+    }
+
+    if (['false', '0'].includes(normalizedValue)) {
+      return false;
+    }
+
+    return undefined;
+  }
+
+  private hasRadiusSearch(
+    payload: LocationListQueryDto,
+  ): payload is LocationListQueryDto & {
+    lat: number;
+    lng: number;
+    radiusKm: number;
+  } {
+    return (
+      typeof payload.lat === 'number' &&
+      typeof payload.lng === 'number' &&
+      typeof payload.radiusKm === 'number'
+    );
+  }
+
+  private getDistanceSelectExpression(): string {
+    return `(
+      6371 * ACOS(
+        LEAST(
+          1,
+          GREATEST(
+            -1,
+            COS(RADIANS(:searchLat)) * COS(RADIANS(CAST(primaryAddress.addressLat AS DECIMAL(10, 7)))) *
+            COS(RADIANS(CAST(primaryAddress.addressLong AS DECIMAL(10, 7))) - RADIANS(:searchLng)) +
+            SIN(RADIANS(:searchLat)) * SIN(RADIANS(CAST(primaryAddress.addressLat AS DECIMAL(10, 7))))
+          )
+        )
+      )
+    )`;
+  }
+
+  private applyRadiusSearch(
+    qb: SelectQueryBuilder<TbLocation>,
+    payload: LocationListQueryDto,
+  ): boolean {
+    if (!this.hasRadiusSearch(payload)) {
+      return false;
+    }
+
+    const distanceSelect = this.getDistanceSelectExpression();
+    qb.addSelect(distanceSelect, 'distanceKm')
+      .andWhere('primaryAddress.addressLat IS NOT NULL')
+      .andWhere('primaryAddress.addressLong IS NOT NULL')
+      .andWhere(`${distanceSelect} <= :radiusKm`)
+      .setParameters({
+        searchLat: payload.lat,
+        searchLng: payload.lng,
+        radiusKm: payload.radiusKm,
+      });
+
+    return true;
   }
 
   private applyGeographicKeywordFilter(
@@ -635,6 +771,10 @@ export class LocationReadRepository {
         fullAddress: row.ownerFullAddress ?? null,
         city: row.ownerCity ?? null,
       },
+      distanceKm:
+        row.distanceKm === null || row.distanceKm === undefined
+          ? undefined
+          : Number(row.distanceKm),
     };
   }
 

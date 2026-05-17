@@ -42,7 +42,6 @@ export class TbPaymentTransaction extends BaseEntity {
   @Column({ type: 'varchar', length: 50, nullable: true })
   planCode: string | null;
 
-  @Index()
   @Column({ type: 'varchar', length: 40, unique: true })
   vnpayTxnRef: string;
 

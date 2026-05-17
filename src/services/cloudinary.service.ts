@@ -5,9 +5,11 @@ import cloudinary, {
 } from '@common/cloudinary/cloudinary.config';
 import { UploadApiOptions, UploadApiResponse } from 'cloudinary';
 import { CloudinaryUploadResponseDto } from '@dtos/upload.dto';
-import { SuccessUploadMessage, ErrorUploadMessage } from '@assets/messages/upload.message';
+import {
+  SuccessUploadMessage,
+  ErrorUploadMessage,
+} from '@assets/messages/upload.message';
 import { FileUpload } from '@assets/interface/cloudinary.interface';
-
 
 @Injectable()
 export class CloudinaryService {
@@ -35,12 +37,13 @@ export class CloudinaryService {
    */
   private buildRawPublicId(originalName: string): string {
     const extension = extname(originalName || '').toLowerCase(); // Lấy đuôi file (vd: .pdf)
-    const baseName = (originalName || 'file')
-      .replace(extension, '') // Tách lấy tên gốc
-      .trim()
-      .replaceAll(/[^a-zA-Z0-9-_]+/g, '-') // Thay ký tự đặc biệt bằng dấu gạch ngang
-      .replaceAll(/-+/g, '-')
-      .replaceAll(/^-|-$/g, '') || 'file';
+    const baseName =
+      (originalName || 'file')
+        .replace(extension, '') // Tách lấy tên gốc
+        .trim()
+        .replaceAll(/[^a-zA-Z0-9-_]+/g, '-') // Thay ký tự đặc biệt bằng dấu gạch ngang
+        .replaceAll(/-+/g, '-')
+        .replaceAll(/^-|-$/g, '') || 'file';
 
     // Trả về tên file kèm timestamp - đảm bảo tính duy nhất
     return `${Date.now()}-${baseName}${extension}`;
@@ -62,7 +65,7 @@ export class CloudinaryService {
     try {
       //  Phân loại file để báo cho Cloudinary biết cách xử lý
       const resourceType = this.resolveResourceType(file.mimetype);
-      
+
       //  Cấu hình các tuỳ chọn cơ bản
       const uploadOptions: UploadApiOptions = {
         folder, // Lưu vào thư mục tương ứng trên Cloud
@@ -81,14 +84,12 @@ export class CloudinaryService {
       // Mở luồng kết nối và đẩy file lên Cloudinary
       const result = await new Promise<UploadApiResponse>((resolve, reject) => {
         cloudinary.uploader
-          .upload_stream(
-            uploadOptions,
-            (error, result) => {
-              if (error) return reject(new Error(error.message));
-              if (!result) return reject(new Error(ErrorUploadMessage.UPLOAD_FAILED));
-              resolve(result); 
-            },
-          )
+          .upload_stream(uploadOptions, (error, result) => {
+            if (error) return reject(new Error(error.message));
+            if (!result)
+              return reject(new Error(ErrorUploadMessage.UPLOAD_FAILED));
+            resolve(result);
+          })
           .end(file.buffer); // Truyền dữ liệu dạng nhị phân (buffer) vào stream
       });
 
@@ -115,17 +116,27 @@ export class CloudinaryService {
   ): Promise<CloudinaryUploadResponseDto> {
     // 1. Kiểm tra định dạng (Chỉ cho phép ảnh)
     const allowedImageTypes = [
-      'image/jpeg', 'image/jpg', 'image/png', 
-      'image/gif', 'image/webp', 'image/svg+xml'
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
     ];
 
     if (!allowedImageTypes.includes(file.mimetype)) {
-      throw new HttpException(ErrorUploadMessage.INVALID_FILE_TYPE, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        ErrorUploadMessage.INVALID_FILE_TYPE,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // 2. Giới hạn 10MB
     if (file.size > 10 * 1024 * 1024) {
-      throw new HttpException(ErrorUploadMessage.FILE_TOO_LARGE, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        ErrorUploadMessage.FILE_TOO_LARGE,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // 3. Gọi hàm Core để thực hiện upload
@@ -145,12 +156,18 @@ export class CloudinaryService {
     file: FileUpload,
   ): Promise<CloudinaryUploadResponseDto> {
     if (!file.mimetype.startsWith('video/')) {
-      throw new HttpException(ErrorUploadMessage.INVALID_FILE_TYPE, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        ErrorUploadMessage.INVALID_FILE_TYPE,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     // Giới hạn 100 MB
     if (file.size > 100 * 1024 * 1024) {
-      throw new HttpException(ErrorUploadMessage.FILE_TOO_LARGE, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        ErrorUploadMessage.FILE_TOO_LARGE,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const mediaUrl = await this.uploadMedia(file, file.fieldname);
@@ -167,16 +184,19 @@ export class CloudinaryService {
   public async uploadFile(
     file: FileUpload,
   ): Promise<CloudinaryUploadResponseDto> {
-    // Giới hạn 20MB
-    if (file.size > 20 * 1024 * 1024) {
-      throw new HttpException(ErrorUploadMessage.FILE_TOO_LARGE, HttpStatus.BAD_REQUEST);
+    // Giới hạn 10MB
+    if (file.size > 10 * 1024 * 1024) {
+      throw new HttpException(
+        ErrorUploadMessage.FILE_TOO_LARGE,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const mediaUrl = await this.uploadMedia(file, file.fieldname);
 
     return new CloudinaryUploadResponseDto({
       message: SuccessUploadMessage.FILE_PROCESSED,
-      imageUrl: mediaUrl, 
+      imageUrl: mediaUrl,
     });
   }
 }

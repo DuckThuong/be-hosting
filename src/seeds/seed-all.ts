@@ -54,6 +54,26 @@ type SeedService = {
   servicePrice?: number;
 };
 
+type SeedOwnerPackagePlan = {
+  planCode: string;
+  name: string;
+  rentalClass: string;
+  price: number;
+  durationDays: number | null;
+  maxActiveListings: number;
+  isActive: boolean;
+};
+
+type SeedOwnerPackageSubscription = {
+  ownerUserCode: string;
+  planCode: string;
+  rentalClass: string;
+  startsAt: string;
+  expiresAt: string | null;
+  trialReminderSentAt: string | null;
+  status: string;
+};
+
 type SeedLocation = {
   locationCode: string;
   typeCode: string;
@@ -62,8 +82,9 @@ type SeedLocation = {
   ownerCode: string;
   minTimeLimit: string | null;
   maxTimeLimit: string | null;
-  locationPriceStart: number;
-  locationPriceEnd: number;
+  locationPrice?: number;
+  locationPriceStart?: number;
+  locationPriceEnd?: number;
   locationPriceAfterDeal: number;
   locationArea: number;
   hasRent: number;
@@ -174,6 +195,8 @@ type SeedMessageAttachment = {
 type SeedDataset = {
   locationTypes: SeedLocationType[];
   services: SeedService[];
+  ownerPackagePlans: SeedOwnerPackagePlan[];
+  ownerPackageSubscriptions: SeedOwnerPackageSubscription[];
   users: SeedUser[];
   profiles: SeedProfile[];
   locations: SeedLocation[];
@@ -203,9 +226,9 @@ function getSeedPassword(): string {
 
 function loadJson<T>(fileName: string): T[] {
   const filePath = path.join(FIXTURE_ROOT, fileName);
-  const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8')) as unknown;
+  const parsed: unknown = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   if (!Array.isArray(parsed)) {
-    throw new Error(`Fixture "${fileName}" must contain an array.`);
+    throw new TypeError(`Fixture "${fileName}" must contain an array.`);
   }
   return parsed as T[];
 }
@@ -214,6 +237,10 @@ function loadDataset(): SeedDataset {
   return {
     locationTypes: loadJson<SeedLocationType>('tb_location-type.json'),
     services: loadJson<SeedService>('tb_service.json'),
+    ownerPackagePlans: loadJson<SeedOwnerPackagePlan>('tb_owner_package_plan.json'),
+    ownerPackageSubscriptions: loadJson<SeedOwnerPackageSubscription>(
+      'tb_owner_package_subscription.json',
+    ),
     users: loadJson<SeedUser>('tb_user_default.json'),
     profiles: loadJson<SeedProfile>('tb_user_profile.json'),
     locations: loadJson<SeedLocation>('tb_location.json'),
@@ -237,6 +264,8 @@ async function ensureSchema(): Promise<void> {
     'tb_user_default',
     'tb_user_profile',
     'tb_service',
+    'tb_owner_package_plan',
+    'tb_owner_package_subscription',
     'tb_location-type',
     'tb_location',
     'tb_location-address',
@@ -271,9 +300,9 @@ async function hasColumn(
 }
 
 async function loadUserIdMap(): Promise<Map<string, number>> {
-  const rows = (await dataSource.query(
+  const rows: Array<{ id: number; userCode: string }> = await dataSource.query(
     'SELECT `id`, `userCode` FROM `tb_user_default`',
-  )) as Array<{ id: number; userCode: string }>;
+  );
   return new Map(rows.map((row) => [row.userCode, Number(row.id)]));
 }
 
@@ -299,7 +328,6 @@ async function seedServices(items: SeedService[]): Promise<void> {
   for (const item of items) {
     const code = item.code ?? item.serviceCode;
     const name = item.name ?? item.serviceName;
-    const description = item.description ?? item.serviceDescription ?? '';
     const category = item.category ?? 'GENERAL';
 
     await dataSource.query(
@@ -307,6 +335,59 @@ async function seedServices(items: SeedService[]): Promise<void> {
        SELECT ?, ?, ?
        WHERE NOT EXISTS (SELECT 1 FROM \`tb_service\` WHERE \`code\` = ?)`,
       [code, name, category, code],
+    );
+  }
+}
+
+async function seedOwnerPackagePlans(
+  items: SeedOwnerPackagePlan[],
+): Promise<void> {
+  for (const item of items) {
+    await dataSource.query(
+      `INSERT INTO \`tb_owner_package_plan\` (
+        \`planCode\`, \`name\`, \`rentalClass\`, \`price\`, \`durationDays\`, \`maxActiveListings\`, \`isActive\`
+      )
+       SELECT ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (SELECT 1 FROM \`tb_owner_package_plan\` WHERE \`planCode\` = ?)`,
+      [
+        item.planCode,
+        item.name,
+        item.rentalClass,
+        item.price,
+        item.durationDays,
+        item.maxActiveListings,
+        item.isActive ? 1 : 0,
+        item.planCode,
+      ],
+    );
+  }
+}
+
+async function seedOwnerPackageSubscriptions(
+  items: SeedOwnerPackageSubscription[],
+): Promise<void> {
+  for (const item of items) {
+    await dataSource.query(
+      `INSERT INTO \`tb_owner_package_subscription\` (
+        \`ownerUserCode\`, \`planCode\`, \`rentalClass\`, \`startsAt\`, \`expiresAt\`, \`trialReminderSentAt\`, \`status\`
+      )
+       SELECT ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (
+         SELECT 1 FROM \`tb_owner_package_subscription\`
+         WHERE \`ownerUserCode\` = ? AND \`rentalClass\` = ? AND \`status\` = ?
+       )`,
+      [
+        item.ownerUserCode,
+        item.planCode,
+        item.rentalClass,
+        item.startsAt,
+        item.expiresAt,
+        item.trialReminderSentAt,
+        item.status,
+        item.ownerUserCode,
+        item.rentalClass,
+        item.status,
+      ],
     );
   }
 }
@@ -369,6 +450,13 @@ async function seedProfiles(items: SeedProfile[]): Promise<void> {
 
 async function seedLocations(items: SeedLocation[]): Promise<void> {
   for (const item of items) {
+    const locationPrice = item.locationPrice ?? item.locationPriceStart;
+    if (locationPrice == null) {
+      throw new Error(
+        `Cannot seed location. Missing price for: ${item.locationCode}`,
+      );
+    }
+
     await dataSource.query(
       `INSERT INTO \`tb_location\` (
         \`typeCode\`, \`locationName\`, \`locationLogo\`, \`ownerCode\`, \`locationCode\`, 
@@ -386,7 +474,7 @@ async function seedLocations(items: SeedLocation[]): Promise<void> {
         item.locationCode,
         item.minTimeLimit,
         item.maxTimeLimit,
-        item.locationPriceStart,
+        locationPrice,
         'tháng',
         item.locationPriceAfterDeal,
         item.locationArea,
@@ -504,10 +592,10 @@ async function seedLocationMedia(items: SeedLocationMedia[]): Promise<void> {
 
 async function seedFavorites(items: SeedFavorite[]): Promise<void> {
   for (const item of items) {
-    const ownerRows = (await dataSource.query(
+    const ownerRows: Array<{ ownerCode: string }> = await dataSource.query(
       'SELECT `ownerCode` FROM `tb_location` WHERE `locationCode` = ? LIMIT 1',
       [item.locationCode],
-    )) as Array<{ ownerCode: string }>;
+    );
     if (!ownerRows.length || ownerRows[0].ownerCode === item.userCode) continue;
     await dataSource.query(
       `INSERT INTO \`tb_location-favorite\` (\`locationCode\`, \`userCode\`)
@@ -532,7 +620,7 @@ async function seedConversations(
       );
     }
 
-    const existingRows = (await dataSource.query(
+    const existingRows: Array<{ id: number }> = await dataSource.query(
       `SELECT \`id\` FROM \`tb_conversation\`
        WHERE \`createdByUserId\` = ?
          AND \`type\` = ?
@@ -540,7 +628,7 @@ async function seedConversations(
          AND ((\`name\` IS NULL AND ? IS NULL) OR \`name\` = ?)
        LIMIT 1`,
       [createdByUserId, item.type, item.status, item.name, item.name],
-    )) as Array<{ id: number }>;
+    );
 
     if (existingRows.length > 0) {
       conversationIdBySeedKey.set(item.seedKey, Number(existingRows[0].id));
@@ -589,7 +677,7 @@ async function seedMessages(
       );
     }
 
-    const existingRows = (await dataSource.query(
+    const existingRows: Array<{ id: number }> = await dataSource.query(
       `SELECT \`id\` FROM \`tb_message\`
        WHERE \`conversationId\` = ?
          AND \`senderId\` = ?
@@ -597,7 +685,7 @@ async function seedMessages(
          AND ((\`content\` IS NULL AND ? IS NULL) OR \`content\` = ?)
        LIMIT 1`,
       [conversationId, senderId, item.createdAt, item.content, item.content],
-    )) as Array<{ id: number }>;
+    );
 
     if (existingRows.length > 0) {
       messageIdBySeedKey.set(item.seedKey, Number(existingRows[0].id));
@@ -762,13 +850,15 @@ async function updateConversationCache(
     const lastMessageId = maps.messageIdBySeedKey.get(lastMessage.seedKey);
     if (!lastMessageId) continue;
 
-    const preview =
-      lastMessage.content?.trim() ||
-      (lastMessage.type === 'IMAGE'
-        ? '[Image]'
-        : lastMessage.type === 'FILE'
-          ? '[File]'
-          : '[Message]');
+    let preview = '[Message]';
+    const trimmedContent = lastMessage.content?.trim();
+    if (trimmedContent) {
+      preview = trimmedContent;
+    } else if (lastMessage.type === 'IMAGE') {
+      preview = '[Image]';
+    } else if (lastMessage.type === 'FILE') {
+      preview = '[File]';
+    }
 
     await dataSource.query(
       `UPDATE \`tb_conversation\`
@@ -791,6 +881,8 @@ async function showSummary(): Promise<void> {
     'tb_user_profile',
     'tb_location-type',
     'tb_service',
+    'tb_owner_package_plan',
+    'tb_owner_package_subscription',
     'tb_location',
     'tb_location-address',
     'tb_location-service',
@@ -820,6 +912,8 @@ async function seedAll(): Promise<void> {
     await ensureSchema();
     await seedLocationTypes(dataset.locationTypes);
     await seedServices(dataset.services);
+    await seedOwnerPackagePlans(dataset.ownerPackagePlans);
+    await seedOwnerPackageSubscriptions(dataset.ownerPackageSubscriptions);
     await seedUsers(dataset.users);
     await seedProfiles(dataset.profiles);
     await seedLocations(dataset.locations);

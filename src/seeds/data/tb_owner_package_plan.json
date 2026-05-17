@@ -1,0 +1,38 @@
+[
+  {
+    "planCode": "LONG_FREE",
+    "name": "Free",
+    "rentalClass": "LONG_TERM",
+    "price": 0,
+    "durationDays": 7,
+    "maxActiveListings": 1,
+    "isActive": true
+  },
+  {
+    "planCode": "INDIVIDUAL",
+    "name": "Individual",
+    "rentalClass": "SHORT_TERM",
+    "price": 49000,
+    "durationDays": 30,
+    "maxActiveListings": 1,
+    "isActive": true
+  },
+  {
+    "planCode": "LONG_BASIC",
+    "name": "Basic",
+    "rentalClass": "LONG_TERM",
+    "price": 99000,
+    "durationDays": 30,
+    "maxActiveListings": 5,
+    "isActive": true
+  },
+  {
+    "planCode": "LONG_PRO",
+    "name": "Pro",
+    "rentalClass": "LONG_TERM",
+    "price": 149000,
+    "durationDays": 30,
+    "maxActiveListings": 10,
+    "isActive": true
+  }
+]
