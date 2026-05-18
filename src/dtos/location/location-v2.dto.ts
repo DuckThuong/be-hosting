@@ -401,6 +401,23 @@ export class LocationListQueryDto {
   limit?: number;
 
   @ApiPropertyOptional({
+    example: 'locationPrice',
+    description:
+      'Field used for sorting. Supports locationPrice, locationPriceAfterDeal, locationArea, locationRate, locationCode.',
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({
+    example: 'ASC',
+    description: 'Sort direction. Supports ASC or DESC.',
+  })
+  @IsOptional()
+  @IsString()
+  sortOrder?: string;
+
+  @ApiPropertyOptional({
     example: 21.0285,
     description: 'Latitude of the search center for radius search.',
   })

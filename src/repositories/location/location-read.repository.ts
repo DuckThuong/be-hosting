@@ -69,6 +69,13 @@ type BaseLocationRow = {
   distanceKm?: string | number | null;
 };
 
+type LocationSortDirection = 'ASC' | 'DESC';
+
+type NormalizedLocationListQuery = LocationListQueryDto & {
+  sortBy?: string;
+  sortOrder?: LocationSortDirection;
+};
+
 @Injectable()
 export class LocationReadRepository {
   constructor(
@@ -145,12 +152,9 @@ export class LocationReadRepository {
       .select('COUNT(DISTINCT location.locationCode)', 'count')
       .getRawOne()
       .then((row) => Number(row?.count ?? 0));
+    this.applyLocationSort(qb, normalizedPayload, hasRadiusSearch, distanceSelect);
+
     const rows = await qb
-      .orderBy(
-        hasRadiusSearch ? distanceSelect : 'location.locationCode',
-        hasRadiusSearch ? 'ASC' : 'DESC',
-      )
-      .addOrderBy('location.locationCode', 'DESC')
       .offset(offset)
       .limit(limit)
       .getRawMany<BaseLocationRow>();
@@ -194,7 +198,7 @@ export class LocationReadRepository {
 
   private normalizeListQuery(
     payload: LocationListQueryDto,
-  ): LocationListQueryDto {
+  ): NormalizedLocationListQuery {
     return {
       ...payload,
       minPrice: this.toOptionalNumber(payload.minPrice),
@@ -204,6 +208,8 @@ export class LocationReadRepository {
       isRented: this.toOptionalBoolean(payload.isRented),
       page: this.toOptionalInteger(payload.page, 1, Number.MAX_SAFE_INTEGER),
       limit: this.toOptionalInteger(payload.limit, 1, 100),
+      sortBy: this.toOptionalSortBy(payload.sortBy),
+      sortOrder: this.toOptionalSortOrder(payload.sortOrder),
       lat: this.toOptionalNumber(payload.lat, -90, 90),
       lng: this.toOptionalNumber(payload.lng, -180, 180),
       radiusKm: this.toOptionalNumber(payload.radiusKm, 0.1, 100),
@@ -266,6 +272,84 @@ export class LocationReadRepository {
     }
 
     return undefined;
+  }
+
+  private toOptionalSortBy(value: unknown): string | undefined {
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+
+    const normalizedValue = value.trim();
+    return normalizedValue.length > 0 ? normalizedValue : undefined;
+  }
+
+  private toOptionalSortOrder(
+    value: unknown,
+  ): LocationSortDirection | undefined {
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+
+    const normalizedValue = value.trim().toUpperCase();
+    if (normalizedValue === 'ASC' || normalizedValue === 'DESC') {
+      return normalizedValue;
+    }
+
+    return undefined;
+  }
+
+  private resolveSortColumn(sortBy?: string): string | undefined {
+    if (!sortBy) {
+      return undefined;
+    }
+
+    const normalizedSortBy = sortBy.trim().toLowerCase();
+
+    const sortColumnMap: Record<string, string> = {
+      newest: 'location.locationCode',
+      oldest: 'location.locationCode',
+      locationcode: 'location.locationCode',
+      locationprice: 'location.locationPrice',
+      price: 'location.locationPrice',
+      locationpriceafterdeal: 'location.locationPriceAfterDeal',
+      priceafterdeal: 'location.locationPriceAfterDeal',
+      locationarea: 'location.locationArea',
+      area: 'location.locationArea',
+      locationrate: 'location.locationRate',
+      rating: 'location.locationRate',
+    };
+
+    return sortColumnMap[normalizedSortBy];
+  }
+
+  private applyLocationSort(
+    qb: SelectQueryBuilder<TbLocation>,
+    payload: NormalizedLocationListQuery,
+    hasRadiusSearch: boolean,
+    distanceSelect: string,
+  ) {
+    const sortColumn = this.resolveSortColumn(payload.sortBy);
+
+    if (sortColumn) {
+      const sortOrder =
+        payload.sortOrder ??
+        (payload.sortBy?.trim().toLowerCase() === 'oldest' ? 'ASC' : 'DESC');
+      qb.orderBy(sortColumn, sortOrder);
+
+      if (hasRadiusSearch) {
+        qb.addOrderBy(distanceSelect, 'ASC');
+      }
+
+      qb.addOrderBy('location.locationCode', 'DESC');
+      return;
+    }
+
+    qb
+      .orderBy(
+        hasRadiusSearch ? distanceSelect : 'location.locationCode',
+        hasRadiusSearch ? 'ASC' : 'DESC',
+      )
+      .addOrderBy('location.locationCode', 'DESC');
   }
 
   private hasRadiusSearch(
@@ -494,7 +578,7 @@ export class LocationReadRepository {
       return;
     }
 
-    qb.andWhere('location.locationPriceAfterDeal >= :minPrice', {
+    qb.andWhere('location.locationPrice >= :minPrice', {
       minPrice,
     });
   }
@@ -507,7 +591,7 @@ export class LocationReadRepository {
       return;
     }
 
-    qb.andWhere('location.locationPriceAfterDeal <= :maxPrice', {
+    qb.andWhere('location.locationPrice <= :maxPrice', {
       maxPrice,
     });
   }

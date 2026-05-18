@@ -185,7 +185,7 @@ export const RentLocationMessageTemplate = (data: {
       font-size: 13px;
     ">
       <span style="color: #e65100; font-weight: 700;">
-       ${Number(data.locationPrice).toLocaleString('vi-VN')}đ
+       ${Number(data.locationPrice).toLocaleString('vi-VN')}đ/
       </span>
       <span style="color: #aaa; font-size: 11px;">
         ${data.locationPriceUnit}
